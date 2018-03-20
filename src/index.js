@@ -1,8 +1,16 @@
+const express = require('express');
+const http = require('http');
 const EventEmitter = require('events');
 const WebSocket = require('ws');
 
+const app = express();
+
+app.use('/', express.static('public'));
+
+const server = http.createServer(app);
+
 const wss1 = new WebSocket.Server({ port: 64381 });
-const wss2 = new WebSocket.Server({ port: 64382 });
+const wss2 = new WebSocket.Server({ server });
 
 const broadcast = (wss) => (data) => {
   wss.clients.forEach((client) => {
@@ -30,4 +38,8 @@ wss2.on('connection', (ws) => {
     console.log('From wss2', msg);
     ev21.emit('msg', msg);
   });
+});
+
+server.listen(64382, () => {
+  console.log(`Listening on ${server.address().port}`);
 });
