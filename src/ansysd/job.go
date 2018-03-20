@@ -9,8 +9,7 @@ type Job struct {
 	Name      string
 	Script    null.String
 	FileName  string
-	Arguments null.String
-	Graphical bool
+	Arguments []string
 }
 
 // Report describes job execution status
@@ -18,5 +17,6 @@ type Report struct {
 	Name     string
 	Finished bool
 	Success  bool
+	Log      null.String
 	Error    null.String
 }
