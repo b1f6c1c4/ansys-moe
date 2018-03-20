@@ -1,3 +1,4 @@
+const JSON5 = require('json5');
 const express = require('express');
 const http = require('http');
 const EventEmitter = require('events');
@@ -34,9 +35,38 @@ wss1.on('connection', (ws) => {
 });
 
 wss2.on('connection', (ws) => {
-  ws.on('message', (msg) => {
-    console.log('From wss2', msg);
-    ev21.emit('msg', msg);
+  ws.on('message', (m) => {
+    const { from, to, pars } = JSON5.parse(m);
+    let Script;
+    if (pars) {
+      const sets = [];
+      Object.keys(pars).forEach((k) => {
+        sets.push(`
+oProject.ChangeProperty([
+    "NAME:AllTabs",
+    [
+      "NAME:ProjectVariableTab",
+      ["NAME:PropServers", "ProjectVariables"],
+      ["NAME:ChangedProps", ["NAME:${k}", "Value:=", "${pars[k]}"]]
+    ]
+  ])
+`);
+      });
+      Script = `
+import ScriptEnv
+ScriptEnv.Initialize("Ansoft.ElectronicsDesktop")
+oDesktop.RestoreWindow()
+oProject = oDesktop.SetActiveProject("${from}")
+${sets.join('\n')}
+`;
+    }
+    const cmd = {
+      Name: to,
+      FileName: `${from}.aedt`,
+      Script,
+    };
+    console.log('Command', cmd);
+    ev21.emit('msg', JSON.stringify(cmd));
   });
 });
 
