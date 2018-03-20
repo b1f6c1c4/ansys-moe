@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/hpcloud/tail"
 
@@ -13,6 +14,9 @@ import (
 )
 
 func executeAnsys(job *Job, reports chan<- *Report, finished chan<- bool) {
+	defer func() {
+		finished <- true
+	}()
 	log := func(s string) {
 		logger("#" + job.Name + ": " + s)
 	}
@@ -28,10 +32,11 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- bool) {
 			Finished: true,
 			Error:    null.StringFrom(str),
 		}
+		return
 	}
 
-	tempFile := filepath.Join(tempDir, job.FileName)
-	if err := cp.Copy(rawFile, tempFile); err != nil {
+	jobFile := filepath.Join(tempDir, job.FileName)
+	if err := cp.Copy(rawFile, jobFile); err != nil {
 		str := "Copy job file failed: " + err.Error()
 		log(str)
 		reports <- &Report{
@@ -39,6 +44,7 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- bool) {
 			Finished: true,
 			Error:    null.StringFrom(str),
 		}
+		return
 	}
 
 	logFile := filepath.Join(tempDir, "job.log")
@@ -54,6 +60,7 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- bool) {
 				Finished: true,
 				Error:    null.StringFrom(str),
 			}
+			return
 		}
 		args = append(args, "-runscript", scriptFile)
 	}
@@ -61,30 +68,46 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- bool) {
 	if job.Arguments != nil {
 		args = append(args, job.Arguments...)
 	}
+	args = append(args, "-batchsolve", jobFile)
 
 	var tailObj *tail.Tail
-	cmd := exec.Command(ansysPath, args...)
-	go func() {
-		if t, err := tail.TailFile(logFile, tail.Config{Follow: true}); err != nil {
-			str := "Tail file failed: " + err.Error()
-			log(str)
-			reports <- &Report{
-				Name:  job.Name,
-				Error: null.StringFrom(str),
-			}
-		} else {
-			tailObj = t
+	if t, err := tail.TailFile(logFile, tail.Config{Follow: true}); err != nil {
+		str := "Tail file failed: " + err.Error()
+		log(str)
+		reports <- &Report{
+			Name:  job.Name,
+			Error: null.StringFrom(str),
+		}
+	} else {
+		tailObj = t
+		go func() {
 			for line := range t.Lines {
 				reports <- &Report{
 					Name: job.Name,
 					Log:  null.StringFrom(line.Text),
 				}
 			}
+		}()
+	}
+
+	cmd := exec.Command(ansysPath, args...)
+	log("To execute: " + ansysPath + " " + strings.Join(args, " "))
+	if err := cmd.Run(); err != nil {
+		str := "Execution failed: " + err.Error()
+		log(str)
+		reports <- &Report{
+			Name:     job.Name,
+			Finished: true,
+			Error:    null.StringFrom(str),
 		}
-	}()
-	go func() {
-		cmd.Wait()
+		return
+	}
+	if tailObj != nil {
 		tailObj.Stop()
-		finished <- true
-	}()
+	}
+	reports <- &Report{
+		Name:     job.Name,
+		Finished: true,
+		Success:  true,
+	}
 }

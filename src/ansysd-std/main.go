@@ -9,4 +9,6 @@ func main() {
 	ansysd.Entry(func(s string) {
 		fmt.Println(s)
 	})
+	stop := make(chan bool)
+	ansysd.Loop(stop)
 }

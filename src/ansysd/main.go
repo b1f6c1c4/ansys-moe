@@ -25,3 +25,28 @@ func Entry(theLogger func(string)) {
 	ansysPath = findAnsysExecutable()
 	logger("Ansys path: " + ansysPath)
 }
+
+// Loop listen on events
+func Loop(stop <-chan bool) {
+	reports := make(chan *Report)
+	finished := make(chan bool)
+	go executeAnsys(&Job{
+		Name:     "xxx",
+		FileName: "Project1.aedt",
+	}, reports, finished)
+	for {
+		select {
+		case report := <-reports:
+			logger("Got report: " + report.Name)
+			if report.Finished {
+				logger("Finished!")
+			}
+			if report.Success {
+				logger("Success!")
+			}
+			logger(report.Log.ValueOrZero())
+		case <-stop:
+			break
+		}
+	}
+}
