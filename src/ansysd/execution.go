@@ -13,10 +13,8 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
-func executeAnsys(job *Job, reports chan<- *Report, finished chan<- bool) {
-	defer func() {
-		finished <- true
-	}()
+func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
+	defer close(finished)
 	log := func(s string) {
 		logger("#" + job.Name + ": " + s)
 	}

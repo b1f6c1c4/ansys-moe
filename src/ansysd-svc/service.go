@@ -28,7 +28,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 		elog.Info(1, s)
 	})
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-	stop := make(chan bool)
+	stop := make(chan struct{})
 	go ansysd.Loop(stop)
 loop:
 	for {
@@ -41,7 +41,7 @@ loop:
 				time.Sleep(100 * time.Millisecond)
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
-				stop <- true
+				close(stop)
 				break loop
 			default:
 				elog.Error(1, fmt.Sprintf("unexpected control request #%d", c))
