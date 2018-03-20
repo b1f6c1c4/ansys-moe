@@ -2,8 +2,11 @@ package main
 
 import (
 	"ansysd"
+	"fmt"
 )
 
 func main() {
-	ansysd.Entry()
+	ansysd.Entry(func(s string) {
+		fmt.Println(s)
+	})
 }

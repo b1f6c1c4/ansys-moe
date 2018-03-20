@@ -24,8 +24,10 @@ type myservice struct{}
 func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
+	ansysd.Entry(func(s string) {
+		elog.Info(1, s)
+	})
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-	ansysd.Entry()
 loop:
 	for {
 		select {
