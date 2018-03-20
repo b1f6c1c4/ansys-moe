@@ -14,13 +14,17 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
-func checkSucc(succ <-chan struct{}) bool {
+func checkSucc(errors <-chan struct{}) bool {
 	<-time.After(time.Second)
-	select {
-	case <-succ:
-		return true
-	default:
-		return false
+	succ := true
+	for {
+		select {
+		case <-errors:
+			succ = false
+			break
+		default:
+			return succ
+		}
 	}
 }
 
@@ -29,6 +33,7 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 	log := func(s string) {
 		logger("#" + job.Name + ": " + s)
 	}
+	defer log("finished")
 
 	rawFile := filepath.Join(dataPath, "raw", job.FileName)
 
@@ -63,7 +68,7 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 		args = append(args, job.Arguments...)
 	}
 
-	succ := make(chan struct{})
+	errors := make(chan struct{})
 	var tailObj *tail.Tail
 	if t, err := tail.TailFile(logFile, tail.Config{Follow: true}); err != nil {
 		str := "Tail file failed: " + err.Error()
@@ -77,8 +82,8 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 		defer tailObj.Stop()
 		go func() {
 			for line := range t.Lines {
-				if strings.HasPrefix(line.Text, "Stopping Batch Run") {
-					succ <- struct{}{}
+				if strings.HasPrefix(line.Text, "[error]") {
+					errors <- struct{}{}
 				}
 				reports <- &Report{
 					Name: job.Name,
@@ -113,7 +118,7 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 			}
 			return
 		}
-		if !checkSucc(succ) {
+		if !checkSucc(errors) {
 			reports <- &Report{
 				Name:     job.Name,
 				Finished: true,
@@ -139,7 +144,7 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 	reports <- &Report{
 		Name:     job.Name,
 		Finished: true,
-		Success:  checkSucc(succ),
+		Success:  checkSucc(errors),
 		Error:    null.StringFrom("Solving"),
 	}
 }
