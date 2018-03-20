@@ -34,7 +34,7 @@ func usage(errmsg string) {
 }
 
 func main() {
-	const svcName = "myservice"
+	const svcName = "ansysd"
 
 	isIntSess, err := svc.IsAnInteractiveSession()
 	if err != nil {

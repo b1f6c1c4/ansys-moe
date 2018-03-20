@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"ansysd"
+
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -23,6 +25,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
+	ansysd.Entry()
 loop:
 	for {
 		select {
