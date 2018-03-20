@@ -6,12 +6,23 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hpcloud/tail"
 
 	cp "github.com/cleversoap/go-cp"
 	null "gopkg.in/guregu/null.v3"
 )
+
+func checkSucc(succ <-chan struct{}) bool {
+	<-time.After(time.Second)
+	select {
+	case <-succ:
+		return true
+	default:
+		return false
+	}
+}
 
 func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 	defer close(finished)
@@ -48,26 +59,11 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 	logFile := filepath.Join(tempDir, "job.log")
 	args := []string{"-ng", "-logfile", logFile}
 
-	if !job.Script.IsZero() {
-		scriptFile := filepath.Join(tempDir, "script.vbs")
-		if err := ioutil.WriteFile(scriptFile, []byte(job.Script.ValueOrZero()), os.ModePerm); err != nil {
-			str := "Write script file failed: " + err.Error()
-			log(str)
-			reports <- &Report{
-				Name:     job.Name,
-				Finished: true,
-				Error:    null.StringFrom(str),
-			}
-			return
-		}
-		args = append(args, "-runscript", scriptFile)
-	}
-
 	if job.Arguments != nil {
 		args = append(args, job.Arguments...)
 	}
-	args = append(args, "-batchsolve", jobFile)
 
+	succ := make(chan struct{})
 	var tailObj *tail.Tail
 	if t, err := tail.TailFile(logFile, tail.Config{Follow: true}); err != nil {
 		str := "Tail file failed: " + err.Error()
@@ -78,8 +74,12 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 		}
 	} else {
 		tailObj = t
+		defer tailObj.Stop()
 		go func() {
 			for line := range t.Lines {
+				if strings.HasPrefix(line.Text, "Stopping Batch Run") {
+					succ <- struct{}{}
+				}
 				reports <- &Report{
 					Name: job.Name,
 					Log:  null.StringFrom(line.Text),
@@ -88,8 +88,44 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 		}()
 	}
 
-	cmd := exec.Command(ansysPath, args...)
-	log("To execute: " + ansysPath + " " + strings.Join(args, " "))
+	if !job.Script.IsZero() {
+		scriptFile := filepath.Join(tempDir, "script.py")
+		if err := ioutil.WriteFile(scriptFile, []byte(job.Script.ValueOrZero()), os.ModePerm); err != nil {
+			str := "Write script file failed: " + err.Error()
+			log(str)
+			reports <- &Report{
+				Name:     job.Name,
+				Finished: true,
+				Error:    null.StringFrom(str),
+			}
+			return
+		}
+		argsS := append(args, "-runscript", scriptFile, "-batchsave", jobFile)
+		cmd := exec.Command(ansysPath, argsS...)
+		log("To execute: " + ansysPath + " " + strings.Join(argsS, " "))
+		if err := cmd.Run(); err != nil {
+			str := "Save execution failed: " + err.Error()
+			log(str)
+			reports <- &Report{
+				Name:     job.Name,
+				Finished: true,
+				Error:    null.StringFrom(str),
+			}
+			return
+		}
+		if !checkSucc(succ) {
+			reports <- &Report{
+				Name:     job.Name,
+				Finished: true,
+				Error:    null.StringFrom("Scripting"),
+			}
+			return
+		}
+	}
+
+	argsE := append(args, "-batchsolve", jobFile)
+	cmd := exec.Command(ansysPath, argsE...)
+	log("To execute: " + ansysPath + " " + strings.Join(argsE, " "))
 	if err := cmd.Run(); err != nil {
 		str := "Execution failed: " + err.Error()
 		log(str)
@@ -100,12 +136,10 @@ func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
 		}
 		return
 	}
-	if tailObj != nil {
-		tailObj.Stop()
-	}
 	reports <- &Report{
 		Name:     job.Name,
 		Finished: true,
-		Success:  true,
+		Success:  checkSucc(succ),
+		Error:    null.StringFrom("Solving"),
 	}
 }
