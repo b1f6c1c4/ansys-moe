@@ -13,19 +13,41 @@ var dataPath string
 var ansysPath string
 var globalConfig globalConfigT
 var logger func(string)
+var cancelChans map[string]chan struct{}
 
 // Entry setup ansysd
 // logger: write string to console or file.
 func Entry(theLogger func(string)) {
 	logger = theLogger
+	cancelChans = make(map[string]chan struct{})
 
-	if exeDir, err := filepath.Abs(filepath.Dir(os.Args[0])); err != nil {
+	exeDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
 		panic(err)
-	} else {
-		dataPath = filepath.Join(exeDir, "data")
-		globalConfig = loadConfig(exeDir)
 	}
+	dataPath = filepath.Join(exeDir, "data")
+	_ = os.MkdirAll(dataPath, os.ModePerm)
+	globalConfig = loadConfig(exeDir)
 	logger("Remote url: " + globalConfig.RemoteUrl)
+
+
+	// TODO
+	reports := make(chan *Report)
+	go func() {
+		for {
+			sb := <-reports
+			logger(sb.CommandID + " " + sb.Type + " " + string(sb.Data))
+		}
+	}()
+	dispatchMessage([]byte(`
+{
+	"cId": "123",
+	"type": "createJob",
+	"jId": "ttt"
+}
+`), reports)
+	return
+
 
 	ansysPath = findAnsysExecutable()
 	logger("Ansys path: " + ansysPath)
@@ -45,53 +67,45 @@ func Loop(stop <-chan struct{}) {
 }
 
 func listenWebsocket(stop <-chan struct{}) {
-	var c *websocket.Conn
-	if w, _, err := websocket.DefaultDialer.Dial(globalConfig.WebsocketUrl, nil); err != nil {
+	c, _, err := websocket.DefaultDialer.Dial(globalConfig.WebsocketUrl, nil)
+	if err != nil {
 		logger("Creating websocket: " + err.Error())
 		return
-	} else {
-		c = w
-		logger("listenWebsocket succeed")
 	}
+	logger("listenWebsocket succeed")
 
 	reports := make(chan *Report)
 	done := make(chan struct{})
-	// go func() {
-	// 	defer close(done)
-	// 	for {
-	// 		if _, message, err := c.ReadMessage(); err != nil {
-	// 			logger("Reading websocket: " + err.Error())
-	// 			return
-	// 		} else {
-	// 			// var job Job
-	// 			// if err := json.Unmarshal([]byte(message), &job); err != nil {
-	// 			// 	logger("Unmarshaling json: " + err.Error())
-	// 			// } else {
-	// 			// 	go executeAnsys(&job, reports, make(chan struct{}))
-	// 			// }
-	// 		}
-	// 	}
-	// }()
+	go func() {
+		defer close(done)
+		for {
+			if _, message, err := c.ReadMessage(); err != nil {
+				logger("Reading websocket: " + err.Error())
+			} else {
+				dispatchMessage(message, reports)
+			}
+		}
+	}()
 
 	for {
 		select {
 		case <-done:
 			return
 		case report := <-reports:
-			var js []byte
-			if j, err := json.Marshal(report); err != nil {
+			js, err := json.Marshal(report)
+			if err != nil {
 				logger("Marshaling report: " + err.Error())
 				break
-			} else {
-				js = j
 			}
-			if err := c.WriteMessage(websocket.TextMessage, js); err != nil {
+			err = c.WriteMessage(websocket.TextMessage, js)
+			if err != nil {
 				logger("Writing websocket: " + err.Error())
 				return
 			}
 			break
 		case <-stop:
-			if err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil {
+			err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			if err != nil {
 				logger("Closing websocket: " + err.Error())
 				return
 			}
