@@ -32,7 +32,7 @@ func (r runDownload) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 	}
 	defer out.Close()
 
-	resp, err := http.Get(remotePath + "raw/" + fileName)
+	resp, err := http.Get(globalConfig.RemoteUrl + "raw/" + fileName)
 	if err != nil {
 		rpt <- makeErrorReport(&r.cmd, "create http", err)
 		return

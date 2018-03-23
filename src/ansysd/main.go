@@ -2,7 +2,6 @@ package ansysd
 
 import (
 	"encoding/json"
-	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -11,8 +10,8 @@ import (
 )
 
 var dataPath string
-var remotePath string
 var ansysPath string
+var globalConfig globalConfigT
 var logger func(string)
 
 // Entry setup ansysd
@@ -24,9 +23,9 @@ func Entry(theLogger func(string)) {
 		panic(err)
 	} else {
 		dataPath = filepath.Join(exeDir, "data")
+		globalConfig = loadConfig(exeDir)
 	}
-	_ = os.MkdirAll(filepath.Join(dataPath, "raw"), os.ModePerm)
-	_ = os.MkdirAll(filepath.Join(dataPath, "temp"), os.ModePerm)
+	logger("Remote url: " + globalConfig.RemoteUrl)
 
 	ansysPath = findAnsysExecutable()
 	logger("Ansys path: " + ansysPath)
@@ -46,9 +45,8 @@ func Loop(stop <-chan struct{}) {
 }
 
 func listenWebsocket(stop <-chan struct{}) {
-	u := url.URL{Scheme: "ws", Host: "101.236.31.187:64381", Path: "/"}
 	var c *websocket.Conn
-	if w, _, err := websocket.DefaultDialer.Dial(u.String(), nil); err != nil {
+	if w, _, err := websocket.DefaultDialer.Dial(globalConfig.WebsocketUrl, nil); err != nil {
 		logger("Creating websocket: " + err.Error())
 		return
 	} else {
@@ -58,22 +56,22 @@ func listenWebsocket(stop <-chan struct{}) {
 
 	reports := make(chan *Report)
 	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for {
-			if _, message, err := c.ReadMessage(); err != nil {
-				logger("Reading websocket: " + err.Error())
-				return
-			} else {
-				var job Job
-				if err := json.Unmarshal([]byte(message), &job); err != nil {
-					logger("Unmarshaling json: " + err.Error())
-				} else {
-					go executeAnsys(&job, reports, make(chan struct{}))
-				}
-			}
-		}
-	}()
+	// go func() {
+	// 	defer close(done)
+	// 	for {
+	// 		if _, message, err := c.ReadMessage(); err != nil {
+	// 			logger("Reading websocket: " + err.Error())
+	// 			return
+	// 		} else {
+	// 			// var job Job
+	// 			// if err := json.Unmarshal([]byte(message), &job); err != nil {
+	// 			// 	logger("Unmarshaling json: " + err.Error())
+	// 			// } else {
+	// 			// 	go executeAnsys(&job, reports, make(chan struct{}))
+	// 			// }
+	// 		}
+	// 	}
+	// }()
 
 	for {
 		select {
