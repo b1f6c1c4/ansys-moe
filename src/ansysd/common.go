@@ -1,6 +1,8 @@
 package ansysd
 
 import (
+	"encoding/json"
+
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -17,9 +19,28 @@ type Command struct {
 type Report struct {
 	CommandID string
 	Type      string
-	Data      string
+	Data      []byte
 }
 
 type executor interface {
-	Run(cmd Command, rpt chan<- Report, cancel <-chan struct{})
+	Run(rpt chan<- *Report, cancel <-chan struct{})
+}
+
+func makeFinishedReport(cmd *Command) *Report {
+	return &Report{
+		CommandID: cmd.CommandID,
+		Type:      "finished",
+	}
+}
+
+func makeErrorReport(cmd *Command, phase string, err error) *Report {
+	j, _ := json.Marshal(map[string]interface{}{
+		"phase":   phase,
+		"message": err.Error(),
+	})
+	return &Report{
+		CommandID: cmd.CommandID,
+		Type:      "errored",
+		Data:      j,
+	}
 }

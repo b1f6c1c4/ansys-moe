@@ -2,14 +2,16 @@ package ansysd
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 var dataPath string
+var remotePath string
 var ansysPath string
 var logger func(string)
 
