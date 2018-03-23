@@ -1,0 +1,87 @@
+# ansysd in ansys-moe
+
+# Data Structures
+
+## Command (object)
+
+- cId (string, required)
+- type (enum, required)
+  - `kill`
+
+    Interrupt the execution of `cId`
+
+  - `status`
+
+    Report system status
+
+  - `download`
+
+    Download `remotes/raw/{fileName}` to `data/{jId}/{fileName}`
+
+  - `createJob`
+
+    Make directory `date/{jId}`
+
+  - `mutate`
+
+    Save `script` to `data/{jId}/scripts/{cId}.vbs`
+    Run `batchsave` over `data/{jId}/{fileName}`
+    Log to `data/{jId}/logs/{cId}.log`
+
+  - `solve`
+
+    Run `batchsolve` over `data/{jId}/{fileName}`
+    Log to `data/{jId}/logs/{cId}.log`
+    Report system status and log difference
+
+  - `extract`
+
+    Make directory `data/{jId}/output/{cId}`
+    Save `script` to `data/{jId}/scripts/{cId}.vbs`
+    Replace `$OUT_DIR` to `data/{jId}/output/{cId}`
+    Run `batchextract` over `data/{jId}/{fileName}`
+    Log to `data/{jId}/logs/{cId}.log`
+    Report every file in `data/{jId}/output/{cId}`
+
+  - `drop`
+
+    If `fileName` non-null non-empty, remove `data/{jId}/{fileName}`
+    Otherwise, recursively remove directory `data/{jId}`
+    Report every file removed (name only)
+
+- jId (string)
+- fileName (string)
+- script (string)
+
+## Report (object)
+
+- cId (string, required)
+- type (string, required)
+  - `status`
+  - `log`
+  - `file`
+  - `errored`
+  - `finished`
+- data (enum)
+  - (StatusReport)
+  - (LogReport)
+  - (FileReport)
+  - (ErrorReport)
+
+## StatusReport (object)
+
+- cpu (object)
+- mem (object)
+
+## LogReport (string)
+
+## FileReport (object)
+
+- fileName (string, required)
+- fileContent (string)
+
+## ErrorReport (object)
+
+- phase (string, required)
+- message (string)
+
