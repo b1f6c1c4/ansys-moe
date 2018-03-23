@@ -44,3 +44,15 @@ func makeErrorReport(cmd *Command, phase string, err error) *Report {
 		Data:      j,
 	}
 }
+
+func makeFileReport(cmd *Command, name string, content null.String) *Report {
+	j, _ := json.Marshal(map[string]interface{}{
+		"fileName":    name,
+		"fileContent": content,
+	})
+	return &Report{
+		CommandID: cmd.CommandID,
+		Type:      "errored",
+		Data:      j,
+	}
+}
