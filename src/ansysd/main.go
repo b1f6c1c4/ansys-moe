@@ -32,20 +32,6 @@ func Entry(theLogger func(string)) {
 
 
 	// TODO
-	reports := make(chan *Report)
-	go func() {
-		for {
-			sb := <-reports
-			logger(sb.CommandID + " " + sb.Type + " " + string(sb.Data))
-		}
-	}()
-	dispatchMessage([]byte(`
-{
-	"cId": "123",
-	"type": "createJob",
-	"jId": "ttt"
-}
-`), reports)
 	return
 
 
@@ -55,6 +41,9 @@ func Entry(theLogger func(string)) {
 
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
+	reports := make(chan *Report)
+	watchLog("fuck.log", nil, reports, nil)
+	return
 	for {
 		listenWebsocket(stop)
 		logger("listenWebsocket quitted")
