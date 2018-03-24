@@ -20,7 +20,7 @@
 
   - `createJob`
 
-    Make directory `date/{jId}`
+    Make directory `data/{jId}`
 
   - `mutate`
 
@@ -47,7 +47,6 @@
 
     If `fileName` non-null non-empty, remove `data/{jId}/{fileName}`
     Otherwise, recursively remove directory `data/{jId}`
-    Report every file removed (name only)
 
 - jId (string)
 - fileName (string)
@@ -73,7 +72,7 @@
 - cpu (object)
 - mem (object)
 
-## LogReport (string)
+## LogReport (array[string])
 
 ## FileReport (object)
 
@@ -84,4 +83,3 @@
 
 - phase (string, required)
 - message (string)
-
