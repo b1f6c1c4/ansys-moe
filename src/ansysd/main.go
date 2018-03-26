@@ -83,7 +83,6 @@ func listenWebsocket(stop <-chan struct{}) {
 				logger("Writing websocket: " + err.Error())
 				return
 			}
-			break
 		case <-stop:
 			err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {

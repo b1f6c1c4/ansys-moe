@@ -54,7 +54,6 @@ func watchLog(fn string, cmd *Command, rpt chan<- *Report, cancel <-chan struct{
 		case <-cancel:
 			return
 		case <-time.After(time.Second):
-			break
 		}
 	}
 }

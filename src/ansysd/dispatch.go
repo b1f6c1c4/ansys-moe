@@ -28,13 +28,16 @@ func dispatchMessage(message []byte, rpt chan<- *Report) {
 		return
 	case "download":
 		exe = runDownload{&cmd}
-		break
 	case "createJob":
 		exe = runCreateJob{&cmd}
-		break
+	case "mutate":
+		exe = runMutate{&cmd}
+	case "solve":
+		exe = runSolve{&cmd}
+	case "extract":
+		exe = runExtract{&cmd}
 	case "drop":
 		exe = runDrop{&cmd}
-		break
 	default:
 		logger("Unsupported type: " + cmd.Type)
 		return
