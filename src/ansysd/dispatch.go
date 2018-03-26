@@ -44,6 +44,7 @@ func dispatchMessage(message []byte, rpt chan<- *Report) {
 	cancelChans[cmd.CommandID] = cancel
 	go func() {
 		exe.Run(rpt, cancel)
+		close(cancel)
 		delete(cancelChans, cmd.CommandID)
 	}()
 }

@@ -30,20 +30,12 @@ func Entry(theLogger func(string)) {
 	globalConfig = loadConfig(exeDir)
 	logger("Remote url: " + globalConfig.RemoteUrl)
 
-
-	// TODO
-	return
-
-
 	ansysPath = findAnsysExecutable()
 	logger("Ansys path: " + ansysPath)
 }
 
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
-	reports := make(chan *Report)
-	watchLog("fuck.log", nil, reports, nil)
-	return
 	for {
 		listenWebsocket(stop)
 		logger("listenWebsocket quitted")
