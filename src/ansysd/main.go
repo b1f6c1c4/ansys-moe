@@ -1,7 +1,7 @@
 package ansysd
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -73,12 +73,13 @@ func listenWebsocket(stop <-chan struct{}) {
 		case <-done:
 			return
 		case report := <-reports:
-			js, err := json.Marshal(report)
-			if err != nil {
-				logger("Marshaling report: " + err.Error())
-				break
-			}
-			err = c.WriteMessage(websocket.TextMessage, js)
+			js := fmt.Sprintf(
+				`{"cId":%q,"type":%q,"data":%s}`,
+				report.CommandID,
+				report.Type,
+				string(report.Data),
+			)
+			err = c.WriteMessage(websocket.TextMessage, []byte(js))
 			if err != nil {
 				logger("Writing websocket: " + err.Error())
 				return
