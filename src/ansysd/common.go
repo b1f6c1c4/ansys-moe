@@ -42,7 +42,7 @@ func makeErrorReport(cmd *Command, phase string, err error) *Report {
 		})
 	} else {
 		j, _ = json.Marshal(map[string]interface{}{
-			"phase":   phase,
+			"phase": phase,
 		})
 	}
 	return &Report{

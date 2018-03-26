@@ -1,21 +1,21 @@
 package ansysd
 
 import (
-	"io/ioutil"
-	"os"
-	"strconv"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"time"
 	"bufio"
 	"errors"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 
 	null "gopkg.in/guregu/null.v3"
 )
 
 func watchLog(fn string, cmd *Command, rpt chan<- *Report, cancel <-chan struct{}) {
-	file, err := os.OpenFile(fn, os.O_RDONLY | os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile(fn, os.O_RDONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		rpt <- makeErrorReport(cmd, "open log file", err)
 		return
@@ -37,8 +37,8 @@ func watchLog(fn string, cmd *Command, rpt chan<- *Report, cancel <-chan struct{
 		str := "[" + strings.Join(s, ",") + "]"
 		rpt <- &Report{
 			CommandID: cmd.CommandID,
-			Type: "log",
-			Data: []byte(str),
+			Type:      "log",
+			Data:      []byte(str),
 		}
 		err = scanner.Err()
 		if err != nil {
@@ -54,7 +54,7 @@ func watchLog(fn string, cmd *Command, rpt chan<- *Report, cancel <-chan struct{
 		case <-cancel:
 			return
 		case <-time.After(time.Second):
-			break;
+			break
 		}
 	}
 }
@@ -64,7 +64,7 @@ func execAnsys(args []string, cmd *Command, rpt chan<- *Report, cancel <-chan st
 	logger("To execute: " + ansysPath + " " + strings.Join(args, " "))
 	err := ctx.Start()
 	if err != nil {
-		rpt <- makeErrorReport(cmd, "execution of " + strings.Join(args, " "), err)
+		rpt <- makeErrorReport(cmd, "execution of "+strings.Join(args, " "), err)
 		return
 	}
 
@@ -111,14 +111,14 @@ func (r runMutate) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		return
 	}
 
-	scriptFile := filepath.Join(dataPath, jobID, "scripts", r.cmd.CommandID + ".vbs")
+	scriptFile := filepath.Join(dataPath, jobID, "scripts", r.cmd.CommandID+".vbs")
 	err = ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
 	if err != nil {
 		rpt <- makeErrorReport(r.cmd, "save script", err)
 		return
 	}
 
-	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID + ".log")
+	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID+".log")
 	go watchLog(logFile, r.cmd, rpt, cancel)
 
 	args := []string{
@@ -157,7 +157,7 @@ func (r runSolve) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		return
 	}
 
-	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID + ".log")
+	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID+".log")
 	go watchLog(logFile, r.cmd, rpt, cancel)
 
 	args := []string{
@@ -235,14 +235,14 @@ func (r runExtract) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 	// In VBScript, only '"' needs to be escaped.
 	scriptX := strings.Replace(script, "$OUT_DIR", strings.Replace(outputPath, "\"", "\"\"", -1), -1)
 
-	scriptFile := filepath.Join(dataPath, jobID, "scripts", r.cmd.CommandID + ".vbs")
+	scriptFile := filepath.Join(dataPath, jobID, "scripts", r.cmd.CommandID+".vbs")
 	err = ioutil.WriteFile(scriptFile, []byte(scriptX), os.ModePerm)
 	if err != nil {
 		rpt <- makeErrorReport(r.cmd, "save script", err)
 		return
 	}
 
-	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID + ".log")
+	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID+".log")
 	go watchLog(logFile, r.cmd, rpt, cancel)
 
 	args := []string{

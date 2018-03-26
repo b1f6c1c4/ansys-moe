@@ -7,7 +7,7 @@ import (
 )
 
 type globalConfigT struct {
-	RemoteUrl string `yaml:"url"`
+	RemoteUrl    string `yaml:"url"`
 	WebsocketUrl string `yaml:"ws"`
 }
 
