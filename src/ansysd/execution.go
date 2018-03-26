@@ -2,12 +2,11 @@ package ansysd
 
 import (
 	// "io/ioutil"
-	"fmt"
 	"os"
 	"strconv"
-	// "os/exec"
+	"os/exec"
 	// "path/filepath"
-	// "strings"
+	"strings"
 	"time"
 	"bufio"
 
@@ -17,17 +16,17 @@ import (
 	// null "gopkg.in/guregu/null.v3"
 )
 
-func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan struct{}) {
+func watchLog(fn string, cmd *Command, rpt chan<- *Report, cancel <-chan struct{}) {
 	file, err := os.OpenFile(fn, os.O_RDONLY | os.O_CREATE, os.ModePerm)
 	if err != nil {
-		reports <- makeErrorReport(cmd, "open log file", err)
+		rpt <- makeErrorReport(cmd, "open log file", err)
 		return
 	}
 	var pos int64
 	for {
 		_, err = file.Seek(pos, 0)
 		if err != nil {
-			reports <- makeErrorReport(cmd, "seek log file", err)
+			rpt <- makeErrorReport(cmd, "seek log file", err)
 			return
 		}
 		buf := bufio.NewReader(file)
@@ -35,22 +34,22 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 		s := []string{}
 		for scanner.Scan() {
 			q := strconv.Quote(scanner.Text())
-			append(s, q)
+			s = append(s, q)
 		}
 		str := "[" + strings.Join(s, ",") + "]"
-		reports <- &Report{
+		rpt <- &Report{
 			CommandID: cmd.CommandID,
 			Type: "log",
-			Data: str,
+			Data: []byte(str),
 		}
 		err = scanner.Err()
 		if err != nil {
-			reports <- makeErrorReport(cmd, "read log file", err)
+			rpt <- makeErrorReport(cmd, "read log file", err)
 			return
 		}
 		pos, err = file.Seek(0, 1)
 		if err != nil {
-			reports <- makeErrorReport(cmd, "seek log file", err)
+			rpt <- makeErrorReport(cmd, "seek log file", err)
 			return
 		}
 		select {
@@ -60,6 +59,82 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 			break;
 		}
 	}
+}
+
+func execAnsys(args []string, cmd *Command, rpt chan<- *Report, cancel <-chan struct{}) {
+	ctx := exec.Command(ansysPath, args...)
+	logger("To execute: " + ansysPath + " " + strings.Join(args, " "))
+	err := ctx.Start()
+	if err != nil {
+		rpt <- makeErrorReport(cmd, "execution of " + strings.Join(args, " "), err)
+		return
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- ctx.Wait()
+	}()
+	select {
+	case <-cancel:
+		err := ctx.Process.Kill()
+		rpt <- makeErrorReport(cmd, "killed", err)
+	case err := <-done:
+		if err != nil {
+			rpt <- makeErrorReport(cmd, "finish", err)
+		} else {
+			rpt <- makeFinishedReport(cmd)
+		}
+	}
+}
+
+type runMutate struct {
+	cmd *Command
+}
+
+func (r runMutate) Run(rpt chan<- *Report, cancel <-chan struct{}) {
+	if !r.cmd.JobID.Valid {
+		rpt <- makeErrorReport(r.cmd, "parse input", errors.New("jobId"))
+		return
+	}
+	jobID := r.cmd.JobID.String
+	if !r.cmd.FileName.Valid {
+		rpt <- makeErrorReport(r.cmd, "parse input", errors.New("fileName"))
+		return
+	}
+	fileName := r.cmd.FileName.String
+	if !r.cmd.Script.Valid {
+		rpt <- makeErrorReport(r.cmd, "parse input", errors.New("script"))
+		return
+	}
+	script := r.cmd.Script.String
+
+	jobFile := filepath.Join(dataPath, jobID, fileName)
+	_, err = os.Stat(jobFile)
+	if err != nil {
+		rpt <- makeErrorReport(r.cmd, "check existance", err)
+		return
+	}
+
+	scriptFile := filepath.Join(dataPath, jobID, "scripts", cmd.CommandID + ".vbs")
+	err := ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
+	if err != nil {
+		rpt <- makeErrorReport(r.cmd, "save script", err)
+		return
+	}
+
+	logFile := filepath.Join(dataPath, jobID, "logs", cmd.CommandID + ".log")
+	go watchLog(logFile, cmd, rpt, cancel)
+
+	args := []string{
+		"-ng",
+		"-logfile",
+		logFile,
+		"-runscript",
+		scriptFile,
+		"-batchsave",
+		jobFile,
+	}
+	execAnsys(args, cmd, rpt, cancel)
 }
 
 // func checkSucc(errors <-chan struct{}) bool {
@@ -76,7 +151,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 	}
 // }
 //
-// func executeAnsys(job *Job, reports chan<- *Report, finished chan<- struct{}) {
+// func executeAnsys(job *Job, rpt chan<- *Report, finished chan<- struct{}) {
 // 	defer close(finished)
 // 	log := func(s string) {
 // 		logger("#" + job.Name + ": " + s)
@@ -89,7 +164,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 	if err := os.Mkdir(tempDir, os.ModePerm); err != nil {
 // 		str := "Make temp dir failed: " + err.Error()
 // 		log(str)
-// 		reports <- &Report{
+// 		rpt <- &Report{
 // 			Name:     job.Name,
 // 			Finished: true,
 // 			Error:    null.StringFrom(str),
@@ -101,7 +176,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 	if err := cp.Copy(rawFile, jobFile); err != nil {
 // 		str := "Copy job file failed: " + err.Error()
 // 		log(str)
-// 		reports <- &Report{
+// 		rpt <- &Report{
 // 			Name:     job.Name,
 // 			Finished: true,
 // 			Error:    null.StringFrom(str),
@@ -121,7 +196,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 	if t, err := tail.TailFile(logFile, tail.Config{Follow: true}); err != nil {
 // 		str := "Tail file failed: " + err.Error()
 // 		log(str)
-// 		reports <- &Report{
+// 		rpt <- &Report{
 // 			Name:  job.Name,
 // 			Error: null.StringFrom(str),
 // 		}
@@ -133,7 +208,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 				if strings.HasPrefix(line.Text, "[error]") {
 // 					errors <- struct{}{}
 // 				}
-// 				reports <- &Report{
+// 				rpt <- &Report{
 // 					Name: job.Name,
 // 					Log:  null.StringFrom(line.Text),
 // 				}
@@ -146,7 +221,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 		if err := ioutil.WriteFile(scriptFile, []byte(job.Script.ValueOrZero()), os.ModePerm); err != nil {
 // 			str := "Write script file failed: " + err.Error()
 // 			log(str)
-// 			reports <- &Report{
+// 			rpt <- &Report{
 // 				Name:     job.Name,
 // 				Finished: true,
 // 				Error:    null.StringFrom(str),
@@ -159,7 +234,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 		if err := cmd.Run(); err != nil {
 // 			str := "Save execution failed: " + err.Error()
 // 			log(str)
-// 			reports <- &Report{
+// 			rpt <- &Report{
 // 				Name:     job.Name,
 // 				Finished: true,
 // 				Error:    null.StringFrom(str),
@@ -167,7 +242,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 			return
 // 		}
 // 		if !checkSucc(errors) {
-// 			reports <- &Report{
+// 			rpt <- &Report{
 // 				Name:     job.Name,
 // 				Finished: true,
 // 				Error:    null.StringFrom("Scripting"),
@@ -177,19 +252,7 @@ func watchLog(fn string, cmd *Command, reports chan<- *Report, cancel <-chan str
 // 	}
 //
 // 	argsE := append(args, "-batchsolve", jobFile)
-// 	cmd := exec.Command(ansysPath, argsE...)
-// 	log("To execute: " + ansysPath + " " + strings.Join(argsE, " "))
-// 	if err := cmd.Run(); err != nil {
-// 		str := "Execution failed: " + err.Error()
-// 		log(str)
-// 		reports <- &Report{
-// 			Name:     job.Name,
-// 			Finished: true,
-// 			Error:    null.StringFrom(str),
-// 		}
-// 		return
-// 	}
-// 	reports <- &Report{
+// 	rpt <- &Report{
 // 		Name:     job.Name,
 // 		Finished: true,
 // 		Success:  checkSucc(errors),

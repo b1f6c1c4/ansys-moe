@@ -23,17 +23,17 @@ func dispatchMessage(message []byte, rpt chan<- *Report) {
 	case "kill":
 		ch := cancelChans[cmd.CommandID]
 		if ch != nil {
-			ch <- struct{}{}
+			close(ch)
 		}
 		return
 	case "download":
-		exe = runDownload{cmd}
+		exe = runDownload{&cmd}
 		break
 	case "createJob":
-		exe = runCreateJob{cmd}
+		exe = runCreateJob{&cmd}
 		break
 	case "drop":
-		exe = runDrop{cmd}
+		exe = runDrop{&cmd}
 		break
 	default:
 		logger("Unsupported type: " + cmd.Type)

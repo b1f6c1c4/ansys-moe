@@ -34,10 +34,17 @@ func makeFinishedReport(cmd *Command) *Report {
 }
 
 func makeErrorReport(cmd *Command, phase string, err error) *Report {
-	j, _ := json.Marshal(map[string]interface{}{
-		"phase":   phase,
-		"message": err.Error(),
-	})
+	var j []byte
+	if err != nil {
+		j, _ = json.Marshal(map[string]interface{}{
+			"phase":   phase,
+			"message": err.Error(),
+		})
+	} else {
+		j, _ = json.Marshal(map[string]interface{}{
+			"phase":   phase,
+		})
+	}
 	return &Report{
 		CommandID: cmd.CommandID,
 		Type:      "errored",
