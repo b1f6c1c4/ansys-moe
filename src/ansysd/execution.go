@@ -130,7 +130,6 @@ func (r runMutate) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		jobFile,
 	}
 	execAnsys(args, r.cmd, rpt, cancel)
-	rpt <- makeFinishedReport(r.cmd)
 }
 
 type runSolve struct {
@@ -167,7 +166,6 @@ func (r runSolve) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		jobFile,
 	}
 	execAnsys(args, r.cmd, rpt, cancel)
-	rpt <- makeFinishedReport(r.cmd)
 }
 
 func reportDir(cmd *Command, rpt chan<- *Report, relPath string, absPath string) {
@@ -179,7 +177,7 @@ func reportDir(cmd *Command, rpt chan<- *Report, relPath string, absPath string)
 	for _, f := range files {
 		var nRelPath string
 		if len(relPath) == 0 {
-			nRelpath = f.Name()
+			nRelPath = f.Name()
 		} else {
 			nRelPath = relPath + "/" + f.Name()
 		}
@@ -256,6 +254,4 @@ func (r runExtract) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 	execAnsys(args, r.cmd, rpt, cancel)
 
 	reportDir(r.cmd, rpt, "", outputPath)
-
-	rpt <- makeFinishedReport(r.cmd)
 }

@@ -49,8 +49,6 @@ func (r runDownload) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		rpt <- makeErrorReport(r.cmd, "copy stream", err)
 		return
 	}
-
-	rpt <- makeFinishedReport(r.cmd)
 }
 
 type runCreateJob struct {
@@ -69,8 +67,6 @@ func (r runCreateJob) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		rpt <- makeErrorReport(r.cmd, "create folder", err)
 		return
 	}
-
-	rpt <- makeFinishedReport(r.cmd)
 }
 
 type runDrop struct {
@@ -90,7 +86,6 @@ func (r runDrop) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 			rpt <- makeErrorReport(r.cmd, "remove folder", err)
 			return
 		}
-		rpt <- makeFinishedReport(r.cmd)
 		return
 	}
 
@@ -100,6 +95,4 @@ func (r runDrop) Run(rpt chan<- *Report, cancel <-chan struct{}) {
 		rpt <- makeErrorReport(r.cmd, "remove folder", err)
 		return
 	}
-
-	rpt <- makeFinishedReport(r.cmd)
 }

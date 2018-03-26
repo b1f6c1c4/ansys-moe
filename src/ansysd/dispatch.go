@@ -26,6 +26,12 @@ func dispatchMessage(message []byte, rpt chan<- *Report) {
 			close(ch)
 		}
 		return
+	case "status":
+		go func() {
+			rpt <- makeStatusReport(&cmd)
+			rpt <- makeFinishedReport(&cmd)
+		}()
+		return
 	case "download":
 		exe = runDownload{&cmd}
 	case "createJob":
@@ -47,6 +53,7 @@ func dispatchMessage(message []byte, rpt chan<- *Report) {
 	cancelChans[cmd.CommandID] = cancel
 	go func() {
 		exe.Run(rpt, cancel)
+		rpt <- makeFinishedReport(&cmd)
 		close(cancel)
 		delete(cancelChans, cmd.CommandID)
 	}()
