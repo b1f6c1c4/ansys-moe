@@ -1,0 +1,16 @@
+# Entry points
+
+type Query {
+
+  # Check system status [GET /]
+  status: Status
+}
+
+# Inputs
+
+# Objects
+
+type Status {
+  version: String
+  commitHash: String
+}

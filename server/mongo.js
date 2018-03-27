@@ -52,7 +52,7 @@ const connect = async () => {
   }
   isConnected = true;
 
-  await connectLocal('ballot');
+  await connectLocal('ansys-moe-controller');
 };
 
 const fixUpdate = (schema) => {
