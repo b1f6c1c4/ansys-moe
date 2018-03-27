@@ -3,6 +3,7 @@ const express = require('express');
 const { graphiqlExpress } = require('apollo-server-express');
 // const { makeServer } = require('./app/graphql');
 const mongo = require('./mongo');
+const status = require('./status');
 const logger = require('./logger')('index');
 
 logger.info('Versions', process.versions);
@@ -31,6 +32,7 @@ process.on('SIGTERM', () => {
 const app = express();
 
 app.set('trust proxy', true);
+app.get('/', (req, res) => res.json(status));
 // app.use('/api', api, (req, res) => res.status(404).send());
 
 const port = parseInt(process.env.PORT || '3000', 10);

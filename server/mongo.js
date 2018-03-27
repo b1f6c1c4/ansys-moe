@@ -52,12 +52,6 @@ const connect = async () => {
   }
   isConnected = true;
 
-  if (process.env.NODE_ENV === 'test') {
-    mongoose.set('bufferCommands', false);
-    await connectLocal('ballot-test');
-    return;
-  }
-
   await connectLocal('ballot');
 };
 

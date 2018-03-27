@@ -23,7 +23,7 @@ const lvls = {
 winston.addColors(lvls);
 
 const logger = winston.createLogger({
-  level: process.env.BACKEND_LOG || (process.env.NODE_ENV === 'test' ? 'fatal' : 'info'),
+  level: process.env.BACKEND_LOG || 'info',
   levels: lvls.levels,
   format: winston.format.combine(
     winston.format.timestamp(),
