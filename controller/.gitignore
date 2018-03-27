@@ -1,0 +1,13 @@
+# Artifact
+node_modules
+coverage
+data
+VERSION.json
+
+# Cruft
+*~
+*.swp
+*.swo
+.DS_Store
+npm-debug.log
+yarn-error.log
