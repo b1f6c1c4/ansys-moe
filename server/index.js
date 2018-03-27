@@ -98,7 +98,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 app.use('/raw', file);
 
-// app.use('/', (req, res) => res.status(404).send());
+app.use('/', (req, res) => res.status(404).send());
 
 function runApp() {
   logger.debug('http.createServer ...');
