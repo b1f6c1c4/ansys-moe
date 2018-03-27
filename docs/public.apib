@@ -8,7 +8,7 @@ This API uses HTTP verbs (methods) as following:
 
 + `GET` - *Download* - download resources
 + `PUT` - *Upload/Replace* - upload or replace resources
-+ `POST` - *GraphQL* - call **GraphQL** queryies and mutations
++ `POST` - *Upload/Replace/GraphQL* - upload using multiform, call **GraphQL** queryies and mutations
 
 ## Notational Conventions
 
@@ -19,7 +19,6 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 This API uses HTTP status codes to communicate with the API consumer.
 
 + `200 OK` - Response to a successful GET, POST, PUT.
-+ `201 Created` - Response to a PUT that results in a creation.
 + `204 No Content` - Response to a successful request that won't be returning a body.
 + `400 Bad Request` - Malformed request; form validation errors.
 + `404 Not Found` - When a non-existent resource is requested.
@@ -52,6 +51,10 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 # Group Files
 
+## Upload or replace file [POST /raw/]
+
++ Response 204
+
 ## Raw file [/raw/{fn}]
 
 + Parameters
@@ -63,7 +66,5 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 ### Upload [PUT]
 
-+ Response 200
-
-+ Response 201
++ Response 204
 
