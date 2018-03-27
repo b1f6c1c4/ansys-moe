@@ -1,6 +1,7 @@
 # Artifact
 node_modules
 coverage
+data
 VERSION.json
 
 # Cruft

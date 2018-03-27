@@ -1,5 +1,6 @@
 # Artfact
 coverage
+data
 !node_modules
 !VERSION.json
 
