@@ -1,4 +1,4 @@
-package ansysd
+package commond
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ var globalConfig globalConfigT
 var logger func(string)
 var cancelChans map[string]chan struct{}
 
-// Entry setup ansysd
+// Entry setup commond
 // logger: write string to console or file.
 func Entry(theLogger func(string)) {
 	logger = theLogger

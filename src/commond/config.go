@@ -1,4 +1,4 @@
-package ansysd
+package commond
 
 import (
 	yaml "gopkg.in/yaml.v2"

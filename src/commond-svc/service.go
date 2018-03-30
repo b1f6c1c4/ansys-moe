@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"ansysd"
+	"commond"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -24,12 +24,12 @@ type myservice struct{}
 func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
-	ansysd.Entry(func(s string) {
+	commond.Entry(func(s string) {
 		elog.Info(1, s)
 	})
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 	stop := make(chan struct{})
-	go ansysd.Loop(stop)
+	go commond.Loop(stop)
 loop:
 	for {
 		select {

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"ansysd"
+	"commond"
 	"fmt"
 	"os"
 	"os/signal"
 )
 
 func main() {
-	ansysd.Entry(func(s string) {
+	commond.Entry(func(s string) {
 		fmt.Println(s)
 	})
 
@@ -16,7 +16,7 @@ func main() {
 	signal.Notify(sg, os.Interrupt)
 
 	stop := make(chan struct{})
-	go ansysd.Loop(stop)
+	go commond.Loop(stop)
 
 	<-sg
 	fmt.Println("Interrupted")
