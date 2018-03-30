@@ -2,9 +2,43 @@ package commond
 
 import (
 	"encoding/json"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 
 	null "gopkg.in/guregu/null.v3"
 )
+
+// RawCommand from amqp
+type RawCommand struct {
+	CommandID string
+	Data      []byte
+}
+
+// CommonAction to amqp
+type CommonAction struct {
+	CommandID string
+}
+
+// StatusReport to amqp
+type StatusReport struct {
+	CommandID string                 `json:"-"`
+	Cpu       *cpu.TimesStat         `json:"cpu"`
+	Mem       *mem.VirtualMemoryStat `json:"mem"`
+}
+
+// LogReport to amqp
+type LogReport struct {
+	CommandID string `json:"-"`
+	Level     string `json:"level"`
+	Source    string `json:"source"`
+	Data      string `json:"data"`
+}
+
+// CancelControl subscribe or unsubscribe cancelling
+type CancelControl struct {
+	CommandID string
+	Enable    bool
+}
 
 // Command from controller
 type Command struct {

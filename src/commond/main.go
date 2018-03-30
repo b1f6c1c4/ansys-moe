@@ -12,6 +12,7 @@ import (
 var dataPath string
 var ansysPath string
 var globalConfig globalConfigT
+var staticLogger func(string)
 var logger func(string)
 var cancelChans map[string]chan struct{}
 

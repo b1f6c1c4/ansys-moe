@@ -10,7 +10,7 @@ type globalConfigT struct {
 	RemoteUrl    string `yaml:"url"`
 	WebsocketUrl string `yaml:"ws"`
 	RabbitUrl    string `yaml:"mq"`
-	Prefetch	 int    `yaml:"prefetch"`
+	Prefetch     int    `yaml:"prefetch"`
 }
 
 func loadConfig(exeDir string) globalConfigT {

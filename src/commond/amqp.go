@@ -1,20 +1,21 @@
 package commond
 
 import (
-    "github.com/streadway/amqp"
+	"encoding/json"
+	"github.com/streadway/amqp"
 )
 
 func runAmqp(
 	queue string,
 	cmd chan<- *RawCommand,
 	ccl chan<- string,
-	act <-chan *interface{},
+	act <-chan *CommonAction,
 	stt <-chan *StatusReport,
 	log chan *LogReport,
-	cancelControl chan<- CancelControl,
+	cancelControl <-chan CancelControl,
 	stop <-chan struct{},
 ) {
-    conn, err := amqp.Dial(globalConfig.RabbitUrl)
+	conn, err := amqp.Dial(globalConfig.RabbitUrl)
 	if err != nil {
 		staticLogger("Dial rabbit: " + err.Error())
 		return
@@ -35,54 +36,54 @@ func runAmqp(
 		return
 	}
 
-	qMain, err := mainCh.QueueDeclare(
-        queue, // name
-        true,        // durable
-        false,       // delete when unused
-        false,       // exclusive
-        false,       // no-wait
-        nil,         // arguments
+	_, err = mainCh.QueueDeclare(
+		queue, // name
+		true,  // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
 	)
 	if err != nil {
 		staticLogger("Declare main queue: " + err.Error())
 		return
 	}
 
-	qAction, err := mainCh.QueueDeclare(
-        "action", // name
-        true,        // durable
-        false,       // delete when unused
-        false,       // exclusive
-        false,       // no-wait
-        nil,         // arguments
+	_, err = mainCh.QueueDeclare(
+		"action", // name
+		true,     // durable
+		false,    // delete when unused
+		false,    // exclusive
+		false,    // no-wait
+		nil,      // arguments
 	)
 	if err != nil {
 		staticLogger("Declare queue action: " + err.Error())
 		return
 	}
 
-	err := aux.ExchangeDeclare(
-        "monitor", // name
-		"topic", // type
-        false,        // durable
-        false,       // delete when unused
-        false,       // exclusive
-        false,       // no-wait
-        nil,         // arguments
+	err = auxCh.ExchangeDeclare(
+		"monitor", // name
+		"topic",   // type
+		false,     // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		staticLogger("Declare exchange monitor: " + err.Error())
 		return
 	}
 
-	err := auxCh.ExchangeDeclare(
-        "cancel", // name
-		"topic", // type
-        true,        // durable
-        false,       // delete when unused
-        false,       // exclusive
-        false,       // no-wait
-        nil,         // arguments
+	err = auxCh.ExchangeDeclare(
+		"cancel", // name
+		"topic",  // type
+		true,     // durable
+		false,    // delete when unused
+		false,    // exclusive
+		false,    // no-wait
+		nil,      // arguments
 	)
 	if err != nil {
 		staticLogger("Declare exchange cancel: " + err.Error())
@@ -90,9 +91,9 @@ func runAmqp(
 	}
 
 	err = mainCh.Qos(
-        globalConfig.Prefetch,     // prefetch count
-        0,     // prefetch size
-        false, // global
+		globalConfig.Prefetch, // prefetch count
+		0,     // prefetch size
+		false, // global
 	)
 	if err != nil {
 		staticLogger("Set main channel qos: " + err.Error())
@@ -100,24 +101,24 @@ func runAmqp(
 	}
 
 	msgs, err := mainCh.Consume(
-        queue, // queue
-        "",     // consumer
-        false,  // auto-ack
-        false,  // exclusive
-        false,  // no-local
-        false,  // no-wait
-        nil,    // args
+		queue, // queue
+		"",    // consumer
+		false, // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
 	)
 	if err != nil {
 		staticLogger("Consume main queue: " + err.Error())
 		return
 	}
 
-	cancels := make(map[string] *amqp.Queue)
+	cancels := make(map[string]*amqp.Queue)
 
 	go func() {
 		for d := range msgs {
-			cmd <- &RawCommand{d.CorrelationId,d.Body}
+			cmd <- &RawCommand{d.CorrelationId, d.Body}
 		}
 	}()
 	for {
@@ -125,18 +126,18 @@ func runAmqp(
 		case action := <-act:
 			str, err := json.Marshal(action)
 			if err != nil {
-				log <- &LogReport(action.cId, "error", "amqp", "Stringify action: " + err.Error())
+				log <- &LogReport{action.CommandID, "error", "amqp", "Stringify action: " + err.Error()}
 				break
 			}
 			err = mainCh.Publish(
-                "",        // exchange
-                "action", // routing key
-                false,     // mandatory
-                false,     // immediate
-                amqp.Publishing{
+				"",       // exchange
+				"action", // routing key
+				false,    // mandatory
+				false,    // immediate
+				amqp.Publishing{
 					ContentType: "application/json",
-                    Body: str,
-                },
+					Body:        str,
+				},
 			)
 			if err != nil {
 				staticLogger("Publish action to main: " + err.Error())
@@ -144,23 +145,23 @@ func runAmqp(
 			}
 		case st := <-stt:
 			key := "status:" + queue
-			if lg.cId != "" {
-				key = key + ":" + lg.cId
+			if st.CommandID != "" {
+				key = key + ":" + st.CommandID
 			}
 			str, err := json.Marshal(st)
 			if err != nil {
-				log <- &LogReport(action.cId, "error", "amqp", "Stringify status: " + err.Error())
+				log <- &LogReport{st.CommandID, "error", "amqp", "Stringify status: " + err.Error()}
 				break
 			}
 			err = mainCh.Publish(
-                "monitor",        // exchange
-				key, // routing key
-                false,     // mandatory
-                false,     // immediate
-                amqp.Publishing{
+				"monitor", // exchange
+				key,       // routing key
+				false,     // mandatory
+				false,     // immediate
+				amqp.Publishing{
 					ContentType: "application/json",
-                    Body: str,
-                },
+					Body:        str,
+				},
 			)
 			if err != nil {
 				staticLogger("Publish status to main: " + err.Error())
@@ -168,8 +169,8 @@ func runAmqp(
 			}
 		case lg := <-log:
 			key := "log:" + queue
-			if lg.cId != "" {
-				key = key + ":" + lg.cId
+			if lg.CommandID != "" {
+				key = key + ":" + lg.CommandID
 			}
 			str, err := json.Marshal(lg)
 			if err != nil {
@@ -177,14 +178,14 @@ func runAmqp(
 				break
 			}
 			err = mainCh.Publish(
-                "monitor",        // exchange
-				key, // routing key
-                false,     // mandatory
-                false,     // immediate
-                amqp.Publishing{
+				"monitor", // exchange
+				key,       // routing key
+				false,     // mandatory
+				false,     // immediate
+				amqp.Publishing{
 					ContentType: "application/json",
-                    Body: str,
-                },
+					Body:        str,
+				},
 			)
 			if err != nil {
 				staticLogger(string(str))
@@ -193,34 +194,34 @@ func runAmqp(
 			}
 		case cctrl := <-cancelControl:
 			if cctrl.Enable {
-				key := "log:" + queue + ":" + cctrl.cId
+				key := "log:" + queue + ":" + cctrl.CommandID
 				q, err := auxCh.QueueDeclare(
-					"", // name
-					false,        // durable
-					true,       // delete when unused
-					true,       // exclusive
-					false,       // no-wait
-					nil,         // arguments
+					"",    // name
+					false, // durable
+					true,  // delete when unused
+					true,  // exclusive
+					false, // no-wait
+					nil,   // arguments
 				)
 				if err != nil {
-					log <- &LogReport(cctrl.cId, "error", "amqp", "Declare temp queue: " + err.Error())
+					log <- &LogReport{cctrl.CommandID, "error", "amqp", "Declare temp queue: " + err.Error()}
 					break
 				}
 				err = auxCh.QueueBind(
-					q.Name,       // queue name
-					key,            // routing key
+					q.Name,   // queue name
+					key,      // routing key
 					"cancel", // exchange
 					false,
 					nil,
 				)
 				if err != nil {
-					log <- &LogReport(cctrl.cId, "error", "amqp", "Queue bind: " + err.Error())
+					log <- &LogReport{cctrl.CommandID, "error", "amqp", "Queue bind: " + err.Error()}
 					break
 				}
 				cmsgs, err := auxCh.Consume(
 					q.Name, // queue
 					"",     // consumer
-					true,  // auto-ack
+					true,   // auto-ack
 					false,  // exclusive
 					false,  // no-local
 					false,  // no-wait
@@ -228,16 +229,16 @@ func runAmqp(
 				)
 				go func() {
 					for range cmsgs {
-						ccl <- cctrl.cId
+						ccl <- cctrl.CommandID
 					}
 				}()
-				cancels[cctrl.cId] = q
+				cancels[cctrl.CommandID] = &q
 			} else {
-				q := cancels[cctrl.cId]
+				q := cancels[cctrl.CommandID]
 				if q != nil {
 					_, err := auxCh.QueueDelete(q.Name, false, false, true)
 					if err != nil {
-						log <- &LogReport(cctrl.cId, "error", "amqp", "Delete queue: " + err.Error())
+						log <- &LogReport{cctrl.CommandID, "error", "amqp", "Delete queue: " + err.Error()}
 						break
 					}
 				}
