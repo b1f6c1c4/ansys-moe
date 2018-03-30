@@ -3,7 +3,7 @@
 # Queues
 
 * Majors:
-  * ansys - every single ansys execution.
+  * ansys (AnsysCommand) - every single ansys execution.
   * moe - every single moe execution.
 * Calculators:
   * mathematica - mathematica as a calculator.
@@ -11,16 +11,34 @@
   * javascript - javascript as a calculator.
 * Callback:
   * action - trigger state change after execution.
+    - (AnsysAction)
 * Exchange:
   * monitor - system status, don't persist.
-    * status:<type>[:<cId>]
-    * log:<type>[:<cId>]
-  * cancel - kill ansys/moe/calculator execution.
-    * cancel:<type>:<cId>
+    * `status:<type>[:<cId>]` (StatusReport)
+    * `log:<type>[:<cId>]` (LogReport)
+  * cancel - kill execution.
+    * `cancel:<type>:<cId>` (null)
 
 # Data Structures
 
-## ansys (object)
+## StatusReport (object)
+
+- cpu (object)
+- mem (object)
+
+## LogReport (object)
+
+- level (enum, required)
+  - `trace`
+  - `debug`
+  - `info`
+  - `warn`
+  - `error`
+  - `fatal`
+- source (string, required)
+- data (any)
+
+## AnsysCommand (object)
 
 - type (enum, required)
   - `mutate`
@@ -57,3 +75,11 @@
 
 - file (string, required)
 - script (string)
+
+## AnsysAction (object)
+
+- type (enum, required)
+  - `failure`
+  - `success`
+- phase (string)
+- message (string)
