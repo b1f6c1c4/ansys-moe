@@ -96,7 +96,7 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-app.use('/raw', file);
+app.use('/storage', file);
 
 app.use('/', (req, res) => res.status(404).send());
 
