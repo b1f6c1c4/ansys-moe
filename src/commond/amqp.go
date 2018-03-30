@@ -5,47 +5,25 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func runAmqp(
-	queue string,
-	cmd chan<- *RawCommand,
-	ccl chan<- string,
-	act <-chan *CommonAction,
-	stt <-chan *StatusReport,
-	log chan *LogReport,
-	cancelControl <-chan CancelControl,
-	stop <-chan struct{},
-) {
+var mainCh, auxCh *amqp.Channel
+var cancels map[string]*amqp.Queue
+
+func setupAmqp(stop <-chan struct{}) {
 	conn, err := amqp.Dial(globalConfig.RabbitUrl)
 	if err != nil {
 		staticLogger("Dial rabbit: " + err.Error())
 		return
 	}
-	defer conn.Close()
 
-	mainCh, err := conn.Channel()
-	defer mainCh.Close()
+	mainCh, err = conn.Channel()
 	if err != nil {
 		staticLogger("Open main channel: " + err.Error())
 		return
 	}
 
-	auxCh, err := conn.Channel()
-	defer mainCh.Close()
+	auxCh, err = conn.Channel()
 	if err != nil {
 		staticLogger("Open aux channel: " + err.Error())
-		return
-	}
-
-	_, err = mainCh.QueueDeclare(
-		queue, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	if err != nil {
-		staticLogger("Declare main queue: " + err.Error())
 		return
 	}
 
@@ -100,6 +78,32 @@ func runAmqp(
 		return
 	}
 
+	cancels = make(map[string]*amqp.Queue)
+
+	go func() {
+		select {
+		case <-stop:
+		}
+		mainCh.Close()
+		auxCh.Close()
+		conn.Close()
+	}()
+}
+
+func subscribeCommand(queue string, cmd chan<- *RawCommand) {
+	_, err := mainCh.QueueDeclare(
+		queue, // name
+		true,  // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		staticLogger("Declare main queue: " + err.Error())
+		return
+	}
+
 	msgs, err := mainCh.Consume(
 		queue, // queue
 		"",    // consumer
@@ -114,19 +118,18 @@ func runAmqp(
 		return
 	}
 
-	cancels := make(map[string]*amqp.Queue)
+	for d := range msgs {
+		cmd <- &RawCommand{d.CorrelationId, queue, d.Body}
+	}
+}
 
-	go func() {
-		for d := range msgs {
-			cmd <- &RawCommand{d.CorrelationId, d.Body}
-		}
-	}()
+func publishAction(act <-chan *CommonAction) {
 	for {
 		select {
 		case action := <-act:
 			str, err := json.Marshal(action)
 			if err != nil {
-				log <- &LogReport{action.CommandID, "error", "amqp", "Stringify action: " + err.Error()}
+				rLogger.Error(action, "amqp", "Stringify action: "+err.Error())
 				break
 			}
 			err = mainCh.Publish(
@@ -143,14 +146,21 @@ func runAmqp(
 				staticLogger("Publish action to main: " + err.Error())
 				break
 			}
+		}
+	}
+}
+
+func publishStatus(stt <-chan *StatusReport) {
+	for {
+		select {
 		case st := <-stt:
-			key := "status:" + queue
+			key := "status:" + st.Type
 			if st.CommandID != "" {
 				key = key + ":" + st.CommandID
 			}
 			str, err := json.Marshal(st)
 			if err != nil {
-				log <- &LogReport{st.CommandID, "error", "amqp", "Stringify status: " + err.Error()}
+				rLogger.Error(st, "amqp", "Stringify status: "+err.Error())
 				break
 			}
 			err = mainCh.Publish(
@@ -167,8 +177,15 @@ func runAmqp(
 				staticLogger("Publish status to main: " + err.Error())
 				break
 			}
+		}
+	}
+}
+
+func publishLog(log chan *LogReport) {
+	for {
+		select {
 		case lg := <-log:
-			key := "log:" + queue
+			key := "log:" + lg.Type
 			if lg.CommandID != "" {
 				key = key + ":" + lg.CommandID
 			}
@@ -192,59 +209,60 @@ func runAmqp(
 				staticLogger("Publish log to main: " + err.Error())
 				break
 			}
-		case cctrl := <-cancelControl:
-			if cctrl.Enable {
-				key := "log:" + queue + ":" + cctrl.CommandID
-				q, err := auxCh.QueueDeclare(
-					"",    // name
-					false, // durable
-					true,  // delete when unused
-					true,  // exclusive
-					false, // no-wait
-					nil,   // arguments
-				)
-				if err != nil {
-					log <- &LogReport{cctrl.CommandID, "error", "amqp", "Declare temp queue: " + err.Error()}
-					break
-				}
-				err = auxCh.QueueBind(
-					q.Name,   // queue name
-					key,      // routing key
-					"cancel", // exchange
-					false,
-					nil,
-				)
-				if err != nil {
-					log <- &LogReport{cctrl.CommandID, "error", "amqp", "Queue bind: " + err.Error()}
-					break
-				}
-				cmsgs, err := auxCh.Consume(
-					q.Name, // queue
-					"",     // consumer
-					true,   // auto-ack
-					false,  // exclusive
-					false,  // no-local
-					false,  // no-wait
-					nil,    // args
-				)
-				go func() {
-					for range cmsgs {
-						ccl <- cctrl.CommandID
-					}
-				}()
-				cancels[cctrl.CommandID] = &q
-			} else {
-				q := cancels[cctrl.CommandID]
-				if q != nil {
-					_, err := auxCh.QueueDelete(q.Name, false, false, true)
-					if err != nil {
-						log <- &LogReport{cctrl.CommandID, "error", "amqp", "Delete queue: " + err.Error()}
-						break
-					}
-				}
-			}
-		case <-stop:
-			return
 		}
+	}
+}
+
+func subscribeCancel(e ExeContext, cll chan struct{}) {
+	key := "log:" + e.getType() + ":" + e.getCommandID()
+	q, err := auxCh.QueueDeclare(
+		"",    // name
+		false, // durable
+		true,  // delete when unused
+		true,  // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		rLogger.Error(e, "amqp", "Declare temp queue: "+err.Error())
+		return
+	}
+	err = auxCh.QueueBind(
+		q.Name,   // queue name
+		key,      // routing key
+		"cancel", // exchange
+		false,
+		nil,
+	)
+	if err != nil {
+		rLogger.Error(e, "amqp", "Queue bind: "+err.Error())
+		return
+	}
+	cmsgs, err := auxCh.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	go func() {
+		for range cmsgs {
+			close(cll)
+		}
+	}()
+	cancels[e.getCommandID()] = &q
+}
+
+func unsubscribeCancel(e ExeContext) {
+	q := cancels[e.getCommandID()]
+	if q == nil {
+		return
+	}
+	_, err := auxCh.QueueDelete(q.Name, false, false, true)
+	if err != nil {
+		rLogger.Error(e, "amqp", "Delete queue: "+err.Error())
+		return
 	}
 }

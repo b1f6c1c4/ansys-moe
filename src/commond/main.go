@@ -14,6 +14,7 @@ var ansysPath string
 var globalConfig globalConfigT
 var staticLogger func(string)
 var logger func(string)
+var rLogger remoteLogger
 var cancelChans map[string]chan struct{}
 
 // Entry setup commond

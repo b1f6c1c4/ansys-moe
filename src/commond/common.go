@@ -8,27 +8,43 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
+// ExeContext is type:cId
+type ExeContext interface {
+	getCommandID() string
+	getType() string
+}
+
 // RawCommand from amqp
 type RawCommand struct {
 	CommandID string
+	Type      string
 	Data      []byte
 }
 
 // CommonAction to amqp
 type CommonAction struct {
 	CommandID string
+	Type      string
 }
+
+func (o CommonAction) getCommandID() string { return o.CommandID }
+func (o CommonAction) getType() string      { return o.Type }
 
 // StatusReport to amqp
 type StatusReport struct {
 	CommandID string                 `json:"-"`
+	Type      string                 `json:"-"`
 	Cpu       *cpu.TimesStat         `json:"cpu"`
 	Mem       *mem.VirtualMemoryStat `json:"mem"`
 }
 
+func (o StatusReport) getCommandID() string { return o.CommandID }
+func (o StatusReport) getType() string      { return o.Type }
+
 // LogReport to amqp
 type LogReport struct {
 	CommandID string `json:"-"`
+	Type      string `json:"-"`
 	Level     string `json:"level"`
 	Source    string `json:"source"`
 	Data      string `json:"data"`
