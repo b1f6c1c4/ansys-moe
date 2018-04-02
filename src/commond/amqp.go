@@ -4,28 +4,32 @@ import (
 	"commond/common"
 	"encoding/json"
 	"github.com/streadway/amqp"
+	"time"
 )
 
 var mainCh, auxCh *amqp.Channel
 var cancels map[string]*amqp.Queue
 
-func setupAmqp(stop <-chan struct{}) {
-	conn, err := amqp.Dial(common.C.RabbitUrl)
+func setupAmqp(stop <-chan struct{}) error {
+	hb, _ := time.ParseDuration("30s")
+	conn, err := amqp.DialConfig(common.C.RabbitUrl, amqp.Config{
+		Heartbeat: hb,
+	})
 	if err != nil {
 		common.SL("Dial rabbit: " + err.Error())
-		return
+		return err
 	}
 
 	mainCh, err = conn.Channel()
 	if err != nil {
 		common.SL("Open main channel: " + err.Error())
-		return
+		return err
 	}
 
 	auxCh, err = conn.Channel()
 	if err != nil {
 		common.SL("Open aux channel: " + err.Error())
-		return
+		return err
 	}
 
 	_, err = mainCh.QueueDeclare(
@@ -38,7 +42,7 @@ func setupAmqp(stop <-chan struct{}) {
 	)
 	if err != nil {
 		common.SL("Declare queue action: " + err.Error())
-		return
+		return err
 	}
 
 	err = auxCh.ExchangeDeclare(
@@ -52,7 +56,7 @@ func setupAmqp(stop <-chan struct{}) {
 	)
 	if err != nil {
 		common.SL("Declare exchange monitor: " + err.Error())
-		return
+		return err
 	}
 
 	err = auxCh.ExchangeDeclare(
@@ -66,7 +70,7 @@ func setupAmqp(stop <-chan struct{}) {
 	)
 	if err != nil {
 		common.SL("Declare exchange cancel: " + err.Error())
-		return
+		return err
 	}
 
 	err = mainCh.Qos(
@@ -76,7 +80,7 @@ func setupAmqp(stop <-chan struct{}) {
 	)
 	if err != nil {
 		common.SL("Set main channel qos: " + err.Error())
-		return
+		return err
 	}
 
 	cancels = make(map[string]*amqp.Queue)
@@ -89,6 +93,7 @@ func setupAmqp(stop <-chan struct{}) {
 		auxCh.Close()
 		conn.Close()
 	}()
+	return nil
 }
 
 func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {

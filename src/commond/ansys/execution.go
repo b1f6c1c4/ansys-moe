@@ -43,8 +43,10 @@ func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan stru
 	return nil
 }
 
-func (m Module) RunMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
+func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
 	id := cmd.Raw.CommandID
+	common.RL.Info(cmd.Raw, "ansys/runMutate", "Command started")
+
 	if !cmd.File.Valid {
 		err := errors.New("file")
 		common.RL.Error(cmd.Raw, "ansys/runMutate", "Parse input: "+err.Error())

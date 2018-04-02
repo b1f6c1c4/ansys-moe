@@ -11,11 +11,13 @@ func Entry(theLogger func(string)) {
 }
 
 func addModule(m common.Module, stop <-chan struct{}) {
+	common.SL("Adding module " + m.GetKind())
 	ch := make(chan *common.RawCommand)
 	go subscribeCommand(m.GetKind(), ch)
 	for {
 		select {
 		case raw := <-ch:
+			common.SL("Received command of kind " + m.GetKind())
 			go m.Run(raw)
 		case <-stop:
 			return
@@ -25,7 +27,11 @@ func addModule(m common.Module, stop <-chan struct{}) {
 
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
-	setupAmqp(stop)
+	err := setupAmqp(stop)
+	if err != nil {
+		panic(err)
+	}
+	common.SL("Amqp Connected")
 
 	log := make(chan *common.LogReport)
 	go publishLog(log)
@@ -38,5 +44,9 @@ func Loop(stop <-chan struct{}) {
 	act := make(chan common.ExeContext)
 	go publishAction(act)
 
-	addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.EnableAnsys {
+		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	}
+
+	common.SL("Started event loop")
 }

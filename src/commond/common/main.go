@@ -31,7 +31,6 @@ func Entry(theLogger func(string)) {
 	DataPath = filepath.Join(exeDir, "data")
 	_ = os.MkdirAll(DataPath, os.ModePerm)
 	C = loadConfig(exeDir)
-	SL("Remote url: " + C.RemoteUrl)
 }
 
 // SetupRL setup remote logger

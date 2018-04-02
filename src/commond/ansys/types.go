@@ -19,6 +19,12 @@ type ansysAction struct {
 	Type      string `json:"type"`
 }
 
+// GetCommandID make ansysAction an ExeContext
+func (o ansysAction) GetCommandID() string { return o.CommandID }
+
+// GetKind make ansysAction an ExeContext
+func (o ansysAction) GetKind() string { return o.Kind }
+
 type executor interface {
 	Run(rpt chan<- *ansysAction, cancel <-chan struct{}) error
 }

@@ -34,10 +34,16 @@ func NewModule(
 
 // Run parse and execute a command
 func (m Module) Run(raw *common.RawCommand) {
+	result := &ansysAction{
+		CommandID: raw.GetCommandID(),
+		Kind:      raw.GetKind(),
+		Type:      "failure",
+	}
 	defer func() {
 		if r := recover(); r != nil {
 			common.RL.Error(raw, "ansys", fmt.Sprintf("Recovered panic: %v", r))
 		}
+		m.rpt <- result
 	}()
 
 	var cmd ansysCommand
@@ -50,7 +56,7 @@ func (m Module) Run(raw *common.RawCommand) {
 	var exe func(*ansysCommand, <-chan struct{}) error
 	switch cmd.Type {
 	case "mutate":
-		exe = m.RunMutate
+		exe = m.runMutate
 	case "solve":
 	case "extract":
 	default:
@@ -65,5 +71,7 @@ func (m Module) Run(raw *common.RawCommand) {
 	}()
 
 	err = exe(&cmd, cancel)
-	// TODO
+	if err == nil {
+		result.Type = "done"
+	}
 }

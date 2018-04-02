@@ -8,10 +8,10 @@ import (
 
 // GlobalConfigT describes ./config.yaml
 type GlobalConfigT struct {
-	RemoteUrl    string `yaml:"url"`
-	WebsocketUrl string `yaml:"ws"`
-	RabbitUrl    string `yaml:"mq"`
-	Prefetch     int    `yaml:"prefetch"`
+	RemoteUrl   string `yaml:"url"`
+	RabbitUrl   string `yaml:"mq"`
+	Prefetch    int    `yaml:"prefetch"`
+	EnableAnsys bool   `yaml:"ansys"`
 }
 
 func loadConfig(exeDir string) GlobalConfigT {
