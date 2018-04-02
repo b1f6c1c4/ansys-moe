@@ -1,0 +1,70 @@
+FORMAT: 1A
+
+# ansys-moe
+
+## HTTP Methods
+
+This API uses HTTP verbs (methods) as following:
+
++ `GET` - *Download* - download resources
++ `PUT` - *Upload/Replace* - upload or replace resources
++ `POST` - *Upload/Replace/GraphQL* - upload using multiform, call **GraphQL** queryies and mutations
+
+## Notational Conventions
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119](https://www.ietf.org/rfc/rfc2119).
+
+## Status Codes and Errors
+
+This API uses HTTP status codes to communicate with the API consumer.
+
++ `200 OK` - Response to a successful GET, POST, PUT.
++ `204 No Content` - Response to a successful request that won't be returning a body.
++ `400 Bad Request` - Malformed request; form validation errors.
++ `404 Not Found` - When a non-existent resource is requested.
++ `405 Method Not Allowed` - Method not allowed.
++ `406 Not Acceptable` - Could not satisfy the request Accept header.
++ `409 Conflict` - When resource state forbids such request.
++ `415 Unsupported Media Type` - Unsupported media type in request.
+
+## Data Structures
+
+# Group Default
+
+## Check system status [GET /]
+
++ Response 200 (application/json; charset=utf-8)
+
+    + Attributes
+        + version: `4907ca16`
+        + commitHash: `4907ca16faf693b76a71df0efd19ef9dcefaa309`
+
+# Group GraphQL
+
+## Get GraphiQL instance [GET /graphql]
+
++ Response 200 (text/html; charset=utf-8)
+
+## Execute GraphQL [POST /grahql]
+
++ Response 200 (application/json; charset=utf-8)
+
+# Group Storage
+
+## Upload or replace file [POST /storage/]
+
++ Response 204
+
+## File [/storage/{fn}]
+
++ Parameters
+  + fn (string) - File name
+
+### Download [GET]
+
++ Response 200 (application/octet-stream)
+
+### Upload [PUT]
+
++ Response 204
+
