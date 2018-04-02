@@ -11,12 +11,24 @@ type ExeContext interface {
 	GetKind() string
 }
 
+// Module is a kind executor
+type Module interface {
+	ExeContext
+	Run(raw *RawCommand)
+}
+
 // RawCommand from amqp
 type RawCommand struct {
 	CommandID string
 	Kind      string
 	Data      []byte
 }
+
+// GetCommandID make RawCommand an ExeContext
+func (o RawCommand) GetCommandID() string { return o.CommandID }
+
+// GetKind make RawCommand an ExeContext
+func (o RawCommand) GetKind() string { return o.Kind }
 
 // StatusReport to amqp
 type StatusReport struct {
@@ -26,8 +38,11 @@ type StatusReport struct {
 	Mem       *mem.VirtualMemoryStat `json:"mem"`
 }
 
+// GetCommandID make StatusReport an ExeContext
 func (o StatusReport) GetCommandID() string { return o.CommandID }
-func (o StatusReport) GetKind() string      { return o.Kind }
+
+// GetKind make StatusReport an ExeContext
+func (o StatusReport) GetKind() string { return o.Kind }
 
 // LogReport to amqp
 type LogReport struct {
@@ -36,10 +51,4 @@ type LogReport struct {
 	Level     string `json:"level"`
 	Source    string `json:"source"`
 	Data      string `json:"data"`
-}
-
-// CancelControl subscribe or unsubscribe cancelling
-type CancelControl struct {
-	CommandID string
-	Enable    bool
 }

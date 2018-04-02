@@ -2,16 +2,15 @@ package ansys
 
 import (
 	"commond/common"
-	"encoding/json"
 
 	null "gopkg.in/guregu/null.v3"
 )
 
 type ansysCommand struct {
-	Raw       *common.RawCommand
-	Type      string `json:"type"`
-	File      null.String `json:"file"`
-	Script    null.String `json:"script"`
+	Raw    *common.RawCommand
+	Type   string      `json:"type"`
+	File   null.String `json:"file"`
+	Script null.String `json:"script"`
 }
 
 type ansysAction struct {
