@@ -123,7 +123,7 @@ func subscribeCommand(queue string, cmd chan<- *RawCommand) {
 	}
 }
 
-func publishAction(act <-chan *CommonAction) {
+func publishAction(act <-chan ExeContext) {
 	for {
 		select {
 		case action := <-act:

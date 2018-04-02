@@ -21,15 +21,6 @@ type RawCommand struct {
 	Data      []byte
 }
 
-// CommonAction to amqp
-type CommonAction struct {
-	CommandID string
-	Type      string
-}
-
-func (o CommonAction) getCommandID() string { return o.CommandID }
-func (o CommonAction) getType() string      { return o.Type }
-
 // StatusReport to amqp
 type StatusReport struct {
 	CommandID string                 `json:"-"`
