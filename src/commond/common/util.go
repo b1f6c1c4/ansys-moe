@@ -99,6 +99,32 @@ func Download(e ExeContext, remote string, local string) error {
 
 // UploadDir a dir from data path to remote
 func UploadDir(e ExeContext, remote string, local string) error {
+	// func reportDir(e ExeContext, rpt chan<- *ansysAction, relPath string, absPath string) {
+	// 	files, err := ioutil.ReadDir(absPath)
+	// 	if err != nil {
+	// 		common.RL.Error(e, "read dir", err)
+	// 		return
+	// 	}
+	// 	for _, f := range files {
+	// 		var nRelPath string
+	// 		if len(relPath) == 0 {
+	// 			nRelPath = f.Name()
+	// 		} else {
+	// 			nRelPath = relPath + "/" + f.Name()
+	// 		}
+	// 		nAbsPath := filepath.Join(absPath, f.Name())
+	// 		if f.IsDir() {
+	// 			reportDir(e, rpt, nRelPath, nAbsPath)
+	// 		} else {
+	// 			c, err := ioutil.ReadFile(nAbsPath)
+	// 			if err != nil {
+	// 				common.RL.Error(e, "read file", err)
+	// 			} else {
+	// 				rpt <- makeFileReport(e, f.Name(), null.StringFrom(string(c)))
+	// 			}
+	// 		}
+	// 	}
+	// }
 	return errors.New("Not implemented") // TODO
 }
 

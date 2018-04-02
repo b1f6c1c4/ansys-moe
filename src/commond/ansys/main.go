@@ -58,7 +58,9 @@ func (m Module) Run(raw *common.RawCommand) {
 	case "mutate":
 		exe = m.runMutate
 	case "solve":
+		exe = m.runSolve
 	case "extract":
+		exe = m.runExtract
 	default:
 		common.RL.Error(raw, "ansys", "Unsupported type: "+cmd.Type)
 		return
