@@ -1,4 +1,4 @@
-package commond
+package ansys
 
 import (
 	"bufio"

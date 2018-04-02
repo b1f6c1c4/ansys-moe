@@ -1,51 +1,10 @@
-package commond
+package ansys
 
 import (
 	"encoding/json"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
 
 	null "gopkg.in/guregu/null.v3"
 )
-
-// ExeContext is type:cId
-type ExeContext interface {
-	getCommandID() string
-	getKind() string
-}
-
-// RawCommand from amqp
-type RawCommand struct {
-	CommandID string
-	Kind      string
-	Data      []byte
-}
-
-// StatusReport to amqp
-type StatusReport struct {
-	CommandID string                 `json:"-"`
-	Kind      string                 `json:"-"`
-	Cpu       *cpu.TimesStat         `json:"cpu"`
-	Mem       *mem.VirtualMemoryStat `json:"mem"`
-}
-
-func (o StatusReport) getCommandID() string { return o.CommandID }
-func (o StatusReport) getKind() string      { return o.Kind }
-
-// LogReport to amqp
-type LogReport struct {
-	CommandID string `json:"-"`
-	Kind      string `json:"-"`
-	Level     string `json:"level"`
-	Source    string `json:"source"`
-	Data      string `json:"data"`
-}
-
-// CancelControl subscribe or unsubscribe cancelling
-type CancelControl struct {
-	CommandID string
-	Enable    bool
-}
 
 // Command from controller
 type Command struct {

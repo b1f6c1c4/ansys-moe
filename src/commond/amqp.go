@@ -1,6 +1,7 @@
 package commond
 
 import (
+	"commond/common"
 	"encoding/json"
 	"github.com/streadway/amqp"
 )
@@ -90,7 +91,7 @@ func setupAmqp(stop <-chan struct{}) {
 	}()
 }
 
-func subscribeCommand(kind string, cmd chan<- *RawCommand) {
+func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
 	_, err := mainCh.QueueDeclare(
 		kind,  // name
 		true,  // durable
@@ -119,11 +120,11 @@ func subscribeCommand(kind string, cmd chan<- *RawCommand) {
 	}
 
 	for d := range msgs {
-		cmd <- &RawCommand{d.CorrelationId, kind, d.Body}
+		cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body}
 	}
 }
 
-func publishAction(act <-chan ExeContext) {
+func publishAction(act <-chan common.ExeContext) {
 	for {
 		select {
 		case action := <-act:
@@ -150,7 +151,7 @@ func publishAction(act <-chan ExeContext) {
 	}
 }
 
-func publishStatus(stt <-chan *StatusReport) {
+func publishStatus(stt <-chan *common.StatusReport) {
 	for {
 		select {
 		case st := <-stt:
@@ -181,7 +182,7 @@ func publishStatus(stt <-chan *StatusReport) {
 	}
 }
 
-func publishLog(log chan *LogReport) {
+func publishLog(log chan *common.LogReport) {
 	for {
 		select {
 		case lg := <-log:
@@ -213,8 +214,8 @@ func publishLog(log chan *LogReport) {
 	}
 }
 
-func subscribeCancel(e ExeContext, cll chan struct{}) {
-	key := "log:" + e.getKind() + ":" + e.getCommandID()
+func subscribeCancel(e common.ExeContext, cll chan struct{}) {
+	key := "log:" + e.GetKind() + ":" + e.GetCommandID()
 	q, err := auxCh.QueueDeclare(
 		"",    // name
 		false, // durable
@@ -252,11 +253,11 @@ func subscribeCancel(e ExeContext, cll chan struct{}) {
 			close(cll)
 		}
 	}()
-	cancels[e.getCommandID()] = &q
+	cancels[e.GetCommandID()] = &q
 }
 
-func unsubscribeCancel(e ExeContext) {
-	q := cancels[e.getCommandID()]
+func unsubscribeCancel(e common.ExeContext) {
+	q := cancels[e.GetCommandID()]
 	if q == nil {
 		return
 	}
