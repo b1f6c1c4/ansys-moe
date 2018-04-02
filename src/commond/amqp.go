@@ -10,21 +10,21 @@ var mainCh, auxCh *amqp.Channel
 var cancels map[string]*amqp.Queue
 
 func setupAmqp(stop <-chan struct{}) {
-	conn, err := amqp.Dial(globalConfig.RabbitUrl)
+	conn, err := amqp.Dial(common.C.RabbitUrl)
 	if err != nil {
-		staticLogger("Dial rabbit: " + err.Error())
+		common.SL("Dial rabbit: " + err.Error())
 		return
 	}
 
 	mainCh, err = conn.Channel()
 	if err != nil {
-		staticLogger("Open main channel: " + err.Error())
+		common.SL("Open main channel: " + err.Error())
 		return
 	}
 
 	auxCh, err = conn.Channel()
 	if err != nil {
-		staticLogger("Open aux channel: " + err.Error())
+		common.SL("Open aux channel: " + err.Error())
 		return
 	}
 
@@ -37,7 +37,7 @@ func setupAmqp(stop <-chan struct{}) {
 		nil,      // arguments
 	)
 	if err != nil {
-		staticLogger("Declare queue action: " + err.Error())
+		common.SL("Declare queue action: " + err.Error())
 		return
 	}
 
@@ -51,7 +51,7 @@ func setupAmqp(stop <-chan struct{}) {
 		nil,       // arguments
 	)
 	if err != nil {
-		staticLogger("Declare exchange monitor: " + err.Error())
+		common.SL("Declare exchange monitor: " + err.Error())
 		return
 	}
 
@@ -65,17 +65,17 @@ func setupAmqp(stop <-chan struct{}) {
 		nil,      // arguments
 	)
 	if err != nil {
-		staticLogger("Declare exchange cancel: " + err.Error())
+		common.SL("Declare exchange cancel: " + err.Error())
 		return
 	}
 
 	err = mainCh.Qos(
-		globalConfig.Prefetch, // prefetch count
-		0,     // prefetch size
-		false, // global
+		common.C.Prefetch, // prefetch count
+		0,                 // prefetch size
+		false,             // global
 	)
 	if err != nil {
-		staticLogger("Set main channel qos: " + err.Error())
+		common.SL("Set main channel qos: " + err.Error())
 		return
 	}
 
@@ -101,7 +101,7 @@ func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
 		nil,   // arguments
 	)
 	if err != nil {
-		staticLogger("Declare main queue: " + err.Error())
+		common.SL("Declare main queue: " + err.Error())
 		return
 	}
 
@@ -115,7 +115,7 @@ func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
 		nil,   // args
 	)
 	if err != nil {
-		staticLogger("Consume main queue: " + err.Error())
+		common.SL("Consume main queue: " + err.Error())
 		return
 	}
 
@@ -130,7 +130,7 @@ func publishAction(act <-chan common.ExeContext) {
 		case action := <-act:
 			str, err := json.Marshal(action)
 			if err != nil {
-				rLogger.Error(action, "amqp", "Stringify action: "+err.Error())
+				common.RL.Error(action, "amqp", "Stringify action: "+err.Error())
 				break
 			}
 			err = mainCh.Publish(
@@ -144,7 +144,7 @@ func publishAction(act <-chan common.ExeContext) {
 				},
 			)
 			if err != nil {
-				staticLogger("Publish action to main: " + err.Error())
+				common.SL("Publish action to main: " + err.Error())
 				break
 			}
 		}
@@ -161,7 +161,7 @@ func publishStatus(stt <-chan *common.StatusReport) {
 			}
 			str, err := json.Marshal(st)
 			if err != nil {
-				rLogger.Error(st, "amqp", "Stringify status: "+err.Error())
+				common.RL.Error(st, "amqp", "Stringify status: "+err.Error())
 				break
 			}
 			err = mainCh.Publish(
@@ -175,7 +175,7 @@ func publishStatus(stt <-chan *common.StatusReport) {
 				},
 			)
 			if err != nil {
-				staticLogger("Publish status to main: " + err.Error())
+				common.SL("Publish status to main: " + err.Error())
 				break
 			}
 		}
@@ -192,7 +192,7 @@ func publishLog(log chan *common.LogReport) {
 			}
 			str, err := json.Marshal(lg)
 			if err != nil {
-				staticLogger("Stringify log: " + err.Error())
+				common.SL("Stringify log: " + err.Error())
 				break
 			}
 			err = mainCh.Publish(
@@ -206,8 +206,8 @@ func publishLog(log chan *common.LogReport) {
 				},
 			)
 			if err != nil {
-				staticLogger(string(str))
-				staticLogger("Publish log to main: " + err.Error())
+				common.SL(string(str))
+				common.SL("Publish log to main: " + err.Error())
 				break
 			}
 		}
@@ -225,7 +225,7 @@ func subscribeCancel(e common.ExeContext, cll chan struct{}) {
 		nil,   // arguments
 	)
 	if err != nil {
-		rLogger.Error(e, "amqp", "Declare temp queue: "+err.Error())
+		common.RL.Error(e, "amqp", "Declare temp queue: "+err.Error())
 		return
 	}
 	err = auxCh.QueueBind(
@@ -236,7 +236,7 @@ func subscribeCancel(e common.ExeContext, cll chan struct{}) {
 		nil,
 	)
 	if err != nil {
-		rLogger.Error(e, "amqp", "Queue bind: "+err.Error())
+		common.RL.Error(e, "amqp", "Queue bind: "+err.Error())
 		return
 	}
 	cmsgs, err := auxCh.Consume(
@@ -263,7 +263,7 @@ func unsubscribeCancel(e common.ExeContext) {
 	}
 	_, err := auxCh.QueueDelete(q.Name, false, false, true)
 	if err != nil {
-		rLogger.Error(e, "amqp", "Delete queue: "+err.Error())
+		common.RL.Error(e, "amqp", "Delete queue: "+err.Error())
 		return
 	}
 }
