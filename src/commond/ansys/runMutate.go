@@ -46,7 +46,7 @@ func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
-	// Log to `data/{cId}/ansys.log`
+	// Log to `data/{cId}/mutate.log`
 	logFile := filepath.Join(common.DataPath, id, "ansys.log")
 	go common.WatchLog(cmd.Raw, logFile, cancel)
 
