@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
   }
 });
 
-app.use('/storage', file);
+app.use('/', file);
 
 app.use('/', (req, res) => res.status(404).send());
 
