@@ -90,9 +90,9 @@ func setupAmqp(stop <-chan struct{}) {
 	}()
 }
 
-func subscribeCommand(queue string, cmd chan<- *RawCommand) {
+func subscribeCommand(kind string, cmd chan<- *RawCommand) {
 	_, err := mainCh.QueueDeclare(
-		queue, // name
+		kind,  // name
 		true,  // durable
 		false, // delete when unused
 		false, // exclusive
@@ -105,7 +105,7 @@ func subscribeCommand(queue string, cmd chan<- *RawCommand) {
 	}
 
 	msgs, err := mainCh.Consume(
-		queue, // queue
+		kind,  // queue
 		"",    // consumer
 		false, // auto-ack
 		false, // exclusive
@@ -119,7 +119,7 @@ func subscribeCommand(queue string, cmd chan<- *RawCommand) {
 	}
 
 	for d := range msgs {
-		cmd <- &RawCommand{d.CorrelationId, queue, d.Body}
+		cmd <- &RawCommand{d.CorrelationId, kind, d.Body}
 	}
 }
 
@@ -154,7 +154,7 @@ func publishStatus(stt <-chan *StatusReport) {
 	for {
 		select {
 		case st := <-stt:
-			key := "status:" + st.Type
+			key := "status:" + st.Kind
 			if st.CommandID != "" {
 				key = key + ":" + st.CommandID
 			}
@@ -185,7 +185,7 @@ func publishLog(log chan *LogReport) {
 	for {
 		select {
 		case lg := <-log:
-			key := "log:" + lg.Type
+			key := "log:" + lg.Kind
 			if lg.CommandID != "" {
 				key = key + ":" + lg.CommandID
 			}
@@ -214,7 +214,7 @@ func publishLog(log chan *LogReport) {
 }
 
 func subscribeCancel(e ExeContext, cll chan struct{}) {
-	key := "log:" + e.getType() + ":" + e.getCommandID()
+	key := "log:" + e.getKind() + ":" + e.getCommandID()
 	q, err := auxCh.QueueDeclare(
 		"",    // name
 		false, // durable

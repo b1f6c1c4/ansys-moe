@@ -5,5 +5,5 @@ type remoteLogger struct {
 }
 
 func (l remoteLogger) Error(e ExeContext, p string, m string) {
-	l.Ch <- &LogReport{e.getCommandID(), e.getType(), "error", p, m}
+	l.Ch <- &LogReport{e.getCommandID(), e.getKind(), "error", p, m}
 }
