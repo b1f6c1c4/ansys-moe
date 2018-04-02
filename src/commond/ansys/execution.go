@@ -13,51 +13,13 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
-func watchLog(fn string, cmd *ansysCommand, cancel <-chan struct{}) error {
-	common.RL.Info(cmd.Raw, "ansys/watchLog", "Watching log file")
-	file, err := os.OpenFile(fn, os.O_RDONLY|os.O_CREATE, os.ModePerm)
-	if err != nil {
-		common.RL.Error(cmd.Raw, "ansys/watchLog", "Open log file: " + err.Error())
-		return err
-	}
-	var pos int64
-	for {
-		_, err = file.Seek(pos, 0)
-		if err != nil {
-			common.RL.Error(cmd.Raw, "ansys/watchLog", "Seek log file: " + err.Error())
-			return err
-		}
-		buf := bufio.NewReader(file)
-		scanner := bufio.NewScanner(buf)
-		for scanner.Scan() {
-			q := scanner.Text()
-			common.RL.Debug(cmd.Raw, "ansys/PIPE", q)
-		}
-		err = scanner.Err()
-		if err != nil {
-			common.RL.Error(cmd.Raw, "ansys/watchLog", "Read log file: " + err.Error())
-			return err
-		}
-		pos, err = file.Seek(0, 1)
-		if err != nil {
-			common.RL.Error(cmd.Raw, "ansys/watchLog", "Seek log file: " + err.Error())
-			return err
-		}
-		select {
-		case <-cancel:
-			return nil
-		case <-time.After(time.Second):
-		}
-	}
-}
-
-func execAnsys(args []string, cmd *ansysCommand, rpt chan<- *ansysAction, cancel <-chan struct{}) error {
+func execAnsys(e ExeContext, args []string, cancel <-chan struct{}) error {
 	ctx := exec.ansysCommand(ansysPath, args...)
 	args := strings.Join(args, " ")
-	common.RL.Info(cmd.Raw, "ansys/execAnsys", "Will execute: " + args)
+	common.RL.Info(e, "ansys/execAnsys", "Will execute: " + args)
 	err := ctx.Start()
 	if err != nil {
-		common.RL.Error(cmd.Raw, "ansys/execAnsys", "execution of " + args + ": " + err.Error())
+		common.RL.Error(e, "ansys/execAnsys", "execution of " + args + ": " + err.Error())
 		return err
 	}
 
@@ -67,17 +29,17 @@ func execAnsys(args []string, cmd *ansysCommand, rpt chan<- *ansysAction, cancel
 	}()
 	select {
 	case <-cancel:
-		common.RL.Info(cmd.Raw, "ansys/execAnsys", "Killing process")
+		common.RL.Info(e, "ansys/execAnsys", "Killing process")
 		err := ctx.Process.Kill()
 		if err != nil {
-			common.RL.Error(cmd.Raw, "ansys/execAnsys", "Killing process: " + err.Error())
+			common.RL.Error(e, "ansys/execAnsys", "Killing process: " + err.Error())
 			return err
 		}
-		common.RL.Info(cmd.Raw, "ansys/execAnsys", "Process killed")
+		common.RL.Info(e, "ansys/execAnsys", "Process killed")
 	case err := <-done:
-		common.RL.Info(cmd.Raw, "ansys/execAnsys", "Process exited")
+		common.RL.Info(e, "ansys/execAnsys", "Process exited")
 		if err != nil {
-			common.RL.Error(cmd.Raw, "ansys/execAnsys", "Process exited: " + err.Error())
+			common.RL.Error(e, "ansys/execAnsys", "Process exited: " + err.Error())
 			return err
 		}
 	}
@@ -88,40 +50,47 @@ type runMutate struct {
 }
 
 func (r runMutate) Run(rpt chan<- *ansysAction, cancel <-chan struct{}) error {
-	if !r.cmd.JobID.Valid {
-		common.RL.Error(r.cmd, "parse input", errors.New("jobId"))
-		return
+	id := r.cmd.Raw.CommandID
+	if !r.cmd.File.Valid {
+		err := errors.New("file")
+		common.RL.Error(r.cmd.Raw, "ansys/runMutate", "Parse input: " + err.Error())
+		return err
 	}
-	jobID := r.cmd.JobID.String
-	if !r.cmd.FileName.Valid {
-		common.RL.Error(r.cmd, "parse input", errors.New("fileName"))
-		return
-	}
-	fileName := r.cmd.FileName.String
+	file := r.cmd.File.String
+	fileName := filepath.Base(file)
 	if !r.cmd.Script.Valid {
-		common.RL.Error(r.cmd, "parse input", errors.New("script"))
-		return
+		err := errors.New("script")
+		common.RL.Error(r.cmd.Raw, "ansys/runMutate", "Parse input: " + err.Error())
+		return err
 	}
 	script := r.cmd.Script.String
 
-	jobFile := filepath.Join(dataPath, jobID, fileName)
-	_, err := os.Stat(jobFile)
+	// Create `data/{cId}`
+	err := common.EnsurePath(r.cmd.Raw, id)
 	if err != nil {
-		common.RL.Error(r.cmd, "check existance", err)
-		return
+		return err
 	}
 
-	scriptFile := filepath.Join(dataPath, jobID, "scripts", r.cmd.CommandID+".vbs")
+    // Download `storage/{file}` to `data/{cId}/{file.name}`
+	err = common.Download(r.cmd.Raw, file, filepath.Join(id, file.name))
+	if err != nil {
+		return err
+	}
+
+    // Save `script` to `data/{cId}/script.vbs`
+	scriptFile := filepath.Join(common.DataPath, id, "script.vbs")
 	err = ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
 	if err != nil {
-		common.RL.Error(r.cmd, "save script", err)
-		return
+		common.RL.Error(r.cmd.Raw, "ansys/runMutate", "Save script: " + err.Error())
+		return err
 	}
 
-	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID+".log")
-	go watchLog(logFile, r.cmd, rpt, cancel)
+    // Log to `data/{cId}/ansys.log`
+	logFile := filepath.Join(common.DataPath, id, "ansys.log")
+	go watchLog(r.cmd.Raw, logFile, cancel)
 
-	args := []string{
+    // Run `batchsave` over `data/{cId}/{file.name}`
+	err = execAnsys(r.cmd.Raw, []string{
 		"-ng",
 		"-logfile",
 		logFile,
@@ -129,8 +98,24 @@ func (r runMutate) Run(rpt chan<- *ansysAction, cancel <-chan struct{}) error {
 		scriptFile,
 		"-batchsave",
 		jobFile,
+	}, cancel)
+	if err != nil {
+		return err
 	}
-	execAnsys(args, r.cmd, rpt, cancel)
+
+    // Upload `data/{cId}/` to `storage/{cId}/`
+	err = common.UploadDir(id, id)
+	if err != nil {
+		return err
+	}
+
+    // Drop directory `data/{cId}/`
+	err = common.DropDir(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type runSolve struct {
@@ -149,14 +134,14 @@ func (r runSolve) Run(rpt chan<- *ansysAction, cancel <-chan struct{}) {
 	}
 	fileName := r.cmd.FileName.String
 
-	jobFile := filepath.Join(dataPath, jobID, fileName)
+	jobFile := filepath.Join(common.DataPath, jobID, fileName)
 	_, err := os.Stat(jobFile)
 	if err != nil {
 		common.RL.Error(r.cmd, "check existance", err)
 		return
 	}
 
-	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID+".log")
+	logFile := filepath.Join(common.DataPath, jobID, "logs", r.cmd.CommandID+".log")
 	go watchLog(logFile, r.cmd, rpt, cancel)
 
 	args := []string{
@@ -217,14 +202,14 @@ func (r runExtract) Run(rpt chan<- *ansysAction, cancel <-chan struct{}) {
 	}
 	script := r.cmd.Script.String
 
-	jobFile := filepath.Join(dataPath, jobID, fileName)
+	jobFile := filepath.Join(common.DataPath, jobID, fileName)
 	_, err := os.Stat(jobFile)
 	if err != nil {
 		common.RL.Error(r.cmd, "check existance", err)
 		return
 	}
 
-	outputPath := filepath.Join(dataPath, jobID, "output", r.cmd.CommandID)
+	outputPath := filepath.Join(common.DataPath, jobID, "output", r.cmd.CommandID)
 	err = os.MkdirAll(outputPath, os.ModePerm)
 	if err != nil {
 		common.RL.Error(r.cmd, "prepare output path", err)
@@ -233,14 +218,14 @@ func (r runExtract) Run(rpt chan<- *ansysAction, cancel <-chan struct{}) {
 	// In VBScript, only '"' needs to be escaped.
 	scriptX := strings.Replace(script, "$OUT_DIR", strings.Replace(outputPath, "\"", "\"\"", -1), -1)
 
-	scriptFile := filepath.Join(dataPath, jobID, "scripts", r.cmd.CommandID+".vbs")
+	scriptFile := filepath.Join(common.DataPath, jobID, "scripts", r.cmd.CommandID+".vbs")
 	err = ioutil.WriteFile(scriptFile, []byte(scriptX), os.ModePerm)
 	if err != nil {
 		common.RL.Error(r.cmd, "save script", err)
 		return
 	}
 
-	logFile := filepath.Join(dataPath, jobID, "logs", r.cmd.CommandID+".log")
+	logFile := filepath.Join(common.DataPath, jobID, "logs", r.cmd.CommandID+".log")
 	go watchLog(logFile, r.cmd, rpt, cancel)
 
 	args := []string{

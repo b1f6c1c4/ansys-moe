@@ -6,12 +6,12 @@ import (
 )
 
 // NewStatusReport create a status report
-func NewStatusReport(cmd ExeContext) *StatusReport {
+func NewStatusReport(e ExeContext) *StatusReport {
 	cs, _ := cpu.Times(false)
 	m, _ := mem.VirtualMemory()
 	return &StatusReport{
-		CommandID: cmd.GetCommandID(),
-		Kind:      cmd.GetKind(),
+		CommandID: e.GetCommandID(),
+		Kind:      e.GetKind(),
 		Cpu:       cs,
 		Mem:       m,
 	}
