@@ -1,0 +1,27 @@
+version: "2.3"
+services:
+
+  nginx:
+    build: ./nginx
+    restart: always
+    ports:
+      - "8888:80"
+    links:
+      - storage
+    networks:
+      - ansys-moe
+
+  storage:
+    image: ansys-storage
+    restart: always
+    environment:
+      BACKEND_LOG: "${DEBUG_LEVEL}"
+      DATA_PATH: "/ansys"
+    volumes:
+      - /root/ansys-moe:/ansys
+    networks:
+      - ansys-moe
+
+networks:
+  ansys-moe:
+    driver: bridge
