@@ -139,8 +139,12 @@ func publishAction(act <-chan common.ExeContext) {
 				false,    // mandatory
 				false,    // immediate
 				amqp.Publishing{
-					ContentType: "application/json",
-					Body:        str,
+					Headers: map[string]interface{}{
+						"kind": action.GetKind(),
+					},
+					CorrelationId: action.GetCommandID(),
+					ContentType:   "application/json",
+					Body:          str,
 				},
 			)
 			if err != nil {

@@ -1,15 +1,15 @@
-package commond
+package common
 
 import (
-	"commond/common"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
 )
 
-func makeStatusReport(cmd common.ExeContext) *common.StatusReport {
+// NewStatusReport create a status report
+func NewStatusReport(cmd ExeContext) *StatusReport {
 	cs, _ := cpu.Times(false)
 	m, _ := mem.VirtualMemory()
-	return &common.StatusReport{
+	return &StatusReport{
 		CommandID: cmd.GetCommandID(),
 		Kind:      cmd.GetKind(),
 		Cpu:       cs,
