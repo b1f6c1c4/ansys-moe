@@ -5,11 +5,16 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-// NewStatusReport create a status report
-func NewStatusReport(e ExeContext) *StatusReport {
+// StatusReporter reports to amqp
+type StatusReporter struct {
+	Ch chan<- *StatusReport
+}
+
+// Report reports status
+func (l StatusReporter) Report(e ExeContext) {
 	cs, _ := cpu.Times(false)
 	m, _ := mem.VirtualMemory()
-	return &StatusReport{
+	l.Ch <- &StatusReport{
 		CommandID: e.GetCommandID(),
 		Kind:      e.GetKind(),
 		Cpu:       cs,

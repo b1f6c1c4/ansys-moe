@@ -2,7 +2,7 @@ package common
 
 // RemoteLoggerT writes to amqp
 type RemoteLoggerT struct {
-	Ch chan *LogReport
+	Ch chan<- *LogReport
 }
 
 // Trace is level=trace

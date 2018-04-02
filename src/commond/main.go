@@ -26,7 +26,17 @@ func addModule(m common.Module, stop <-chan struct{}) {
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
 	setupAmqp(stop)
+
+	log := make(chan *common.LogReport)
+	go publishLog(log)
+	common.SetupRL(log)
+
+	stt := make(chan *common.StatusReport)
+	go publishStatus(stt)
+	common.SetupSR(stt)
+
 	act := make(chan common.ExeContext)
 	go publishAction(act)
+
 	addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
 }
