@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const shell = require('shelljs');
 const contentstream = require('./contentstream');
 const logger = require('./logger')('file');
 
@@ -13,7 +14,7 @@ router.use(express.static(dataPath, {
   dotfiles: 'allow',
 }));
 
-const isAllowed = (fn) => /^[-.a-zA-Z0-9_]+$/.test(fn);
+const isAllowed = (fn) => /^[-.a-zA-Z0-9_]+(\/[-.a-zA-Z0-9_]+){0,3}$/.test(fn);
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
@@ -22,6 +23,8 @@ const storage = multer.diskStorage({
   filename(req, file, cb) {
     const fn = file.fieldname;
     if (isAllowed(fn)) {
+      const fullPath = path.join(dataPath, fn);
+      shell.mkdir('-p', path.dirname(fullPath));
       cb(null, fn);
     } else {
       cb(Error('Field name not allowed'));
@@ -33,14 +36,16 @@ const upload = multer({
   storage,
 });
 
-router.put('/:fn', (req, res) => {
-  const { fn } = req.params;
+router.put(/.*/, (req, res) => {
+  const fn = req.path.substr(1);
   if (!isAllowed(fn)) {
     res.status(403).send();
     return;
   }
   try {
-    const f = fs.createWriteStream(path.join(dataPath, fn));
+    const fullPath = path.join(dataPath, fn);
+    shell.mkdir('-p', path.dirname(fullPath));
+    const f = fs.createWriteStream(fullPath);
     f.on('error', (e) => {
       logger.error('createWriteStream', e);
       res.status(500).send();
@@ -54,7 +59,7 @@ router.put('/:fn', (req, res) => {
       res.status(204).send();
     });
   } catch (e) {
-    logger.error(e);
+    logger.error('createWriteStream', e);
     res.status(500).send(e);
   }
 });

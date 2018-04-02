@@ -1,12 +1,6 @@
-const _ = require('lodash');
 const { createServer } = require('http');
 const express = require('express');
 const cors = require('cors');
-const nocache = require('nocache');
-const bodyParser = require('body-parser');
-const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
-const { schema } = require('./graphql');
-const mongo = require('./mongo');
 const status = require('./status');
 const file = require('./file');
 const logger = require('./logger')('index');
@@ -61,41 +55,6 @@ app.get('/', (req, res) => {
   }
 });
 
-app.post(
-  '/graphql',
-  nocache(),
-  bodyParser.json(),
-  bodyParser.text({
-    type: 'application/graphql',
-  }),
-  (req, res, next) => {
-    logger.info(`${req.method} /graphql`);
-    if (req.is('application/graphql')) {
-      req.body = { query: req.body };
-    }
-    next();
-  },
-  graphqlExpress({
-    schema,
-    tracing: process.env.NODE_ENV !== 'production',
-    formatError: (err) => {
-      const e = {
-        message: err.message,
-        statusCode: _.get(err, 'originalError.statusCode'),
-        errorCode: _.get(err, 'originalError.errorCode'),
-      };
-      logger.trace('Return err', e);
-      return e;
-    },
-  }),
-);
-
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/graphql', graphiqlExpress({
-    endpointURL: '/graphql',
-  }));
-}
-
 app.use('/storage', file);
 
 app.use('/', (req, res) => res.status(404).send());
@@ -114,7 +73,6 @@ function runApp() {
 }
 
 const inits = [];
-inits.push(mongo.connect());
 
 Promise.all(inits)
   .then(runApp)
