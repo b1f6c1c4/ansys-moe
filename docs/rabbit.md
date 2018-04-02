@@ -11,13 +11,13 @@
   * javascript - javascript as a calculator.
 * Callback:
   * action - trigger state change after execution.
-    - (AnsysAction)
+    - kind:ansys (AnsysAction)
 * Exchange:
   * monitor - system status, don't persist.
-    * `status:<type>[:<cId>]` (StatusReport)
-    * `log:<type>[:<cId>]` (LogReport)
+    * `status:<kind>[:<cId>]` (StatusReport)
+    * `log:<kind>[:<cId>]` (LogReport)
   * cancel - kill execution.
-    * `cancel:<type>:<cId>` (null)
+    * `cancel:<kind>:<cId>` (null)
 
 # Data Structures
 
@@ -80,6 +80,10 @@
 
 - type (enum, required)
   - `failure`
-  - `success`
-- phase (string)
-- message (string)
+
+    If anything obviously wrong happens
+
+  - `done`
+
+    If the procedure finished successfully
+
