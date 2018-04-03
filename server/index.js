@@ -65,6 +65,14 @@ function runApp() {
         }
       });
     };
+    amqp.emitter.on('status', (msg) => {
+      logger.debug(`Status from ${msg._routingKey}`, msg);
+      wss.broadcast(msg);
+    });
+    amqp.emitter.on('log', (msg) => {
+      logger.debug(`Log from ${msg._routingKey}`, msg);
+      wss.broadcast(msg);
+    });
 
     logger.info(`Server started localhost:${port}`);
   });
