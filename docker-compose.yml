@@ -8,6 +8,7 @@ services:
       - "8888:80"
     links:
       - storage
+      - monitor
     networks:
       - ansys-moe
 
@@ -19,6 +20,18 @@ services:
       DATA_PATH: "/ansys"
     volumes:
       - /root/ansys-moe:/ansys
+    networks:
+      - ansys-moe
+
+  monitor:
+    image: ansys-monitor
+    restart: always
+    environment:
+      BACKEND_LOG: "${DEBUG_LEVEL}"
+      RABBIT_HOST: "${RABBIT_HOST}"
+      RABBIT_PORT: "${RABBIT_PORT}"
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASS: "${RABBIT_PASS}"
     networks:
       - ansys-moe
 
