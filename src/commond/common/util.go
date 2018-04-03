@@ -101,6 +101,7 @@ func Download(e ExeContext, remote string, local string) error {
 }
 
 func upload(e ExeContext, remote, local string, writer *multipart.Writer) error {
+	RL.Debug(e, "upload", "Will upload "+remote)
 	file, err := os.Open(local)
 	if err != nil {
 		RL.Error(e, "upload", "Open file: "+err.Error())
@@ -145,10 +146,11 @@ func uploadDir(e ExeContext, remote, local string, writer *multipart.Writer) err
 
 // UploadDir a dir from data path to remote
 func UploadDir(e ExeContext, remote, local string) error {
+	RL.Debug(e, "uploadDir", "Will upload data/"+local+" to storage/"+remote)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	err := uploadDir(e, remote, local, writer)
+	err := uploadDir(e, remote, filepath.Join(DataPath, local), writer)
 	if err != nil {
 		return err
 	}
@@ -179,6 +181,7 @@ func UploadDir(e ExeContext, remote, local string) error {
 		return err
 	}
 
+	RL.Info(e, "uploadDir", "Uploaded data/"+local+" to storage/"+remote)
 	return nil
 }
 

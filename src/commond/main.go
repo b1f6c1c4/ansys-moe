@@ -14,6 +14,7 @@ func addModule(m common.Module, stop <-chan struct{}) {
 	common.SL("Adding module " + m.GetKind())
 	ch := make(chan *common.RawCommand)
 	go subscribeCommand(m.GetKind(), ch)
+	common.RL.Info(m, "main", "Added module")
 	for {
 		select {
 		case raw := <-ch:
