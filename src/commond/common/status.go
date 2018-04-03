@@ -21,3 +21,12 @@ func (l StatusReporter) Report(e ExeContext) {
 		Mem:       m,
 	}
 }
+
+// ReportP reports process status
+func (l StatusReporter) ReportP(e ExeContext, p interface{}) {
+	l.Ch <- &StatusReport{
+		CommandID: e.GetCommandID(),
+		Kind:      e.GetKind(),
+		Usage:     p,
+	}
+}

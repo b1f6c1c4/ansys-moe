@@ -36,6 +36,7 @@ type StatusReport struct {
 	Kind      string                 `json:"-"`
 	Cpu       []cpu.TimesStat        `json:"cpu"`
 	Mem       *mem.VirtualMemoryStat `json:"mem"`
+	Usage     interface{}            `json:"usage"`
 }
 
 // GetCommandID make StatusReport an ExeContext

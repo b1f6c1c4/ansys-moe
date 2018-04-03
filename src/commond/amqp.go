@@ -179,6 +179,9 @@ func publishStatus(stt <-chan *common.StatusReport) {
 				false,     // mandatory
 				false,     // immediate
 				amqp.Publishing{
+					Headers: map[string]interface{}{
+						"host": common.HostName,
+					},
 					ContentType: "application/json",
 					Body:        str,
 				},
@@ -210,6 +213,9 @@ func publishLog(log chan *common.LogReport) {
 				false,     // mandatory
 				false,     // immediate
 				amqp.Publishing{
+					Headers: map[string]interface{}{
+						"host": common.HostName,
+					},
 					ContentType: "application/json",
 					Body:        str,
 				},

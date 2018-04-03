@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
@@ -56,19 +55,6 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 	if err != nil {
 		return err
 	}
-
-	// Report system status and log difference
-	go func() {
-		m, _ := time.ParseDuration("60s")
-		for {
-			select {
-			case <-time.After(m):
-				common.SR.Report(cmd.Raw)
-			case <-cancel:
-				return
-			}
-		}
-	}()
 
 	// Replace `$OUT_DIR` in `script` to `data/{cId}/output`
 	// In VBScript, only '"' needs to be escaped.
