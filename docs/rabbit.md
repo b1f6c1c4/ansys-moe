@@ -6,12 +6,13 @@
   * ansys (AnsysCommand) - every single ansys execution.
   * moe - every single moe execution.
 * Calculators:
-  * mathematica - mathematica as a calculator.
+  * mathematica (MmaCommand) - mathematica as a calculator.
   * matlab - matlab as a calculator.
   * javascript - javascript as a calculator.
 * Callback:
   * action - trigger state change after execution.
     - kind:ansys (AnsysAction)
+    - kind:mathematica (MmaAction)
 * Exchange:
   * monitor - system status, don't persist.
     * `status.<kind>[.<cId>]` (StatusReport)
@@ -78,3 +79,19 @@
 
     If the procedure finished successfully
 
+## MmaCommand (object)
+
+- script (string, required)
+
+## MmaAction (object)
+
+- type (enum, required)
+  - `failure`
+
+    If anything obviously wrong happens
+
+  - `done`
+
+    If the procedure finished successfully
+
+- result (string)
