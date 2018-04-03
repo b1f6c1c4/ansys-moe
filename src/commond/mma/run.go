@@ -19,15 +19,15 @@ func (m Module) run(cmd *mmaCommand, cancel <-chan struct{}) (string, error) {
 	}
 	script := cmd.Script.String
 
-	// Save `script` to `data/{cId}.m`
-	scriptFile := filepath.Join(common.DataPath, id+".m")
+	// Save `script` to `data/{cId}.wls`
+	scriptFile := filepath.Join(common.DataPath, id+".wls")
 	err := ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
 	if err != nil {
 		common.RL.Error(cmd.Raw, "mma/run", "Save script: "+err.Error())
 		return "", err
 	}
 
-	// Run `data/{cId}.m`
+	// Run `data/{cId}.wls`
 	r, err := m.execMma(cmd.Raw, []string{
 		"-file",
 		scriptFile,
@@ -36,7 +36,7 @@ func (m Module) run(cmd *mmaCommand, cancel <-chan struct{}) (string, error) {
 		return "", err
 	}
 
-	// Drop file `data/{cId}.m`
+	// Drop file `data/{cId}.wls`
 	err = os.Remove(scriptFile)
 	if err != nil {
 		return "", err

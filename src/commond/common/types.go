@@ -22,6 +22,7 @@ type RawCommand struct {
 	CommandID string
 	Kind      string
 	Data      []byte
+	Ack       func()
 }
 
 // GetCommandID make RawCommand an ExeContext

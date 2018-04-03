@@ -20,7 +20,7 @@ type Module struct {
 func (m Module) GetCommandID() string { return "" }
 
 // GetKind make Module an ExeContext
-func (m Module) GetKind() string { return "mma" }
+func (m Module) GetKind() string { return "mathematica" }
 
 // NewModule setup mma
 func NewModule(
@@ -36,6 +36,7 @@ func NewModule(
 
 // Run parse and execute a command
 func (m Module) Run(raw *common.RawCommand) {
+	defer raw.Ack()
 	result := &mmaAction{
 		CommandID: raw.GetCommandID(),
 		Kind:      raw.GetKind(),
@@ -50,6 +51,7 @@ func (m Module) Run(raw *common.RawCommand) {
 
 	var cmd mmaCommand
 	err := json.Unmarshal(raw.Data, &cmd)
+	cmd.Raw = raw
 	if err != nil {
 		common.RL.Error(raw, "mma", "Unmarshaling json: "+err.Error())
 		return

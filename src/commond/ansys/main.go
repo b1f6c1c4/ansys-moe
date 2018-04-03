@@ -48,6 +48,7 @@ func (m Module) Run(raw *common.RawCommand) {
 
 	var cmd ansysCommand
 	err := json.Unmarshal(raw.Data, &cmd)
+	cmd.Raw = raw
 	if err != nil {
 		common.RL.Error(raw, "ansys", "Unmarshaling json: "+err.Error())
 		return

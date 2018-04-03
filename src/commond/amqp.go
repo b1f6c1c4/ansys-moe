@@ -125,7 +125,10 @@ func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
 	}
 
 	for d := range msgs {
-		cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body}
+		ack := func() {
+			d.Ack(false)
+		}
+		cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body, ack}
 	}
 }
 

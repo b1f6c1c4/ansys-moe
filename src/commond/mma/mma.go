@@ -27,21 +27,13 @@ func findMmaExecutable() string {
 func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct{}) ([]byte, error) {
 	ctx := exec.Command(m.mmaPath, args...)
 	jArgs := strings.Join(args, " ")
-	common.RL.Info(e, "mma/execMma", "Will execute: "+jArgs)
-	err := ctx.Start()
-	if err != nil {
-		common.RL.Error(e, "mma/execMma", "execution of "+jArgs+": "+err.Error())
-		return nil, err
-	}
 
-	done := make(chan error, 1)
-	go func() {
-		done <- ctx.Wait()
-	}()
+	done := make(chan struct{})
+	killing := make(chan error, 1)
 	go func() {
 		m, _ := time.ParseDuration("60s")
 		for {
-			if ctx.ProcessState.Exited() {
+			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
 				return
 			}
 			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
@@ -52,25 +44,33 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 			}
 		}
 	}()
-	select {
-	case <-cancel:
-		common.RL.Info(e, "mma/execMma", "Killing process")
-		err := ctx.Process.Kill()
-		if err != nil {
-			common.RL.Error(e, "mma/execMma", "Killing process: "+err.Error())
-			return nil, err
+	go func() {
+		select {
+		case <-cancel:
+			common.RL.Info(e, "mma/execMma", "Killing process")
+			err := ctx.Process.Kill()
+			killing <- err
+			if err != nil {
+				common.RL.Error(e, "mma/execMma", "Killing process: "+err.Error())
+				return
+			}
+			common.RL.Info(e, "mma/execMma", "Process killed")
+		case <-done:
 		}
-		common.RL.Info(e, "mma/execMma", "Process killed")
-	case err := <-done:
-		common.RL.Info(e, "mma/execMma", "Process exited")
-		if err != nil {
-			common.RL.Error(e, "mma/execMma", "Process exited: "+err.Error())
-			return nil, err
-		}
-	}
+	}()
+
+	common.RL.Info(e, "mma/execMma", "Will execute: "+jArgs)
 	r, err := ctx.CombinedOutput()
+	close(done)
+	select {
+	case err := <-killing:
+		return nil, err
+	default:
+	}
+
+	common.RL.Info(e, "mma/execMma", "Process exited")
 	if err != nil {
-		common.RL.Error(e, "mma/execMma", "Get output: "+err.Error())
+		common.RL.Error(e, "mma/execMma", "Process exited: "+err.Error())
 		return nil, err
 	}
 	return r, nil

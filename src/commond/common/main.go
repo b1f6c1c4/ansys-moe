@@ -28,7 +28,7 @@ var C GlobalConfigT
 
 // Entry setup commond
 func Entry(theLogger func(string)) {
-	Core = &RawCommand{"", "core", nil}
+	Core = &RawCommand{"", "core", nil, nil}
 	SL = theLogger
 
 	exeDir, err := filepath.Abs(filepath.Dir(os.Args[0]))

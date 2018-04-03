@@ -40,7 +40,7 @@ func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan stru
 	go func() {
 		m, _ := time.ParseDuration("60s")
 		for {
-			if ctx.ProcessState.Exited() {
+			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
 				return
 			}
 			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
