@@ -14,10 +14,10 @@
     - kind:ansys (AnsysAction)
 * Exchange:
   * monitor - system status, don't persist.
-    * `status:<kind>[:<cId>]` (StatusReport)
-    * `log:<kind>[:<cId>]` (LogReport)
+    * `status.<kind>[.<cId>]` (StatusReport)
+    * `log.<kind>[.<cId>]` (LogReport)
   * cancel - kill execution.
-    * `cancel:<kind>:<cId>` (null)
+    * `cancel.<kind>.<cId>` (null)
 
 # Data Structures
 
