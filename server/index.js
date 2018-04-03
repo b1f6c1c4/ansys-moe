@@ -1,5 +1,6 @@
 const { createServer } = require('http');
 const websocket = require('ws');
+const amqp = require('./amqp');
 const status = require('./status');
 const logger = require('./logger')('index');
 
@@ -70,6 +71,14 @@ function runApp() {
 }
 
 const inits = [];
+if (!process.env.NO_RABBIT) {
+  inits.push(amqp.connect()
+    .then(() => {
+      logger.info('Rabbitmq connected.');
+    }));
+} else {
+  logger.warn('Rabbitmq omitted.');
+}
 
 Promise.all(inits)
   .then(runApp)
