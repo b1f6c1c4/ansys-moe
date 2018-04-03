@@ -1,0 +1,26 @@
+{
+  "name": "ansys-monitor",
+  "version": "1.0.0",
+  "repository": "https://github.com/b1f6c1c4/ansys-moe",
+  "author": "b1f6c1c4 <b1f6c1c4@gmail.com>",
+  "scripts": {
+    "build": "node tag.js",
+    "start": "cross-env NODE_ENV=development nodemon server",
+    "start:prod": "cross-env NODE_ENV=production node server",
+    "lint": "eslint --ignore-path .gitignore ."
+  },
+  "private": true,
+  "dependencies": {
+    "amqp": "^0.2.6",
+    "chalk": "^2.3.2",
+    "cross-env": "^5.1.4",
+    "winston": "^3.0.0-rc3",
+    "ws": "^5.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.10.0",
+    "shelljs": "^0.8.1"
+  }
+}
