@@ -1,4 +1,5 @@
 const { createServer } = require('http');
+const websocket = require('ws');
 const status = require('./status');
 const logger = require('./logger')('index');
 
@@ -28,6 +29,11 @@ process.on('SIGTERM', () => {
 const port = parseInt(process.env.PORT || '3000', 10);
 
 const app = (req, res) => {
+  if (req.url !== '/') {
+    res.statusCode = 404;
+    res.end();
+    return;
+  }
   if (status) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -46,6 +52,18 @@ function runApp() {
       logger.fatalDie(err);
       return;
     }
+
+    const wss = new websocket.Server({
+      path: '/',
+      server,
+    });
+    wss.broadcast = (data) => {
+      wss.clients.forEach((client) => {
+        if (client.readyState === websocket.OPEN) {
+          client.send(data);
+        }
+      });
+    };
 
     logger.info(`Server started localhost:${port}`);
   });
