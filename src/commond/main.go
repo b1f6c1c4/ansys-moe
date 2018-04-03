@@ -3,6 +3,7 @@ package commond
 import (
 	"commond/ansys"
 	"commond/common"
+	"commond/mma"
 	"time"
 )
 
@@ -69,12 +70,15 @@ func Loop(stop <-chan struct{}) {
 	if common.C.EnableAnsys {
 		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
 	}
+	if common.C.EnableMma {
+		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	}
 
 	common.SL("Started event loop")
 	common.RL.Info(common.Core, "main", "Started event loop")
 
 	m, _ := time.ParseDuration("60s")
-	rpt:
+rpt:
 	for {
 		common.SR.Report(common.Core)
 		select {

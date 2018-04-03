@@ -65,7 +65,7 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 	scriptFile := filepath.Join(common.DataPath, id, "script.vbs")
 	err = ioutil.WriteFile(scriptFile, []byte(scriptX), os.ModePerm)
 	if err != nil {
-		common.RL.Error(cmd.Raw, "ansys/runExtract", "Save script: "+err.Error())
+		common.RL.Error(cmd.Raw, "ansys/runSolve", "Save script: "+err.Error())
 		return err
 	}
 

@@ -12,6 +12,7 @@ type GlobalConfigT struct {
 	RabbitUrl   string `yaml:"mq"`
 	Prefetch    int    `yaml:"prefetch"`
 	EnableAnsys bool   `yaml:"ansys"`
+	EnableMma   bool   `yaml:"mathematica"`
 }
 
 func loadConfig(exeDir string) GlobalConfigT {
