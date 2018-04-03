@@ -2,8 +2,11 @@ package common
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -97,35 +100,86 @@ func Download(e ExeContext, remote string, local string) error {
 	return nil
 }
 
+func upload(e ExeContext, remote, local string, writer *multipart.Writer) error {
+	file, err := os.Open(local)
+	if err != nil {
+		RL.Error(e, "upload", "Open file: "+err.Error())
+		return err
+	}
+	defer file.Close()
+
+	part, err := writer.CreateFormFile(remote, remote)
+	if err != nil {
+		RL.Error(e, "upload", "Create form file: "+err.Error())
+		return err
+	}
+
+	_, err = io.Copy(part, file)
+	if err != nil {
+		RL.Error(e, "upload", "Copy stream: "+err.Error())
+		return err
+	}
+	return nil
+}
+
+func uploadDir(e ExeContext, remote, local string, writer *multipart.Writer) error {
+	files, err := ioutil.ReadDir(local)
+	if err != nil {
+		RL.Error(e, "uploadDir", "Read dir: "+err.Error())
+		return err
+	}
+	for _, f := range files {
+		nr := remote + "/" + f.Name()
+		nl := filepath.Join(local, f.Name())
+		if f.IsDir() {
+			err = uploadDir(e, nr, nl, writer)
+		} else {
+			err = upload(e, nr, nl, writer)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UploadDir a dir from data path to remote
-func UploadDir(e ExeContext, remote string, local string) error {
-	// func reportDir(e ExeContext, rpt chan<- *ansysAction, relPath string, absPath string) {
-	// 	files, err := ioutil.ReadDir(absPath)
-	// 	if err != nil {
-	// 		common.RL.Error(e, "read dir", err)
-	// 		return
-	// 	}
-	// 	for _, f := range files {
-	// 		var nRelPath string
-	// 		if len(relPath) == 0 {
-	// 			nRelPath = f.Name()
-	// 		} else {
-	// 			nRelPath = relPath + "/" + f.Name()
-	// 		}
-	// 		nAbsPath := filepath.Join(absPath, f.Name())
-	// 		if f.IsDir() {
-	// 			reportDir(e, rpt, nRelPath, nAbsPath)
-	// 		} else {
-	// 			c, err := ioutil.ReadFile(nAbsPath)
-	// 			if err != nil {
-	// 				common.RL.Error(e, "read file", err)
-	// 			} else {
-	// 				rpt <- makeFileReport(e, f.Name(), null.StringFrom(string(c)))
-	// 			}
-	// 		}
-	// 	}
-	// }
-	return errors.New("Not implemented") // TODO
+func UploadDir(e ExeContext, remote, local string) error {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	err := uploadDir(e, remote, local, writer)
+	if err != nil {
+		return err
+	}
+
+	err = writer.Close()
+	if err != nil {
+		RL.Error(e, "uploadDir", "Close writer: "+err.Error())
+		return err
+	}
+
+	req, err := http.NewRequest("POST", C.RemoteUrl, body)
+	if err != nil {
+		RL.Error(e, "uploadDir", "Make request: "+err.Error())
+		return err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		RL.Error(e, "uploadDir", "Do request: "+err.Error())
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 204 {
+		err = errors.New("StatusCode " + string(resp.StatusCode))
+		RL.Error(e, "uploadDir", err.Error())
+		return err
+	}
+
+	return nil
 }
 
 // DropDir remove the whole folder

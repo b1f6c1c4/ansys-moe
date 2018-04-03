@@ -102,7 +102,7 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 	}
 
 	// Upload `data/{cId}/` to `storage/{cId}/`
-	err = common.UploadDir(cmd.Raw, id, id)
+	err = common.UploadDir(cmd.Raw, "/"+id, id)
 	if err != nil {
 		return err
 	}
