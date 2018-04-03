@@ -16,9 +16,10 @@ func main() {
 	signal.Notify(sg, os.Interrupt)
 
 	stop := make(chan struct{})
-	go commond.Loop(stop)
+	go func() {
+		<-sg
+		close(stop)
+	}()
 
-	<-sg
-	fmt.Println("Interrupted")
-	close(stop)
+	commond.Loop(stop)
 }

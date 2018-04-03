@@ -6,6 +6,24 @@ import (
 	"time"
 )
 
+func delayed(ch <-chan struct{}, dur string) chan struct{} {
+	m, err := time.ParseDuration(dur)
+	if err != nil {
+		m = time.Second
+	}
+	c := make(chan struct{})
+	go func() {
+		select {
+		case <-ch:
+		}
+		select {
+		case <-time.After(m):
+		}
+		close(c)
+	}()
+	return c
+}
+
 // Entry setup commond
 func Entry(theLogger func(string)) {
 	common.Entry(theLogger)
@@ -29,7 +47,7 @@ func addModule(m common.Module, stop <-chan struct{}) {
 
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
-	err := setupAmqp(stop)
+	err := setupAmqp(delayed(stop, "1s"))
 	if err != nil {
 		panic(err)
 	}
@@ -56,12 +74,19 @@ func Loop(stop <-chan struct{}) {
 	common.RL.Info(common.Core, "main", "Started event loop")
 
 	m, _ := time.ParseDuration("60s")
+	rpt:
 	for {
 		common.SR.Report(common.Core)
 		select {
 		case <-stop:
-			return
+			common.SL("Received signal to stop")
+			common.RL.Fatal(common.Core, "main", "Received signal to stop")
+			break rpt
 		case <-time.After(m):
 		}
+	}
+	m, _ = time.ParseDuration("2s")
+	select {
+	case <-time.After(m):
 	}
 }
