@@ -2,6 +2,6 @@ FROM node:8-alpine
 
 COPY . .
 
-CMD ["yarn", "start"]
+CMD ["yarn", "start:prod"]
 
 EXPOSE 3000

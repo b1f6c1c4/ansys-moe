@@ -20,7 +20,11 @@ const makeQueueStatus = () => new Promise((resolve) => {
     q.subscribe({
       routingKeyInPayload: true,
     }, (msg) => {
-      emitter.emit('status', msg);
+      try {
+        emitter.emit('status', msg);
+      } catch (e) {
+        logger.error('Emitting status', e);
+      }
     });
     logger.info(`Status queue ${q.name} ready`);
     resolve();
@@ -41,7 +45,11 @@ const makeQueueLog = () => new Promise((resolve) => {
     q.subscribe({
       routingKeyInPayload: true,
     }, (msg) => {
-      emitter.emit('log', msg);
+      try {
+        emitter.emit('log', msg);
+      } catch (e) {
+        logger.error('Emitting log', e);
+      }
     });
     logger.info(`Log queue ${q.name} ready`);
     resolve();

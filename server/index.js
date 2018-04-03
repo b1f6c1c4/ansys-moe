@@ -58,10 +58,14 @@ function runApp() {
       path: '/',
       server,
     });
+    wss.on('connection', () => {
+      logger.info('WS conencted');
+    });
     wss.broadcast = (data) => {
+      const d = JSON.stringify(data);
       wss.clients.forEach((client) => {
         if (client.readyState === websocket.OPEN) {
-          client.send(data);
+          client.send(d);
         }
       });
     };
