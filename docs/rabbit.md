@@ -11,13 +11,13 @@
   * javascript - javascript as a calculator.
 * Callback:
   * action - trigger state change after execution.
-    - (AnsysAction)
+    - kind:ansys (AnsysAction)
 * Exchange:
   * monitor - system status, don't persist.
-    * `status:<type>[:<cId>]` (StatusReport)
-    * `log:<type>[:<cId>]` (LogReport)
+    * `status.<kind>[.<cId>]` (StatusReport)
+    * `log.<kind>[.<cId>]` (LogReport)
   * cancel - kill execution.
-    * `cancel:<type>:<cId>` (null)
+    * `cancel.<kind>.<cId>` (null)
 
 # Data Structures
 
@@ -46,31 +46,22 @@
     Download `storage/{file}` to `data/{cId}/{file.name}`
     Save `script` to `data/{cId}/script.vbs`
     Run `batchsave` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/ansys.log`
+    Log to `data/{cId}/mutate.log`
     Upload `data/{cId}/` to `storage/{cId}/`
-    Report finished, ack the command
     Drop directory `data/{cId}/`
 
   - `solve`
 
-    Download `storage/{file}` to `data/{cId}/{file.name}`
-    Run `batchsolve` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/ansys.log`
-    Report system status and log difference
-    Upload `data/{cId}/` to `storage/{cId}/`
-    Report finished, ack the command
-    Drop directory `data/{cId}/`
-
-  - `extract`
-
     Make directory `data/{cId}/output`
     Download `storage/{file}` to `data/{cId}/{file.name}`
+    Run `batchsolve` over `data/{cId}/{file.name}`
+    Log to `data/{cId}/solve.log`
+    Report system status and log difference
     Save `script` to `data/{cId}/script.vbs`
     Replace `$OUT_DIR` in `script` to `data/{cId}/output`
     Run `batchextract` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/ansys.log`
+    Log to `data/{cId}/extract.log`
     Upload `data/{cId}/` to `storage/{cId}/`
-    Report finished, ack the command
     Drop directory `data/{cId}/`
 
 - file (string, required)
@@ -80,6 +71,10 @@
 
 - type (enum, required)
   - `failure`
-  - `success`
-- phase (string)
-- message (string)
+
+    If anything obviously wrong happens
+
+  - `done`
+
+    If the procedure finished successfully
+
