@@ -164,9 +164,9 @@ func publishStatus(stt <-chan *common.StatusReport) {
 	for {
 		select {
 		case st := <-stt:
-			key := "status:" + st.Kind
+			key := "status." + st.Kind
 			if st.CommandID != "" {
-				key = key + ":" + st.CommandID
+				key = key + "." + st.CommandID
 			}
 			str, err := json.Marshal(st)
 			if err != nil {
@@ -195,9 +195,9 @@ func publishLog(log chan *common.LogReport) {
 	for {
 		select {
 		case lg := <-log:
-			key := "log:" + lg.Kind
+			key := "log." + lg.Kind
 			if lg.CommandID != "" {
-				key = key + ":" + lg.CommandID
+				key = key + "." + lg.CommandID
 			}
 			str, err := json.Marshal(lg)
 			if err != nil {
