@@ -19,7 +19,7 @@ services:
       BACKEND_LOG: "${DEBUG_LEVEL}"
       DATA_PATH: "/ansys"
     volumes:
-      - /root/ansys-moe:/ansys
+      - /root/ansys-moe/storage:/ansys
     networks:
       - ansys-moe
 
@@ -32,6 +32,66 @@ services:
       RABBIT_PORT: "${RABBIT_PORT}"
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
+    networks:
+      - ansys-moe
+
+  etcd1:
+    image: quay.io/coreos/etcd:v3.2.18
+    restart: always
+    ports:
+      - "23791:2379"
+    volumes:
+      - /root/ansys-moe/etcd1:/etcd_data
+    environment:
+      ETCD_DATA_DIR: /etcd_data
+      ETCD_NAME: etcd1
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd1:2380
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: ansys-moe-etcd
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd1:2379
+    networks:
+      - ansys-moe
+
+  etcd2:
+    image: quay.io/coreos/etcd:v3.2.18
+    restart: always
+    ports:
+      - "23792:2379"
+    volumes:
+      - /root/ansys-moe/etcd2:/etcd_data
+    environment:
+      ETCD_DATA_DIR: /etcd_data
+      ETCD_NAME: etcd2
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd2:2380
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: ansys-moe-etcd
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd2:2379
+    networks:
+      - ansys-moe
+
+  etcd3:
+    image: quay.io/coreos/etcd:v3.2.18
+    restart: always
+    ports:
+      - "23793:2379"
+    volumes:
+      - /root/ansys-moe/etcd3:/etcd_data
+    environment:
+      ETCD_DATA_DIR: /etcd_data
+      ETCD_NAME: etcd3
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd3:2380
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: ansys-moe-etcd
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd3:2379
     networks:
       - ansys-moe
 
