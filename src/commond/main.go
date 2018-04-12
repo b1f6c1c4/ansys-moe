@@ -4,6 +4,7 @@ import (
 	"commond/ansys"
 	"commond/common"
 	"commond/mma"
+	"commond/rlang"
 	"time"
 )
 
@@ -35,15 +36,17 @@ func addModule(m common.Module, stop <-chan struct{}) {
 	ch := make(chan *common.RawCommand)
 	go subscribeCommand(m.GetKind(), ch)
 	common.RL.Info(m, "main", "Added module")
-	for {
-		select {
-		case raw := <-ch:
-			common.SL("Received command of kind " + m.GetKind())
-			go m.Run(raw)
-		case <-stop:
-			return
+	go func() {
+		for {
+			select {
+			case raw := <-ch:
+				common.SL("Received command of kind " + m.GetKind())
+				go m.Run(raw)
+			case <-stop:
+				return
+			}
 		}
-	}
+	}()
 }
 
 // Loop listen on events
@@ -72,6 +75,9 @@ func Loop(stop <-chan struct{}) {
 	}
 	if common.C.EnableMma {
 		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	}
+	if common.C.EnableRLang {
+		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
 	}
 
 	common.SL("Started event loop")
