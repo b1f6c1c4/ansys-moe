@@ -8,7 +8,6 @@ const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const { schema } = require('./graphql');
 const mongo = require('./mongo');
 const status = require('./status');
-const file = require('./file');
 const logger = require('./logger')('index');
 
 logger.info('Versions', process.versions);
@@ -95,8 +94,6 @@ if (process.env.NODE_ENV !== 'production') {
     endpointURL: '/graphql',
   }));
 }
-
-app.use('/storage', file);
 
 app.use('/', (req, res) => res.status(404).send());
 
