@@ -1,9 +1,12 @@
 package common
 
 import (
+	"fmt"
 	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strconv"
 )
 
 // GlobalConfigT describes ./config.yaml
@@ -17,6 +20,17 @@ type GlobalConfigT struct {
 
 func loadConfig(exeDir string) GlobalConfigT {
 	cfg := GlobalConfigT{}
+	cfg.RemoteUrl = os.Getenv("REMOTE_URL")
+	cfg.RabbitUrl = fmt.Sprintf(
+		"amqp://%s:%s@%s:%s/",
+		os.Getenv("RABBIT_USER"),
+		os.Getenv("RABBIT_PASS"),
+		os.Getenv("RABBIT_HOST"),
+		os.Getenv("RABBIT_PORT"),
+	)
+	cfg.Prefetch, _ = strconv.Atoi(os.Getenv("PREFETCH"))
+	cfg.EnableAnsys = os.Getenv("ANSYS") != ""
+	cfg.EnableMma = os.Getenv("MATHEMATICA") != ""
 	txt, err := ioutil.ReadFile(filepath.Join(exeDir, "config.yaml"))
 	if err != nil {
 		SL("Cannot open config.yaml")
