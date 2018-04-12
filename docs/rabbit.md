@@ -6,11 +6,13 @@
   * ansys (AnsysCommand) - every single ansys execution.
   * moe - every single moe execution.
 * Calculators:
+  * rlang (RLangCommand) - rlang as a calculator.
   * mathematica (MmaCommand) - mathematica as a calculator.
   * matlab - matlab as a calculator.
   * javascript - javascript as a calculator.
 * Callback:
   * action - trigger state change after execution.
+    - kind:rlang (RLangAction)
     - kind:ansys (AnsysAction)
     - kind:mathematica (MmaAction)
 * Exchange:
@@ -78,6 +80,23 @@
   - `done`
 
     If the procedure finished successfully
+
+## RLangCommand (object)
+
+- script (string, required)
+
+## RLangAction (object)
+
+- type (enum, required)
+  - `failure`
+
+    If anything obviously wrong happens
+
+  - `done`
+
+    If the procedure finished successfully
+
+- result (string)
 
 ## MmaCommand (object)
 
