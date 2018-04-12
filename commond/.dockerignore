@@ -1,0 +1,9 @@
+*~
+*.swp
+*.swo
+docs
+bin
+pkg
+**/.git
+**/example
+**/examples

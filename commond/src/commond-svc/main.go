@@ -34,7 +34,7 @@ func usage(errmsg string) {
 }
 
 func main() {
-	const svcName = "ansysd"
+	const svcName = "commond"
 
 	isIntSess, err := svc.IsAnInteractiveSession()
 	if err != nil {
@@ -55,7 +55,7 @@ func main() {
 		runService(svcName, true)
 		return
 	case "install":
-		err = installService(svcName, "my service")
+		err = installService(svcName, "ansys-moe commond")
 	case "remove":
 		err = removeService(svcName)
 	case "start":
