@@ -6,11 +6,11 @@ services:
     restart: always
     ports:
       - "8888:80"
-    links:
+    depends_on:
       - storage
       - monitor
     networks:
-      - ansys-moe
+      - prod
 
   storage:
     image: ansys-storage
@@ -21,19 +21,39 @@ services:
     volumes:
       - /root/ansys-moe/storage:/ansys
     networks:
-      - ansys-moe
+      - prod
 
   monitor:
     image: ansys-monitor
     restart: always
     environment:
       BACKEND_LOG: "${DEBUG_LEVEL}"
-      RABBIT_HOST: "${RABBIT_HOST}"
-      RABBIT_PORT: "${RABBIT_PORT}"
+      RABBIT_HOST: rabbit
+      RABBIT_PORT: 5672
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
+    depends_on:
+      rabbit:
+        condition: service_healthy
     networks:
-      - ansys-moe
+      - prod
+
+  rlangd:
+    image: ansys-commond
+    restart: always
+    environment:
+      REMOTE_URL: http://nginx
+      RABBIT_HOST: rabbit
+      RABBIT_PORT: 5672
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASS: "${RABBIT_PASS}"
+      PREFETCH: 2
+      RLANG: "true"
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    networks:
+      - prod
 
   etcd1:
     image: quay.io/coreos/etcd:v3.2.18
@@ -53,7 +73,7 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd1:2379
     networks:
-      - ansys-moe
+      - prod
 
   etcd2:
     image: quay.io/coreos/etcd:v3.2.18
@@ -73,7 +93,7 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd2:2379
     networks:
-      - ansys-moe
+      - prod
 
   etcd3:
     image: quay.io/coreos/etcd:v3.2.18
@@ -93,8 +113,24 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd3:2379
     networks:
-      - ansys-moe
+      - prod
+
+  rabbit:
+    image: rabbitmq:management-alpine
+    restart: always
+    ports:
+      - "9511:5672"
+      - "9512:15672"
+    volumes:
+      - /root/ansys-moe/rabbit:/var/lib/rabbitmq/mnesia
+    healthcheck:
+      test: ["CMD", "wget", "-O-", "http://localhost:15672"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+    networks:
+      - prod
 
 networks:
-  ansys-moe:
+  prod:
     driver: bridge
