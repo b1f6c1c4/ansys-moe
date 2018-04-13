@@ -1,4 +1,4 @@
-FROM python:3-alpine
+FROM python:3
 
 WORKDIR /usr/src/ansys-core
 COPY requirements.txt ./
