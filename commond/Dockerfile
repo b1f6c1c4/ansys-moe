@@ -1,5 +1,5 @@
-FROM golang:alpine as builder
-COPY . /go
+FROM golang:latest as builder
+COPY src /go/src
 RUN go install commond-std
 
 FROM r-base:latest
