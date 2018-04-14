@@ -8,4 +8,4 @@ RUN pipenv install --system
 
 COPY . .
 
-CMD ["python", "."]
+CMD ["python", "./src"]
