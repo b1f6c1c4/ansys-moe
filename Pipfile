@@ -9,6 +9,7 @@ pika = "*"
 futures = "==3.1.1"
 
 [dev-packages]
+pylint = "*"
 
 [requires]
 python_version = "3.6"
