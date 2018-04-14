@@ -1,3 +1,5 @@
+.env
+
 # Artifact
 __pycache__/
 *.py[cod]

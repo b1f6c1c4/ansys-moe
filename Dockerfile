@@ -1,8 +1,10 @@
-FROM python:3
+FROM python:3.6
+
+RUN pip install pipenv
 
 WORKDIR /usr/src/ansys-core
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY Pipfile* ./
+RUN pipenv install --system
 
 COPY . .
 

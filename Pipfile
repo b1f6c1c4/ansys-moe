@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+etcd3 = "*"
+pika = "*"
+futures = "==3.1.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
