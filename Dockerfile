@@ -1,7 +1,10 @@
-FROM node:8-alpine
+FROM node:9.11.1-alpine
+
+WORKDIR /usr/src/ansys-petri
+COPY package.json .
+COPY yarn.lock .
+RUN ["yarn"]
 
 COPY . .
 
 CMD ["yarn", "start:prod"]
-
-EXPOSE 3000

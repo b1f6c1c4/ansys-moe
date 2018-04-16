@@ -1,35 +1,22 @@
-const etcdjs = require('etcdjs');
+const { Etcd3 } = require('etcd3');
 const logger = require('./logger')('etcd');
 
-let etcd;
+let client;
 
-const connectLocal = async () => {
-  const endpoints = JSON.parse(process.env.ETCD_ENDPOINTS || '["localhost:2379"]');
+const connect = () => {
+  const raw = JSON.parse(process.env.ETCD_ENDPOINTS || '["localhost:2379"]');
+  const endpoints = raw.map((r) => r.startsWith('http') ? r : `http://${r}`);
   logger.debug('Etcd endpoints', endpoints);
 
-  try {
-    logger.info('Connecting etcd...');
-    etcd = etcdjs(endpoints, {
-      refresh: true,
-      json: true,
-    });
-    logger.info('Etcd client prepared');
-  } catch (e) {
-    logger.error('Calling etcdjs()', e);
-    throw e;
-  }
-};
-
-const connect = async () => {
-  if (etcd) {
-    logger.warn('Try connecting etcd mult times');
-    return;
-  }
-
-  await connectLocal();
+  client = new Etcd3({
+    hosts: endpoints,
+  });
 };
 
 module.exports = {
   connect,
-  etcd,
 };
+
+Object.defineProperty(module.exports, 'etcd', {
+  get: () => client,
+});

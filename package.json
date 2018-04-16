@@ -5,24 +5,15 @@
   "author": "b1f6c1c4 <b1f6c1c4@gmail.com>",
   "scripts": {
     "build": "node tag.js",
-    "start": "cross-env NODE_ENV=development nodemon server",
-    "start:prod": "cross-env NODE_ENV=production node server",
+    "start": "nodemon server",
+    "start:prod": "node server",
     "lint": "eslint --ignore-path .gitignore ."
   },
   "private": true,
   "dependencies": {
-    "apollo-server-express": "^1.3.4",
-    "body-parser": "^1.18.2",
     "chalk": "^2.3.2",
-    "cors": "^2.8.4",
-    "cross-env": "^5.1.4",
-    "etcdjs": "^2.4.2",
-    "express": "^4.16.3",
-    "graphql": "^0.13.2",
-    "graphql-advanced-projection": "^1.0.1",
-    "graphql-tools": "^2.24.0",
+    "etcd3": "^0.2.9",
     "lodash": "^4.17.5",
-    "nocache": "^2.0.0",
     "winston": "^3.0.0-rc3"
   },
   "devDependencies": {
