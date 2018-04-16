@@ -3,9 +3,8 @@ const PetriRuntime = require('./runtime');
 const logger = require('../logger')('petri');
 
 class PetriNet {
-  constructor(db, rootRegex) {
+  constructor(db) {
     this.db = db;
-    this.rootRegex = rootRegex;
     this.internals = {};
     this.externals = {};
   }

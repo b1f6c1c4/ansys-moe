@@ -1,5 +1,7 @@
 // const _ = require('lodash');
-const etcd = require('./etcd');
+// const { PetriNet } = require('./petri');
+// const EtcdAdapter = require('./adapter');
+// const etcd = require('./etcd');
 const amqp = require('./amqp');
 require('./status');
 const logger = require('./logger')('index');
@@ -27,9 +29,14 @@ process.on('SIGTERM', () => {
   logger.fatalDie('SIGTERM received');
 });
 
+// const petri = new PetriNet(new EtcdAdapter(etcd.etcd));
+// petri.register();
+
 amqp.emitter.on('action', (msg) => {
-  logger.info('Received message', msg);
+  logger.info('Received message', msg.body);
+  setTimeout(() => msg.obj.acknowledge(false), 1000);
+  // petri.dispatch();
 });
 
-etcd.connect();
+// etcd.connect();
 amqp.connect();
