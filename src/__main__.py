@@ -2,6 +2,7 @@ import os
 import etcd3
 import pika
 from petri import PetriNet
+import logging
 
 def get_etcd():
     host = os.environ.get('ETCD_HOST', 'localhost')
@@ -35,13 +36,28 @@ etcd = get_etcd()
 # )
 # amqp.close()
 
+logging.basicConfig(level=logging.DEBUG)
+
 # Create petri net
 petri = PetriNet(
     etcd,
-    root_regex='/[a-z0-9]+/state',
+    root_regex=r'(?P<root>/[a-z0-9]+)/state',
 )
 
+@petri.static(tag='INIT')
+def init(_, e, payload):
+    print(payload)
+    e.incr('/init', 1)
+    return ['/init']
+
 @petri.static(listen=['/init'])
-def on_init(changed, e):
+def on_init(_, e):
     e.decr('/init', 1)
     e.incr('/inited', 1)
+    return ['/inited']
+
+@petri.static(listen=['/inited'])
+def on_inited(_, e):
+    e.decr('/inited', 1)
+
+petri.dispatch(('/haha/state', 'INIT', 123))

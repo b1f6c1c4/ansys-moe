@@ -1,11 +1,19 @@
+import re
 import logging
 
-class EtcdWrapper:
+class PetriRuntime:
     def __init__(self, etcd, base, root):
         self.__etcd = etcd
         self.__base = base
         self.__root = root
         self.__map = {}
+        self.__lock = self.__etcd.lock(self.__base)
+
+    def __enter__(self):
+        self.__lock.acquire()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.__lock.release()
 
     @property
     def base(self):
@@ -41,6 +49,7 @@ class PetriNet:
     def __init__(self, etcd, root_regex):
         self.__etcd = etcd
         self.__root_regex = root_regex
+        self.__root_regex_compiled = re.compile('^'+self.__root_regex+'$')
         self.__registry = []
         self.__tags = {}
 
@@ -79,13 +88,41 @@ class PetriNet:
             self.__registry.append(reg)
         return decorator
 
-    def _execute(self, reg, changed, e):
-        kind, func = reg
+    def dispatch(self, action):
+        base, tag, payload = action
+        m = self.__root_regex_compiled.search(base)
+        root = m.group('root')
+        e = PetriRuntime(self.__etcd, base, root)
+        with e:
+            changed = self._execute_external(tag, e, payload)
+            self._execute_all(changed, e)
+            e.finalize()
+
+    def _execute_all(self, changed, e):
+        chg = changed
+        while chg:
+            chg = {rst
+                    for c in chg
+                    for reg in self.__registry
+                    if PetriNet._listens(reg, c)
+                    for rst in PetriNet._execute(reg, chg, e) or []}
+
+    @staticmethod
+    def _listens(reg, c):
+        listen = reg[2]
+        if not listen:
+            return False
+        return any(re.match('^'+l+'$', c) for l in listen)
+
+    @staticmethod
+    def _execute(reg, changed, e):
+        kind, func, *_ = reg
         try:
             logging.debug('Will execute %s %s', kind, func.__name__)
             chg = func(changed, e)
+            chgx = PetriNet._finalize_execution(reg, e, chg)
             logging.info('%s changed %s', func.__name__, chg)
-            return chg
+            return chgx
         except Exception as ex:
             logging.error('Error during executing %s: %s', func.__name__, ex)
 
@@ -94,11 +131,26 @@ class PetriNet:
             logging.warning('Tag %s not found', tag)
             return None
         reg = self.__tags[tag]
-        kind, func = reg
+        kind, func, *_ = reg
         try:
             logging.debug('Will execute %s %s due to %s', kind, func.__name__, tag)
             chg = func(None, e, payload)
+            chgx = PetriNet._finalize_execution(reg, e, chg)
             logging.info('%s changed %s', func.__name__, chg)
-            return chg
+            return chgx
         except Exception as ex:
             logging.error('Error during executing %s due to %s: %s', func.__name__, tag, ex)
+
+    @staticmethod
+    def _finalize_execution(reg, e, chg):
+        kind, func, *_ = reg
+        if kind == 'static':
+            return chg
+        if kind == 'dynamic':
+            key_num = reg[3]
+            st, dy = chg
+            if e.get(key_num) != 0:
+                raise ValueError('Reentrance: '+func.__name__)
+            e.incr(key_num, 1 + len(dy))
+            return st + dy
+        raise ValueError('Kind not supported: '+kind)
