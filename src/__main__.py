@@ -1,6 +1,7 @@
 import os
 import etcd3
 import pika
+from petri import PetriNet
 
 def get_etcd():
     host = os.environ.get('ETCD_HOST', 'localhost')
@@ -17,19 +18,30 @@ def get_amqp():
     return pika.BlockingConnection(par)
 
 etcd = get_etcd()
-etcd.put('/hello', 'world')
-print(etcd.get('/hello'))
-etcd.delete('/hello')
+# etcd.put('/hello', 'world')
+# print(etcd.get('/hello'))
+# etcd.delete('/hello')
+#
+# amqp = get_amqp()
+# ch = amqp.channel()
+# ch.basic_publish(
+#     exchange='',
+#     routing_key='action',
+#     body='{"hello":"world"}',
+#     properties=pika.BasicProperties(
+#         content_type='application/json',
+#         delivery_mode=2,
+#     ),
+# )
+# amqp.close()
 
-amqp = get_amqp()
-ch = amqp.channel()
-ch.basic_publish(
-    exchange='',
-    routing_key='action',
-    body='{"hello":"world"}',
-    properties=pika.BasicProperties(
-        content_type='application/json',
-        delivery_mode=2,
-    ),
+# Create petri net
+petri = PetriNet(
+    etcd,
+    root_regex='/[a-z0-9]+/state',
 )
-amqp.close()
+
+@petri.static(listen=['/init'])
+def on_init(changed, e):
+    e.decr('/init', 1)
+    e.incr('/inited', 1)
