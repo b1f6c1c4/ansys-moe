@@ -1,8 +1,9 @@
 import os
+import logging
 import etcd3
 import pika
-import logging
 from petri import PetriNet
+from petri.transition import Static
 
 def get_etcd():
     host = os.environ.get('ETCD_HOST', 'localhost')
@@ -44,18 +45,23 @@ petri = PetriNet(
     root_regex=r'(?P<root>/[a-z0-9]+)/state',
 )
 
-@petri.static(tag='INIT')
+@petri
+@Static(tag='INIT')
 def init(_, e, payload):
     print(payload)
     e.incr('/init', 1)
 
-@petri.static(listen=['/init'])
+@petri
+@Static()
 def on_init(_, e):
-    e.decr('/init', 1)
+    if not e.decr('/init', 1):
+        return
     e.incr('/inited', 1)
 
-@petri.static(listen=['/inited'])
+@petri
+@Static()
 def on_inited(_, e):
-    e.decr('/inited', 1)
+    if not e.decr('/inited', 1):
+        return
 
 petri.dispatch(('/haha/state', 'INIT', 123))
