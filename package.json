@@ -5,21 +5,36 @@
   "author": "b1f6c1c4 <b1f6c1c4@gmail.com>",
   "scripts": {
     "build": "node tag.js",
-    "start": "nodemon server",
-    "start:prod": "node server",
-    "lint": "eslint --ignore-path .gitignore ."
+    "start": "cross-env NODE_ENV=development nodemon server",
+    "start:prod": "cross-env NODE_ENV=production node server",
+    "lint": "eslint --ignore-path .gitignore .",
+    "pretest": "yarn lint",
+    "test": "cross-env NODE_ENV=test jest --forceExit --coverage",
+    "test:watch": "cross-env NODE_ENV=test jest --forceExit --coverage --runInBand --watchAll"
   },
   "private": true,
+  "jest": {
+    "collectCoverageFrom": [
+      "server/petri/**/*.js",
+      "!server/petri/**/*.test.js"
+    ],
+    "moduleDirectories": [
+      "node_modules",
+      "server"
+    ],
+    "testRegex": "tests/.*\\.test\\.js$"
+  },
   "dependencies": {
     "chalk": "^2.3.2",
-    "etcd3": "^0.2.9",
+    "cross-env": "^5.1.4",
     "lodash": "^4.17.5",
     "winston": "^3.0.0-rc3"
   },
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.10.0",
+    "eslint-plugin-import": "^2.11.0",
+    "jest-cli": "^22.4.3",
     "shelljs": "^0.8.1"
   }
 }
