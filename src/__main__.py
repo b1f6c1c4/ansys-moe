@@ -1,8 +1,8 @@
 import os
 import etcd3
 import pika
-from petri import PetriNet
 import logging
+from petri import PetriNet
 
 def get_etcd():
     host = os.environ.get('ETCD_HOST', 'localhost')
@@ -48,13 +48,11 @@ petri = PetriNet(
 def init(_, e, payload):
     print(payload)
     e.incr('/init', 1)
-    return ['/init']
 
 @petri.static(listen=['/init'])
 def on_init(_, e):
     e.decr('/init', 1)
     e.incr('/inited', 1)
-    return ['/inited']
 
 @petri.static(listen=['/inited'])
 def on_inited(_, e):

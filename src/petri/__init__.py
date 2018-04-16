@@ -7,6 +7,7 @@ class PetriRuntime:
         self.__base = base
         self.__root = root
         self.__map = {}
+        self.__incrd = set()
         self.__lock = self.__etcd.lock(self.__base)
 
     def __enter__(self):
@@ -23,6 +24,11 @@ class PetriRuntime:
     def root(self):
         return self.__root
 
+    def clear_incrd(self):
+        t = self.__incrd
+        self.__incrd = set()
+        return t
+
     def get(self, key):
         if key not in self.__map:
             prev = self.__etcd.get(self.__base + key)
@@ -30,10 +36,15 @@ class PetriRuntime:
         return self.__map[key]
 
     def incr(self, key, val):
+        if val <= 0:
+            raise ValueError('val must be positive')
         self.get(key)
         self.__map[key] += val
+        self.__incrd.add(key)
 
     def decr(self, key, val):
+        if val <= 0:
+            raise ValueError('val must be positive')
         self.get(key)
         if self.__map[key] < val:
             return False
@@ -55,7 +66,6 @@ class PetriNet:
 
     def static(self, listen=None, tag=None):
         """Declare an static-input static-output transition
-        f MUST return [changed_keys]
         If tag == None:
             Call f(changed, e) when a key listened changed
         If tag != None:
@@ -72,7 +82,7 @@ class PetriNet:
 
     def dynamic_fork(self, key_num, listen=None, tag=None):
         """Declare an static-input dynamic-output transition
-        f MUST return ([static_changed_keys], [dynamic_changed_keys])
+        f MUST return number of dynamic output
         f MUST NOT manually modify key_num
         If tag == None:
             Call f(changed, e) when a key listened changed
@@ -95,20 +105,24 @@ class PetriNet:
         e = PetriRuntime(self.__etcd, base, root)
         with e:
             changed = self._execute_external(tag, e, payload)
-            self._execute_all(changed, e)
+            self._execute_all(e)
             e.finalize()
 
-    def _execute_all(self, changed, e):
-        chg = changed
+    def _execute_all(self, e):
+        chg = e.clear_incrd()
         while chg:
-            chg = {rst
+            print(chg)
+            todo = {reg
                     for c in chg
                     for reg in self.__registry
-                    if PetriNet._listens(reg, c)
-                    for rst in PetriNet._execute(reg, chg, e) or []}
+                    if PetriNet._listens(reg, c)}
+            for reg in todo:
+                PetriNet._execute(reg, chg, e)
+            chg = e.clear_incrd()
 
     @staticmethod
     def _listens(reg, c):
+        print(reg, c)
         listen = reg[2]
         if not listen:
             return False
@@ -119,38 +133,33 @@ class PetriNet:
         kind, func, *_ = reg
         try:
             logging.debug('Will execute %s %s', kind, func.__name__)
-            chg = func(changed, e)
-            chgx = PetriNet._finalize_execution(reg, e, chg)
-            logging.info('%s changed %s', func.__name__, chg)
-            return chgx
+            num = func(changed, e)
+            PetriNet._finalize_execution(reg, e, num)
         except Exception as ex:
             logging.error('Error during executing %s: %s', func.__name__, ex)
 
     def _execute_external(self, tag, e, payload):
         if tag not in self.__tags:
             logging.warning('Tag %s not found', tag)
-            return None
+            return
         reg = self.__tags[tag]
         kind, func, *_ = reg
         try:
             logging.debug('Will execute %s %s due to %s', kind, func.__name__, tag)
-            chg = func(None, e, payload)
-            chgx = PetriNet._finalize_execution(reg, e, chg)
-            logging.info('%s changed %s', func.__name__, chg)
-            return chgx
+            num = func(None, e, payload)
+            PetriNet._finalize_execution(reg, e, num)
         except Exception as ex:
             logging.error('Error during executing %s due to %s: %s', func.__name__, tag, ex)
 
     @staticmethod
-    def _finalize_execution(reg, e, chg):
+    def _finalize_execution(reg, e, num):
         kind, func, *_ = reg
         if kind == 'static':
-            return chg
-        if kind == 'dynamic':
+            pass
+        elif kind == 'dynamic':
             key_num = reg[3]
-            st, dy = chg
             if e.get(key_num) != 0:
                 raise ValueError('Reentrance: '+func.__name__)
-            e.incr(key_num, 1 + len(dy))
-            return st + dy
-        raise ValueError('Kind not supported: '+kind)
+            e.incr(key_num, 1 + num)
+        else:
+            raise ValueError('Kind not supported: '+kind)
