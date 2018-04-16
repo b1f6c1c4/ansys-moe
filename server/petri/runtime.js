@@ -7,6 +7,7 @@ class PetriRuntime {
     this.base = base;
     this.cache = {};
     this.dirty = false;
+    this.dyns = [];
 
     this.get = this.get.bind(this);
   }
@@ -26,10 +27,22 @@ class PetriRuntime {
     }
     await Promise.all(_.keys(obj).map(this.get));
     logger.trace('Incr', obj);
+    const dyns = {};
     _.forIn(obj, (value, key) => {
       this.cache[key] += value;
       this.dirty = true;
+      this.dyns.filter((d) => key.startsWith(d)).forEach((d) => {
+        const k = `${d}/#`;
+        dyns[k] = (dyns[k] || 0) + value;
+      });
     });
+    if (_.keys(dyns).length) {
+      logger.trace('Incr dyns', dyns);
+      await Promise.all(_.keys(dyns).map(this.get));
+      _.forIn(dyns, (value, key) => {
+        this.cache[key] += value;
+      });
+    }
   }
 
   async decr(obj) {
@@ -46,6 +59,11 @@ class PetriRuntime {
       this.dirty = true;
     });
     return true;
+  }
+
+  async dyn(path) {
+    await this.incr({ [path]: 1 });
+    this.dyns.push(path);
   }
 
   async finalize() {

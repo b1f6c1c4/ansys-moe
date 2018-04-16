@@ -55,7 +55,7 @@ describe('PetriNet', () => {
     }, async (r, payload) => {
       expect(payload).toEqual('pld');
       await r.dyn('/f');
-      await r.incr(_.mapKeys({ a: 1, b: 2 }, (k) => `/f/${k}/init`));
+      await r.incr(_.mapKeys({ a: 1, b: 2 }, (v, k) => `/f/${k}/init`));
     });
 
     await petri.dispatch('/xx/state', 'init', 'pld');
@@ -76,7 +76,7 @@ describe('PetriNet', () => {
       external: true,
     }, async (r, payload) => {
       expect(payload).toEqual('pld');
-      await r.incr(_.mapKeys({ a: 1, b: 2 }, (k) => `/f/${k}/init`));
+      await r.incr(_.mapKeys({ a: 1, b: 2 }, (v, k) => `/f/${k}/init`));
     });
 
     petri.register({

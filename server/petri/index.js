@@ -39,8 +39,8 @@ class PetriNet {
       r.dirty = false;
       // eslint-disable-next-line no-await-in-loop
       await Promise.all(_.values(this.internals).map(({ func: f }) => f(r)));
-      // eslint-disable-next-line no-plus-plus
-      if (--maxDepth === 0) {
+      // eslint-disable-next-line no-plusplus
+      if (--maxDepth <= 0) {
         throw new Error('Potential dead loop');
       }
     }
