@@ -81,7 +81,7 @@ describe('PetriNet', () => {
 
     petri.register({
       name: 'f/init',
-      root: /^\/f\/[a-z0-0]+/,
+      root: /^\/f\/[a-z0-9]+/,
     }, async (r) => {
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
@@ -111,14 +111,14 @@ describe('PetriNet', () => {
     }, async (r, payload) => {
       expect(payload).toEqual('pld');
       await r.dyn('/f');
-      await r.incr(_.mapKeys({ a: 1, b: 2 }, (k) => `/f/${k}/init`));
+      await r.incr(_.mapKeys({ a: 1, b: 2 }, (v, k) => `/f/${k}/init`));
     });
 
     petri.register({
       name: 'f/gather',
-      root: /^\/f\/[a-z0-0]+/,
+      root: /^\/f\/[a-z0-9]+/,
     }, async (r) => {
-      if (await r.decr({ '/inst': 1 })) {
+      if (await r.decr({ '/init': 1 })) {
         await r.incr({ '../@': 1 });
       }
     });

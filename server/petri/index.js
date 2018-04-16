@@ -36,8 +36,11 @@ class PetriNet {
     let maxDepth = 10;
     while (r.dirty) {
       r.dirty = false;
-      // eslint-disable-next-line no-await-in-loop
-      await Promise.all(_.values(this.internals).map((rg) => this.execute(base, r, rg)));
+      // eslint-disable-next-line no-restricted-syntax
+      for (const rg of _.values(this.internals)) {
+        // eslint-disable-next-line no-await-in-loop
+        await this.execute(base, r, rg);
+      }
       // eslint-disable-next-line no-plusplus
       if (--maxDepth <= 0) {
         throw new Error('Potential dead loop');
@@ -46,8 +49,10 @@ class PetriNet {
     await r.finalize();
   }
 
+  /* eslint-disable no-param-reassign */
   async execute(base, r, { root, func }, payload) {
     if (!root) {
+      r.root = '';
       await func(r, payload);
       return;
     }
@@ -60,12 +65,12 @@ class PetriNet {
       .value();
     // eslint-disable-next-line no-restricted-syntax
     for (const v of vals) {
-      // eslint-disable-next-line no-param-reassign
       r.root = v;
       // eslint-disable-next-line no-await-in-loop
       await func(r, payload);
     }
   }
+  /* eslint-enable no-param-reassign */
 }
 
 module.exports = {

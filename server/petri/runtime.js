@@ -92,6 +92,24 @@ class PetriRuntime {
     this.dyns.push(p);
   }
 
+  async done(p) {
+    const kt = `${p}/#`;
+    const kf = `${p}/@`;
+    await this.ensure(p);
+    await this.ensure(kt);
+    await this.ensure(kf);
+    const n = this.get(kt);
+    if (this.get(p) > 0 && n === this.get(kf)) {
+      logger.trace(`Done ${this.root}`, p);
+      this.dif(p, -1);
+      this.dif(kt, -n);
+      this.dif(kf, -n);
+      this.dirty = true;
+      return true;
+    }
+    return false;
+  }
+
   async finalize() {
     logger.info(`Finalize to ${this.base}`, this.cache);
     const op = _.mapKeys(this.cache, (v, k) => this.makeDbPath(k));
