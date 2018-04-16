@@ -6,7 +6,7 @@ const nocache = require('nocache');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const { schema } = require('./graphql');
-const mongo = require('./mongo');
+const etcd = require('./etcd');
 const status = require('./status');
 const logger = require('./logger')('index');
 
@@ -111,7 +111,7 @@ function runApp() {
 }
 
 const inits = [];
-inits.push(mongo.connect());
+inits.push(etcd.connect());
 
 Promise.all(inits)
   .then(runApp)
