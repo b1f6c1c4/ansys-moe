@@ -1,10 +1,7 @@
-FROM node:9.11.1-alpine
-
-WORKDIR /usr/src/ansys-petri
-COPY package.json .
-COPY yarn.lock .
-RUN ["yarn", "install", "--production"]
+FROM node:9.11.1
 
 COPY . .
+
+CMD ["yarn", "install", "--production", "--frozen-lockfile"]
 
 CMD ["yarn", "start:prod"]
