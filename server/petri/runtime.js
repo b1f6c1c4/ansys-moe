@@ -48,6 +48,7 @@ class PetriRuntime {
   }
 
   async incr(obj) {
+    /* istanbul ignore if */
     if (!_.every(obj, (value) => value > 0)) {
       throw new Error('value must be positive');
     }
@@ -72,6 +73,7 @@ class PetriRuntime {
   }
 
   async decr(obj) {
+    /* istanbul ignore if */
     if (!_.every(obj, (value) => value > 0)) {
       throw new Error('value must be positive');
     }

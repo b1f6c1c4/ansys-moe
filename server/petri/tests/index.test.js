@@ -13,6 +13,13 @@ describe('PetriNet', () => {
     db = {};
   });
 
+  it('should handle name not found', async (done) => {
+    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    await petri.dispatch('/xx/state', 'ww', 'pp');
+    expect(db).toEqual({});
+    done();
+  });
+
   it('should handle static', async (done) => {
     const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
 
