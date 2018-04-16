@@ -1,6 +1,7 @@
-const _ = require('lodash');
+// const _ = require('lodash');
 const etcd = require('./etcd');
-const status = require('./status');
+const amqp = require('./amqp');
+require('./status');
 const logger = require('./logger')('index');
 
 logger.info('Versions', process.versions);
@@ -26,4 +27,9 @@ process.on('SIGTERM', () => {
   logger.fatalDie('SIGTERM received');
 });
 
+amqp.emitter.on('action', (msg) => {
+  logger.info('Received message', msg);
+});
+
 etcd.connect();
+amqp.connect();

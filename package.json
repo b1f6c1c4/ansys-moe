@@ -25,6 +25,7 @@
     "testRegex": "tests/.*\\.test\\.js$"
   },
   "dependencies": {
+    "amqp": "^0.2.6",
     "chalk": "^2.3.2",
     "cross-env": "^5.1.4",
     "lodash": "^4.17.5",
