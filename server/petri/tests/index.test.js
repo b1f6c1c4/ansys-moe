@@ -81,12 +81,12 @@ describe('PetriNet', () => {
 
     petri.register({
       name: 'f/init',
-      root: /^\/[a-z0-9]+\/f\/[a-z0-0]+/,
+      root: /^\/f\/[a-z0-0]+/,
     }, async (r) => {
-      if (await r.decr({ '/inst': 1 })) {
+      if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
         await r.incr({ '../../x': 1 });
-        await r.incr({ '../../y': 1 });
+        await r.incr({ '../../../y': 1 });
       }
     });
 
@@ -97,7 +97,7 @@ describe('PetriNet', () => {
       '/xx/state/f/b/init': 0,
       '/xx/state/f/b/st': 2,
       '/xx/state/x': 3,
-      '/xx/state/../y': 3,
+      '/xx/y': 3,
     });
     done();
   });
@@ -116,7 +116,7 @@ describe('PetriNet', () => {
 
     petri.register({
       name: 'f/gather',
-      root: /^\/[a-z0-9]+\/f\/[a-z0-0]+/,
+      root: /^\/f\/[a-z0-0]+/,
     }, async (r) => {
       if (await r.decr({ '/inst': 1 })) {
         await r.incr({ '../@': 1 });

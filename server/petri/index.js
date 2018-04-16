@@ -31,20 +31,40 @@ class PetriNet {
       logger.warn('Name not found', name);
       return;
     }
-    const { func } = reg;
     const r = new PetriRuntime(this.db, base);
-    await func(r, payload);
+    await this.execute(base, r, reg, payload);
     let maxDepth = 10;
     while (r.dirty) {
       r.dirty = false;
       // eslint-disable-next-line no-await-in-loop
-      await Promise.all(_.values(this.internals).map(({ func: f }) => f(r)));
+      await Promise.all(_.values(this.internals).map((rg) => this.execute(base, r, rg)));
       // eslint-disable-next-line no-plusplus
       if (--maxDepth <= 0) {
         throw new Error('Potential dead loop');
       }
     }
     await r.finalize();
+  }
+
+  async execute(base, r, { root, func }, payload) {
+    if (!root) {
+      await func(r, payload);
+      return;
+    }
+    const vals = _.chain(r.cache)
+      .keys()
+      .map((k) => k.match(root))
+      .map(0)
+      .filter()
+      .uniq()
+      .value();
+    // eslint-disable-next-line no-restricted-syntax
+    for (const v of vals) {
+      // eslint-disable-next-line no-param-reassign
+      r.root = v;
+      // eslint-disable-next-line no-await-in-loop
+      await func(r, payload);
+    }
   }
 }
 
