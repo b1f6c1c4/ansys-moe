@@ -1,7 +1,7 @@
-FROM node:8-alpine
+FROM node:9.11.1
 
 COPY . .
 
-CMD ["yarn", "start:prod"]
+CMD ["yarn", "install", "--production", "--frozen-lockfile"]
 
-EXPOSE 3000
+CMD ["yarn", "start:prod"]
