@@ -14,14 +14,14 @@ describe('PetriNet', () => {
   });
 
   it('should handle name not found', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
     await petri.dispatch('/xx/state', 'ww', 'pp');
     expect(db).toEqual({});
     done();
   });
 
   it('should handle static', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
 
     petri.register({
       name: 'init',
@@ -61,7 +61,7 @@ describe('PetriNet', () => {
   });
 
   it('should handle dynamic fork', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
 
     petri.register({
       name: 'init',
@@ -85,7 +85,7 @@ describe('PetriNet', () => {
   });
 
   it('should handle root change', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
 
     petri.register({
       name: 'init',
@@ -121,7 +121,7 @@ describe('PetriNet', () => {
   });
 
   it('should handle root change dispatch', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
 
     petri.register({
       name: 'f/init',
@@ -157,7 +157,7 @@ describe('PetriNet', () => {
   });
 
   it('should throw root not match', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
 
     petri.register({
       name: 'f/init',
@@ -192,7 +192,7 @@ describe('PetriNet', () => {
   });
 
   it('should handle dynamic merge', async (done) => {
-    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+    const petri = new PetriNet(dbMock);
 
     petri.register({
       name: 'init',
