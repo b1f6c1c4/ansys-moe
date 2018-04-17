@@ -11,7 +11,7 @@ module.exports = (petri) => {
     external: true,
   }, async (r, { action }) => {
     logger.info(`Initializing ${r.proj}`, action);
-    await etcd.put(r.mer('/config')).value(action).exec();
+    await etcd.put(r.mer('/config')).json(action).exec();
     const id = `${r.proj}.inited`;
     const script = dedent`
       rst <- seq(0, 10, by=2)

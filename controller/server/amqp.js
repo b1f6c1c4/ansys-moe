@@ -17,6 +17,7 @@ const makeQueueAction = () => new Promise((resolve) => {
     q.bind('#');
     logger.debug('Action q.subscribe...');
     q.subscribe({ ack: true }, (body, headers, { correlationId }, obj) => {
+      logger.debug(`Received message #${correlationId}`, body);
       try {
         emitter.emit('action', {
           correlationId,
@@ -26,7 +27,6 @@ const makeQueueAction = () => new Promise((resolve) => {
         });
       } catch (e) {
         logger.error('Emitting action', e);
-        obj.acknowledge(false);
       }
     });
     logger.info('Action queue ready');

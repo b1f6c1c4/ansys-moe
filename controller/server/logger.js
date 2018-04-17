@@ -36,12 +36,10 @@ const logger = winston.createLogger({
       if (info.data === undefined) {
         return msg;
       }
-      let data;
       if (info.data instanceof Error) {
-        data = info.data.toString();
-      } else {
-        data = JSON.stringify(info.data, null, 2);
+        return `${msg} ${info.data.stack}`;
       }
+      const data = JSON.stringify(info.data, null, 2);
       if (data.includes('\n')) {
         return `${msg}\n${data}`;
       }

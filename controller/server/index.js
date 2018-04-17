@@ -121,27 +121,31 @@ const petri = new PetriNet(new EtcdAdapter(etcd), (base) => ({
 core(petri);
 
 amqp.emitter.on('action', async (msg) => {
-  const id = msg.correlationId;
-  logger.info(`Received message ${msg.kind} ${id}`, msg.body);
-  if (!id) {
-    logger.warn('correlation_id not found');
-    msg.obj.acknowledge(false);
-    return;
-  }
-  const index = id.indexOf('.');
-  const ac = {
-    name: id.substr(index + 1),
-    base: `/${id.substr(0, index)}/state`,
-    kind: msg.headers.kind,
-    action: msg.body,
-  };
-  logger.info('Dispatching action', ac);
   try {
+    const id = msg.correlationId;
+    logger.info(`Received action ${msg.kind} ${id}`, msg.body);
+    if (!id) {
+      logger.warn('correlation_id not found');
+      return;
+    }
+    const index = id.indexOf('.');
+    if (index < 0) {
+      logger.warn('correlation_id malformed');
+      return;
+    }
+    const ac = {
+      name: id.substr(index + 1),
+      base: `/${id.substr(0, index)}/state`,
+      kind: msg.headers.kind,
+      action: msg.body,
+    };
+    logger.info('Dispatching action', ac);
     await petri.dispatch(ac);
   } catch (e) {
-    logger.error('Dispatching action', e);
+    logger.error('Processing action', e);
+  } finally {
+    msg.obj.acknowledge(false);
   }
-  msg.obj.acknowledge(false);
 });
 
 const inits = [];

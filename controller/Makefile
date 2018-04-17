@@ -1,7 +1,9 @@
 ifeq ($(OS),Windows_NT)
   CP=copy
+  RM=del /Q
 else
   CP=cp
+  RM=rm -f
 endif
 
 include .env
@@ -19,6 +21,7 @@ vendor: package.json yarn.lock
 		--tag $(VENDOR_IMAGE) \
 		--file Dockerfile.vendor \
 		.
+	$(RM) .dockerignore
 	docker $(CFG_VENDOR) login \
 		-u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
 	docker $(CFG_VENDOR) push \
@@ -27,8 +30,11 @@ vendor: package.json yarn.lock
 		$(VENDOR_IMAGE)
 
 src:
+	yarn build
 	$(CP) .dockerignore.src .dockerignore
 	docker $(CFG_SRC) build \
 		--tag ansys-controller \
 		--file Dockerfile \
 		.
+	$(RM) .dockerignore
+	$(RM) VERSION.json

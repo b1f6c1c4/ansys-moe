@@ -4,3 +4,5 @@ WORKDIR /usr/src/ansys-controller
 COPY . .
 
 CMD ["yarn", "start:prod"]
+
+EXPOSE 3000
