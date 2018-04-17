@@ -54,7 +54,6 @@ amqp.emitter.on('action', async (msg) => {
     logger.error('Dispatching action', e);
   }
   msg.obj.acknowledge(false);
-  logger.warn('Current state', etcd.mock());
 });
 
 etcd.connect();
