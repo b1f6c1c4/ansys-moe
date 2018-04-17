@@ -15,8 +15,28 @@ describe('PetriNet', () => {
 
   it('should handle name not found', async (done) => {
     const petri = new PetriNet(dbMock);
-    await petri.dispatch('/xx/state', 'ww', 'pp');
+    await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+    });
     expect(db).toEqual({});
+    done();
+  });
+
+  it('should handle aux', async (done) => {
+    const petri = new PetriNet(dbMock, (b) => ({ itst: b }));
+
+    petri.register({
+      name: 'init',
+      external: true,
+    }, async (r) => {
+      expect(r.itst).toEqual('/xx/state');
+    });
+
+    await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+    });
     done();
   });
 

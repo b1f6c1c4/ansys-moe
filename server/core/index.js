@@ -1,21 +1,17 @@
-const _ = require('lodash');
-// const etcd = require('../etcd');
+// const _ = require('lodash');
+const etcd = require('../etcd');
 const amqp = require('../amqp');
 const { dedent } = require('./util');
-const rlang = require('./parser/rlang');
+const parse = require('../parser');
 const logger = require('../logger')('core');
-
-const proj = (r) => _.set(r, 'proj', r.base.match(/^\/([a-z0-9]+)/)[1]);
-// const mer = (r, p) => `/${r.proj}${p}`;
 
 module.exports = (petri) => {
   petri.register({
     name: 'init',
     external: true,
-  }, async (r) => {
-    proj(r);
-    logger.info('Initializing', r.proj);
-    // const config = await etcd.get(mer(r, '/config')).json();
+  }, async (r, { action }) => {
+    logger.info(`Initializing ${r.proj}`, action);
+    await etcd.put(r.mer('/config')).value(action).exec();
     const id = `${r.proj}.inited`;
     const script = dedent`
       rst <- seq(0, 10, by=2)
@@ -29,11 +25,11 @@ module.exports = (petri) => {
   petri.register({
     name: 'inited',
     external: true,
-  }, async (r, { action }) => {
+  }, async (r, payload) => {
     if (await r.decr({ '/initing': 1 })) {
-      const rst = rlang(action);
+      const rst = parse(payload);
       if (!rst) {
-        logger.error('Init failed', action);
+        logger.error('Init failed', payload);
         await r.incr({ '/failure': 1 });
         return;
       }
