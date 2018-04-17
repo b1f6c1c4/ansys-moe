@@ -10,7 +10,7 @@
     "lint": "eslint --ignore-path .gitignore .",
     "pretest": "yarn lint",
     "test": "cross-env NODE_ENV=test jest --forceExit --coverage",
-    "test:watch": "cross-env NODE_ENV=test jest --forceExit --coverage --runInBand --watchAll"
+    "test:watch": "cross-env NODE_ENV=test jest --forceExit --coverage --watchAll"
   },
   "private": true,
   "jest": {

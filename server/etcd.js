@@ -1,5 +1,9 @@
-const { Etcd3 } = require('etcd3');
+const { Etcd3, PutBuilder } = require('etcd3');
 const logger = require('./logger')('etcd');
+
+PutBuilder.prototype.json = function json(obj) {
+  return this.value(JSON.stringify(obj));
+};
 
 let client;
 const connect = () => {
@@ -31,7 +35,7 @@ const mocking = {
 
 module.exports = new Proxy({}, {
   get(target, propKey) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.MOCK_ETCD) {
       return mocking[propKey];
     }
     if (propKey === 'connect') {
