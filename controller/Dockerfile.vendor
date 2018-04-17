@@ -1,0 +1,6 @@
+FROM node:9.11.1
+
+WORKDIR /usr/src/ansys-controller
+COPY . .
+
+RUN ["yarn", "install", "--production", "--frozen-lockfile"]

@@ -6,9 +6,12 @@ const nocache = require('nocache');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const { schema } = require('./graphql');
-const mongo = require('./mongo');
+const { PetriNet } = require('./petri');
+const EtcdAdapter = require('./adapter');
+const etcd = require('./etcd');
+const amqp = require('./amqp');
+const core = require('./core');
 const status = require('./status');
-const file = require('./file');
 const logger = require('./logger')('index');
 
 logger.info('Versions', process.versions);
@@ -96,8 +99,6 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-app.use('/raw', file);
-
 app.use('/', (req, res) => res.status(404).send());
 
 function runApp() {
@@ -113,8 +114,39 @@ function runApp() {
   });
 }
 
+const petri = new PetriNet(new EtcdAdapter(etcd), (base) => ({
+  proj: base.match(/^\/([a-z0-9]+)/)[1],
+  mer(p) { return `/${this.proj}${p}`; },
+}));
+core(petri);
+
+amqp.emitter.on('action', async (msg) => {
+  const id = msg.correlationId;
+  logger.info(`Received message ${msg.kind} ${id}`, msg.body);
+  if (!id) {
+    logger.warn('correlation_id not found');
+    msg.obj.acknowledge(false);
+    return;
+  }
+  const index = id.indexOf('.');
+  const ac = {
+    name: id.substr(index + 1),
+    base: `/${id.substr(0, index)}/state`,
+    kind: msg.headers.kind,
+    action: msg.body,
+  };
+  logger.info('Dispatching action', ac);
+  try {
+    await petri.dispatch(ac);
+  } catch (e) {
+    logger.error('Dispatching action', e);
+  }
+  msg.obj.acknowledge(false);
+});
+
 const inits = [];
-inits.push(mongo.connect());
+inits.push(amqp.connect());
+inits.push(Promise.resolve(etcd.connect()));
 
 Promise.all(inits)
   .then(runApp)

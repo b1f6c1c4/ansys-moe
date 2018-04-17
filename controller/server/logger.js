@@ -1,6 +1,9 @@
 const winston = require('winston');
 const chalk = require('chalk');
 
+// eslint-disable-next-line no-extend-native
+RegExp.prototype.toJSON = RegExp.prototype.toString;
+
 const lvls = {
   levels: {
     fatal: 0,
