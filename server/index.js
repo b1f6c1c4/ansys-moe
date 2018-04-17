@@ -40,10 +40,10 @@ amqp.emitter.on('action', async (msg) => {
     msg.obj.acknowledge(false);
     return;
   }
-  const index = id.indexOf(':');
+  const index = id.indexOf('.');
   const ac = {
     name: id.substr(index + 1),
-    base: `${id.substr(0, index)}/state`,
+    base: `/${id.substr(0, index)}/state`,
     kind: msg.headers.kind,
     action: msg.body,
   };
