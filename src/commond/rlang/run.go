@@ -29,8 +29,6 @@ func (m Module) run(cmd *rlangCommand, cancel <-chan struct{}) (string, error) {
 
 	// Run `data/{cId}.R`
 	r, err := m.execRLang(cmd.Raw, []string{
-		"--arch",
-		"x64",
 		"--vanilla",
 		scriptFile,
 	}, cancel)
