@@ -14,9 +14,7 @@ class EtcdAdapter {
   }
 
   async setMultiple(obj) {
-    return this.etcd.stm().transact((tx) => Promise.all(
-      _.toPairs(obj).map(([key, value]) => tx.put(key).value(value)),
-    ));
+    await Promise.all(_.toPairs(obj).map(([key, value]) => this.set(key, value)));
   }
 }
 
