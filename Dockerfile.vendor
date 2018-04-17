@@ -3,4 +3,4 @@ FROM node:9.11.1
 WORKDIR /usr/src/ansys-controller
 COPY . .
 
-CMD ["yarn", "install", "--production", "--frozen-lockfile"]
+RUN ["yarn", "install", "--production", "--frozen-lockfile"]

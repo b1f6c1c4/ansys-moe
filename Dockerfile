@@ -1,4 +1,4 @@
-FROM ansys-controller-vendor
+FROM b1f6c1c4/ansys-controller-vendor
 
 WORKDIR /usr/src/ansys-controller
 COPY . .
