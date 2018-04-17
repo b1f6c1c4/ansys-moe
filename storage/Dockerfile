@@ -1,5 +1,6 @@
-FROM node:8-alpine
+FROM ansys-storage-vendor
 
+WORKDIR /usr/src/ansys-storage
 COPY . .
 
 CMD ["yarn", "start:prod"]
