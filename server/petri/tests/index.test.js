@@ -23,23 +23,6 @@ describe('PetriNet', () => {
     done();
   });
 
-  it('should handle aux', async (done) => {
-    const petri = new PetriNet(dbMock, (b) => ({ itst: b }));
-
-    petri.register({
-      name: 'init',
-      external: true,
-    }, async (r) => {
-      expect(r.itst).toEqual('/xx/state');
-    });
-
-    await petri.dispatch({
-      name: 'init',
-      base: '/xx/state',
-    });
-    done();
-  });
-
   it('should handle static', async (done) => {
     const petri = new PetriNet(dbMock);
 
@@ -47,7 +30,7 @@ describe('PetriNet', () => {
       name: 'init',
       external: true,
     }, async (r, payload) => {
-      expect(payload).toEqual({ k: 'v' });
+      expect(payload.k).toEqual('v');
       await r.incr({ '/init': 1 });
       return 'rv';
     });

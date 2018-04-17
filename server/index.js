@@ -114,10 +114,8 @@ function runApp() {
   });
 }
 
-const petri = new PetriNet(new EtcdAdapter(etcd), (base) => ({
-  proj: base.match(/^\/([a-z0-9]+)/)[1],
-  mer(p) { return `/${this.proj}${p}`; },
-}));
+const petri = new PetriNet(new EtcdAdapter(etcd));
+
 core(petri);
 
 amqp.emitter.on('action', async (msg) => {
@@ -128,19 +126,22 @@ amqp.emitter.on('action', async (msg) => {
       logger.warn('correlation_id not found');
       return;
     }
-    const index = id.indexOf('.');
-    if (index < 0) {
+    const [proj, name, ...rest] = id.split('.');
+    if (!proj || !name) {
       logger.warn('correlation_id malformed');
       return;
     }
-    const ac = {
-      name: id.substr(index + 1),
-      base: `/${id.substr(0, index)}/state`,
+    const pld = {
+      name,
+      base: `/${proj}/state`,
+      root: rest.length === 0 ? undefined : `/${rest.join('/')}`,
       kind: msg.headers.kind,
       action: msg.body,
     };
-    logger.info('Dispatching action', ac);
-    await petri.dispatch(ac);
+    const cfg = await etcd.get(`/${proj}/cfg`).json();
+    logger.info('Dispatching payload', pld);
+    logger.debug('With config', cfg);
+    await petri.dispatch(pld, proj, cfg);
   } catch (e) {
     logger.error('Processing action', e);
   } finally {
