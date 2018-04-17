@@ -1,7 +1,6 @@
-FROM node:9.11.1
+FROM ansys-controller-vendor
 
+WORKDIR /usr/src/ansys-controller
 COPY . .
-
-CMD ["yarn", "install", "--production", "--frozen-lockfile"]
 
 CMD ["yarn", "start:prod"]

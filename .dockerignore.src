@@ -1,11 +1,9 @@
-Dockerfile
-.dockerignore
-
-docs
+Dockerfile*
+.dockerignore*
 
 # Artfact
 coverage
-!node_modules
+node_modules
 !VERSION.json
 
 # Cruft

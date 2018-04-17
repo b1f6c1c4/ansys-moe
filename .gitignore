@@ -1,3 +1,6 @@
+.dockerignore
+.env
+
 # Artifact
 node_modules
 coverage
