@@ -15,30 +15,31 @@ class PetriNet {
       option = { name: option };
     }
 
-    const { name, external, root } = option;
+    const { name, external } = option;
 
     if (external) {
-      this.externals[name] = { root, func };
+      this.externals[name] = { option, func };
     } else {
-      this.internals[name] = { root, func };
+      this.internals[name] = { option, func };
     }
   }
 
-  async dispatch(base, name, payload) {
+  async dispatch(action) {
+    const { name, base } = action;
     const reg = this.externals[name];
     if (!reg) {
       logger.warn('Name not found', name);
-      return;
+      return undefined;
     }
     const r = new PetriRuntime(this.db, base);
-    await PetriNet.execute(base, r, reg, payload);
+    const rv = await PetriNet.execute(r, reg, action);
     let maxDepth = 10;
     while (r.dirty) {
       r.dirty = false;
       // eslint-disable-next-line no-restricted-syntax
       for (const rg of _.values(this.internals)) {
         // eslint-disable-next-line no-await-in-loop
-        await PetriNet.execute(base, r, rg);
+        await PetriNet.execute(r, rg);
       }
       /* istanbul ignore if */
       // eslint-disable-next-line no-plusplus
@@ -47,18 +48,30 @@ class PetriNet {
       }
     }
     await r.finalize();
+    return rv;
   }
 
   /* eslint-disable no-param-reassign */
-  static async execute(base, r, { root, func }, payload) {
-    if (!root) {
+  static async execute(r, { option, func }, action) {
+    const root = _.get(action, 'root');
+    const payload = action && _.omit(action, ['base', 'root', 'name']);
+    const { name, root: rootRegex } = option;
+    logger.info('Will execute', name);
+    if (!rootRegex) {
       r.root = '';
-      await func(r, payload);
-      return;
+      return func(r, payload);
+    }
+    if (root) {
+      const rt = root.match(rootRegex);
+      if (!rt) {
+        throw new Error('Root not match');
+      }
+      ([r.root] = rt);
+      return func(r, payload);
     }
     const vals = _.chain(r.cache)
       .keys()
-      .map((k) => k.match(root))
+      .map((k) => k.match(rootRegex))
       .map(0)
       .filter()
       .uniq()
@@ -69,6 +82,7 @@ class PetriNet {
       // eslint-disable-next-line no-await-in-loop
       await func(r, payload);
     }
+    return undefined;
   }
   /* eslint-enable no-param-reassign */
 }

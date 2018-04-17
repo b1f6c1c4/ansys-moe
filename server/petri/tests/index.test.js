@@ -27,8 +27,9 @@ describe('PetriNet', () => {
       name: 'init',
       external: true,
     }, async (r, payload) => {
-      expect(payload).toEqual('pld');
+      expect(payload).toEqual({ k: 'v' });
       await r.incr({ '/init': 1 });
+      return 'rv';
     });
 
     petri.register('static fork', async (r) => {
@@ -43,7 +44,13 @@ describe('PetriNet', () => {
       }
     });
 
-    await petri.dispatch('/xx/state', 'init', 'pld');
+    const rv = await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+      root: '/f/a',
+      k: 'v',
+    });
+    expect(rv).toEqual('rv');
     expect(db).toEqual({
       '/xx/state/init': 0,
       '/xx/state/a': 1,
@@ -59,13 +66,15 @@ describe('PetriNet', () => {
     petri.register({
       name: 'init',
       external: true,
-    }, async (r, payload) => {
-      expect(payload).toEqual('pld');
+    }, async (r) => {
       await r.dyn('/f');
       await r.incr(_.mapKeys({ a: 1, b: 2 }, (v, k) => `/f/${k}/init`));
     });
 
-    await petri.dispatch('/xx/state', 'init', 'pld');
+    await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+    });
     expect(db).toEqual({
       '/xx/state/f': 1,
       '/xx/state/f/#': 3,
@@ -81,8 +90,7 @@ describe('PetriNet', () => {
     petri.register({
       name: 'init',
       external: true,
-    }, async (r, payload) => {
-      expect(payload).toEqual('pld');
+    }, async (r) => {
       await r.incr(_.mapKeys({ a: 1, b: 2 }, (v, k) => `/f/${k}/init`));
     });
 
@@ -97,7 +105,10 @@ describe('PetriNet', () => {
       }
     });
 
-    await petri.dispatch('/xx/state', 'init', 'pld');
+    await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+    });
     expect(db).toEqual({
       '/xx/state/f/a/init': 0,
       '/xx/state/f/a/st': 1,
@@ -109,14 +120,84 @@ describe('PetriNet', () => {
     done();
   });
 
+  it('should handle root change dispatch', async (done) => {
+    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+
+    petri.register({
+      name: 'f/init',
+      external: true,
+      root: /^\/f\/[a-z0-9]+/,
+    }, async (r) => {
+      await r.incr({ '/init': 1 });
+    });
+
+    petri.register({
+      name: 'f/st',
+      root: /^\/f\/[a-z0-9]+/,
+    }, async (r) => {
+      if (await r.decr({ '/init': 1 })) {
+        await r.incr({ '/st': 1 });
+        await r.incr({ '../../x': 1 });
+        await r.incr({ '../../../y': 1 });
+      }
+    });
+
+    await petri.dispatch({
+      name: 'f/init',
+      base: '/xx/state',
+      root: '/f/a',
+    });
+    expect(db).toEqual({
+      '/xx/state/f/a/init': 0,
+      '/xx/state/f/a/st': 1,
+      '/xx/state/x': 1,
+      '/xx/y': 1,
+    });
+    done();
+  });
+
+  it('should throw root not match', async (done) => {
+    const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
+
+    petri.register({
+      name: 'f/init',
+      external: true,
+      root: /^\/f\/[a-z0-9]+/,
+    }, async (r) => {
+      await r.incr({ '/init': 1 });
+    });
+
+    petri.register({
+      name: 'f/st',
+      root: /^\/f\/[a-z0-9]+/,
+    }, async (r) => {
+      if (await r.decr({ '/init': 1 })) {
+        await r.incr({ '/st': 1 });
+        await r.incr({ '../../x': 1 });
+        await r.incr({ '../../../y': 1 });
+      }
+    });
+
+    try {
+      await petri.dispatch({
+        name: 'f/init',
+        base: '/xx/state',
+        root: '/f',
+      });
+      expect(undefined).toBeDefined();
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+    }
+    done();
+  });
+
   it('should handle dynamic merge', async (done) => {
     const petri = new PetriNet(dbMock, /^\/[a-z0-9]+/);
 
     petri.register({
       name: 'init',
       external: true,
-    }, async (r, payload) => {
-      expect(payload).toEqual('pld');
+    }, async (r) => {
       await r.dyn('/f');
       await r.incr(_.mapKeys({ a: 1, b: 2 }, (v, k) => `/f/${k}/init`));
     });
@@ -136,7 +217,10 @@ describe('PetriNet', () => {
       }
     });
 
-    await petri.dispatch('/xx/state', 'init', 'pld');
+    await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+    });
     expect(db).toEqual({
       '/xx/state/f': 0,
       '/xx/state/f/#': 0,
