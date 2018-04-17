@@ -13,10 +13,11 @@ const connect = () => {
   });
 };
 
-module.exports = {
-  connect,
-};
-
-Object.defineProperty(module.exports, 'etcd', {
-  get: () => client,
+module.exports = new Proxy({}, {
+  get(target, propKey) {
+    if (propKey === 'connect') {
+      return connect;
+    }
+    return client[propKey];
+  },
 });

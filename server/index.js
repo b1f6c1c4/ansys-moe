@@ -29,7 +29,7 @@ process.on('SIGTERM', () => {
   logger.fatalDie('SIGTERM received');
 });
 
-const petri = new PetriNet(new EtcdAdapter(etcd.etcd));
+const petri = new PetriNet(new EtcdAdapter(etcd));
 core(petri);
 
 amqp.emitter.on('action', async (msg) => {
