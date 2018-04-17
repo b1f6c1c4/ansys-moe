@@ -32,16 +32,28 @@ process.on('SIGTERM', () => {
 const petri = new PetriNet(new EtcdAdapter(etcd.etcd));
 core(petri);
 
-amqp.emitter.on('action', (msg) => {
-  logger.info('Received message', msg.body);
+amqp.emitter.on('action', async (msg) => {
   const id = msg.correlationId;
+  logger.info(`Received message ${msg.kind} ${id}`, msg.body);
+  if (!id) {
+    logger.warn('correlation_id not found');
+    msg.obj.acknowledge(false);
+    return;
+  }
   const index = id.indexOf(':');
-  petri.dispatch({
-    name: id.substr(0, index),
-    base: `${id.substr(index - 1)}/state`,
+  const ac = {
+    name: id.substr(index + 1),
+    base: `${id.substr(0, index)}/state`,
     kind: msg.headers.kind,
     action: msg.body,
-  }).then(() => msg.obj.acknowledge(false));
+  };
+  logger.info('Dispatching action', ac);
+  try {
+    await petri.dispatch(ac);
+  } catch (e) {
+    logger.error('Dispatching action', e);
+  }
+  msg.obj.acknowledge(false);
 });
 
 etcd.connect();

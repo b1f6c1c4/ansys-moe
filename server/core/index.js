@@ -3,7 +3,7 @@ const amqp = require('../amqp');
 // const { newId } = require('./util');
 const logger = require('../logger')('core');
 
-const mer = (r, p) => r.replace(/\/state$/, p || '');
+const mer = (r, p) => r.base.replace(/\/state$/, p || '');
 
 module.exports = (petri) => {
   petri.register({
@@ -17,14 +17,16 @@ module.exports = (petri) => {
     seq(0, 10, by=2)
     `;
     amqp.publish('rlang', { script }, id);
-    r.incr({ '/initing': 1 });
+    await r.incr({ '/initing': 1 });
   });
 
   petri.register({
     name: 'inited',
     external: true,
   }, async (r, { action }) => {
-    logger.info('Inited', action);
-    r.incr({ '/failed': 1 });
+    if (await r.decr({ '/initing': 1 })) {
+      logger.info('Inited', action);
+      await r.incr({ '/failed': 1 });
+    }
   });
 };

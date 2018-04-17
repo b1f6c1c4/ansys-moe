@@ -26,6 +26,7 @@ const makeQueueAction = () => new Promise((resolve) => {
         });
       } catch (e) {
         logger.error('Emitting action', e);
+        obj.acknowledge(false);
       }
     });
     logger.info('Action queue ready');
