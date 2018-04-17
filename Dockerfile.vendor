@@ -1,0 +1,6 @@
+FROM node:9.11.1
+
+WORKDIR /usr/src/ansys-monitor
+COPY . .
+
+RUN ["yarn", "install", "--production", "--frozen-lockfile"]
