@@ -29,7 +29,10 @@ process.on('SIGTERM', () => {
   logger.fatalDie('SIGTERM received');
 });
 
-const petri = new PetriNet(new EtcdAdapter(etcd));
+const petri = new PetriNet(new EtcdAdapter(etcd), (base) => ({
+  proj: base.match(/^\/([a-z0-9]+)/)[1],
+  mer(p) { return `/${this.proj}${p}`; },
+}));
 core(petri);
 
 amqp.emitter.on('action', async (msg) => {

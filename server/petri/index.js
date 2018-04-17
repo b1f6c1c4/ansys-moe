@@ -3,8 +3,9 @@ const PetriRuntime = require('./runtime');
 const logger = require('../logger')('petri');
 
 class PetriNet {
-  constructor(db) {
+  constructor(db, aux) {
     this.db = db;
+    this.aux = aux;
     this.internals = {};
     this.externals = {};
   }
@@ -38,6 +39,9 @@ class PetriNet {
       return undefined;
     }
     const r = new PetriRuntime(this.db, base);
+    if (_.isFunction(this.aux)) {
+      _.assign(r, this.aux(base));
+    }
     const rv = await PetriNet.execute(r, reg, action);
     let maxDepth = 10;
     while (r.dirty) {

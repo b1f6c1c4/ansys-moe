@@ -8,7 +8,7 @@ module.exports = {
   }),
   put: (key) => ({
     value: (value) => ({
-      exec: async () => { db[key] = String(value); },
+      exec: async () => { db[key] = JSON.stringify(value); },
     }),
   }),
   mock: () => db,
