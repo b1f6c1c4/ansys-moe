@@ -17,10 +17,16 @@ class PetriNet {
 
     const { name, external } = option;
 
+    const registry = external ? this.externals : this.internals;
+    /* istanbul ignore if */
+    if (name in registry) {
+      logger.warn('Name duplicated', name);
+    }
+    registry[name] = { option, func };
     if (external) {
-      this.externals[name] = { option, func };
+      logger.info('Registered external', option);
     } else {
-      this.internals[name] = { option, func };
+      logger.info('Registered internal', option);
     }
   }
 
@@ -56,9 +62,10 @@ class PetriNet {
     const root = _.get(action, 'root');
     const payload = action && _.omit(action, ['base', 'root', 'name']);
     const { name, root: rootRegex } = option;
-    logger.info('Will execute', name);
+    logger.trace('Will execute', name);
     if (!rootRegex) {
       r.root = '';
+      logger.trace('Will use root', r.root);
       return func(r, payload);
     }
     if (root) {
@@ -67,6 +74,7 @@ class PetriNet {
         throw new Error('Root not match');
       }
       ([r.root] = rt);
+      logger.trace('Will use root', r.root);
       return func(r, payload);
     }
     const vals = _.chain(r.cache)
@@ -79,6 +87,7 @@ class PetriNet {
     // eslint-disable-next-line no-restricted-syntax
     for (const v of vals) {
       r.root = v;
+      logger.trace('Will use root', r.root);
       // eslint-disable-next-line no-await-in-loop
       await func(r, payload);
     }

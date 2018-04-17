@@ -53,7 +53,7 @@ class PetriRuntime {
       throw new Error('value must be positive');
     }
     await Promise.all(_.keys(obj).map(this.ensure));
-    logger.trace(`INCR ${this.root}`, obj);
+    logger.debug(`INCR ${this.root}`, obj);
     const dyns = {};
     _.forIn(obj, (value, key) => {
       this.dif(key, value);
@@ -64,7 +64,7 @@ class PetriRuntime {
       });
     });
     if (_.keys(dyns).length) {
-      logger.trace(`INCR ${this.root} dyns`, dyns);
+      logger.debug(`INCR ${this.root} dyns`, dyns);
       await Promise.all(_.keys(dyns).map(this.ensure));
       _.forIn(dyns, (value, key) => {
         this.dif(key, value);
@@ -81,7 +81,7 @@ class PetriRuntime {
     if (!_.every(obj, (value, key) => this.get(key) >= value)) {
       return false;
     }
-    logger.trace(`DECR ${this.root}`, obj);
+    logger.debug(`DECR ${this.root}`, obj);
     _.forIn(obj, (value, key) => {
       this.dif(key, -value);
       this.dirty = true;
@@ -102,7 +102,7 @@ class PetriRuntime {
     await this.ensure(kf);
     const n = this.get(kt);
     if (this.get(p) > 0 && n === this.get(kf)) {
-      logger.trace(`Done ${this.root}`, p);
+      logger.debug(`Done ${this.root}`, p);
       this.dif(p, -1);
       this.dif(kt, -n);
       this.dif(kf, -n);
