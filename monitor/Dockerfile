@@ -1,5 +1,6 @@
-FROM node:8-alpine
+FROM ansys-monitor-vendor
 
+WORKDIR /usr/src/ansys-monitor
 COPY . .
 
 CMD ["yarn", "start:prod"]
