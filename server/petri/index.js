@@ -57,13 +57,12 @@ class PetriNet {
     return rv;
   }
 
-  /* eslint-disable no-param-reassign */
   static async execute(r, { option, func }, payload, args) {
     const root = _.get(payload, 'root');
     const { name, root: rootRegex } = option;
     logger.trace('Will execute', name);
     if (!rootRegex) {
-      r.root = '';
+      r.setRoot();
       logger.trace('Will use root', r.root);
       return func(r, payload, ...args);
     }
@@ -72,7 +71,7 @@ class PetriNet {
       if (!rt) {
         throw new Error('Root not match');
       }
-      ([r.root] = rt);
+      r.setRoot(rt);
       logger.trace('Will use root', r.root);
       return func(r, payload, ...args);
     }
@@ -85,14 +84,13 @@ class PetriNet {
       .value();
     // eslint-disable-next-line no-restricted-syntax
     for (const v of vals) {
-      r.root = v;
+      r.setRoot(v.match(rootRegex));
       logger.trace('Will use root', r.root);
       // eslint-disable-next-line no-await-in-loop
       await func(r, payload, ...args);
     }
     return undefined;
   }
-  /* eslint-enable no-param-reassign */
 }
 
 module.exports = {

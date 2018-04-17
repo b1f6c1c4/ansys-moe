@@ -99,8 +99,9 @@ describe('PetriNet', () => {
 
     petri.register({
       name: 'f/init',
-      root: /^\/f\/[a-z0-9]+/,
+      root: /^\/f\/([a-z0-9]+)/,
     }, async (r) => {
+      expect(['a', 'b']).toContain(r.param[0]);
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
         await r.incr({ '../../x': 1 });
