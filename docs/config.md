@@ -17,9 +17,10 @@
 - kind (enum, required)
   - `categorical`
   - `discrete`
-- lowerBound (number) - 0 if categorical
+- lowerBound (number) - 1 if categorical
 - upperBound (number) - steps if categorical
 - steps (number, required) - at least 2
+- condition (string) - kind expression
 
 ## GParameter (object)
 
