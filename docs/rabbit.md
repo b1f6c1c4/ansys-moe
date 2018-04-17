@@ -9,7 +9,6 @@
   * rlang (RLangCommand) - rlang as a calculator.
   * mathematica (MmaCommand) - mathematica as a calculator.
   * matlab - matlab as a calculator.
-  * javascript - javascript as a calculator.
 * Callback:
   * action - trigger state change after execution.
     - kind:rlang (RLangAction)
