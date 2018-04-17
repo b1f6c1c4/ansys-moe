@@ -1,0 +1,26 @@
+# Entry points
+
+type Query {
+
+  # Check system status [GET /]
+  status: Status
+}
+
+type Mutation {
+
+  # Create new project and execute
+  run(config: JSON!): Boolean
+}
+
+# Inputs
+
+# Objects
+
+type Status {
+  version: String
+  commitHash: String
+}
+
+# Scalars
+
+scalar JSON
