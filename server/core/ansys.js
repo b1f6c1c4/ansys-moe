@@ -4,18 +4,19 @@ const amqp = require('../amqp');
 const { hash, dedent } = require('../util');
 const logger = require('../logger')('core/ansys');
 
-module.exports.mutate = (file, { inputs }, variables, { proj, name, root }) => {
+module.exports.mutate = ({ filename, inputs }, variables, { proj, name, root }) => {
   logger.info('Run ansys mutate', { proj, name, root });
   const id = root
     ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
+  const fn = filename.substr(0, filename.lastIndexOf('.'));
   const script = _.template(dedent`
     Dim oAnsoftApp
     Dim oProject
     Dim oDesign
     Dim oModule
     Set oAnsoftApp = CreateObject("AnsoftMaxwell.MaxwellScriptInterface")
-    Set oProject = oAnsoftApp.GetAppDesktop().GetActiveProject()
+    Set oProject = oAnsoftApp.GetAppDesktop().SetActiveProject("<%= fn %>")
     <% _.forEach(inputs, (i) => { %>
       <% if (i.design) { %>
         Set oDesign = oProject.SetActiveDesign("<%= i.design %>")
@@ -44,36 +45,37 @@ module.exports.mutate = (file, { inputs }, variables, { proj, name, root }) => {
             ) _
           )
     <% }); %>
-  `)({ inputs, variables });
+  `)({ fn, inputs, variables });
   amqp.publish('ansys', {
     type: 'mutate',
-    file,
-    script,
+    file: filename,
+    script: script.replace(/\n\s*\n/g, '\n'),
   }, id);
 };
 
-module.exports.solve = (file, { outputs }, { proj, name, root }) => {
+module.exports.solve = (filename, { outputs }, { proj, name, root }) => {
   logger.info('Run ansys solve', { proj, name, root });
   const id = root
     ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
-  const grps = _.groupBy(outputs, fp.compose(hash, _.omit('name')));
+  const fn = filename.substr(0, filename.lastIndexOf('.'));
+  const grps = _.groupBy(outputs, fp.compose(hash, fp.omit('name')));
   const script = _.template(dedent`
     Dim oAnsoftApp
     Dim oProject
     Dim oDesign
     Dim oModule
     Set oAnsoftApp = CreateObject("AnsoftMaxwell.MaxwellScriptInterface")
-    Set oProject = oAnsoftApp.GetAppDesktop().GetActiveProject()
+    Set oProject = oAnsoftApp.GetAppDesktop().SetActiveProject("<%= fn %>")
     <% _.forEach(grps, ([g], k) => { %>
       Set oDesign = oProject.SetActiveDesign("<%= g.design %>")
       Set oModule = oDesign.GetModule("ReportSetup")
       oModule.ExportToFile "<%= g.table %>", "$OUT_DIR/<%= k %>.csv"
     <% }); %>
-  `)({ grps });
+  `)({ fn, grps });
   amqp.publish('ansys', {
     type: 'solve',
-    file,
+    file: filename,
     script,
   }, id);
 };
