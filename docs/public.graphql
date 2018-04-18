@@ -9,7 +9,7 @@ type Query {
 type Mutation {
 
   # Create new project and execute
-  run(config: JSON!): Boolean
+  run(name: ID!, config: JSON!): Boolean
 }
 
 # Inputs
