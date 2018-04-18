@@ -56,23 +56,24 @@ class PetriNet {
   }
 
   static async execute(r, { option, func }, payload, args) {
+    const go = (rt) => {
+      r.setRoot(rt);
+      _.set(r, 'dyns', []);
+      logger.trace('Will use root', r.root);
+      return func(r, payload, ...args);
+    };
     const root = _.get(payload, 'root');
     const { name, root: rootRegex } = option;
     logger.trace('Will execute', name);
-    logger.trace('Using args', args);
     if (!rootRegex) {
-      r.setRoot();
-      logger.trace('Will use root', r.root);
-      return func(r, payload, ...args);
+      return go();
     }
     if (root) {
       const rt = root.match(rootRegex);
       if (!rt) {
         throw new Error('Root not match');
       }
-      r.setRoot(rt);
-      logger.trace('Will use root', r.root);
-      return func(r, payload, ...args);
+      return go(rt);
     }
     const vals = _.chain(r.cache)
       .keys()
@@ -82,9 +83,7 @@ class PetriNet {
       .uniq()
       .value();
     for (const v of vals) {
-      r.setRoot(v.match(rootRegex));
-      logger.trace('Will use root', r.root);
-      await func(r, payload, ...args);
+      await go(v.match(rootRegex));
     }
     return undefined;
   }

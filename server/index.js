@@ -116,7 +116,6 @@ amqp.emitter.on('action', async (msg) => {
   let fin = () => msg.obj.acknowledge(false);
   try {
     const id = msg.correlationId;
-    logger.info(`Received action ${msg.kind} ${id}`, msg.body);
     if (!id) {
       logger.warn('correlation_id not found');
       return;

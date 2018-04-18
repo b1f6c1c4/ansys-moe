@@ -10,7 +10,7 @@ module.exports.virtualQueue = theQueue;
 module.exports.run = (kind, code, variables, { proj, name, root }) => {
   logger.info(`Run integration ${kind}`, { proj, name, root });
   const id = root
-    ? `${proj}.${name}${root.replace('/', '.')}`
+    ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
   switch (kind) {
     case 'expression':
@@ -38,6 +38,8 @@ module.exports.run = (kind, code, variables, { proj, name, root }) => {
 module.exports.parse = ({ kind, action }) => {
   logger.info(`Parse integration ${kind}`, action);
   switch (kind) {
+    case 'expression':
+      return action.type === 'done' ? action.result : null;
     case 'rlang':
       return rlang.parse(action);
     default:

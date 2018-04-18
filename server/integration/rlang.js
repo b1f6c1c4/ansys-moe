@@ -24,6 +24,7 @@ module.exports.parse = ({ type, result }) => {
   const vals = _.chain(sp)
     .filter((s) => /^\{|\[/.test(s))
     .map(_.unary(JSON.parse))
+    .map((v) => _.isArray(v) && v.length === 1 ? v[0] : v)
     .value();
   return vals;
 };
