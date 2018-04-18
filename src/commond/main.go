@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+// VERSION is defined during compilation
+var VERSION string
+// COMMITHASH is defined during compilation
+var COMMITHASH string
+
 func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 	c := make(chan struct{})
 	go func() {
@@ -25,6 +30,8 @@ func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 // Entry setup commond
 func Entry(theLogger func(string)) {
 	common.Entry(theLogger)
+	common.SL("VERSION: " + VERSION)
+	common.SL("COMMITHASH: " + COMMITHASH)
 }
 
 func addModule(m common.Module, stop <-chan struct{}) {

@@ -1,3 +1,6 @@
+.dockerignore
+.env
+
 *~
 *.swp
 *.swo

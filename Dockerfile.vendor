@@ -1,0 +1,8 @@
+FROM golang:latest
+
+RUN ["go", "get", "-u", "github.com/streadway/amqp"]
+RUN ["go", "get", "-u", "github.com/assembla/cony"]
+RUN ["go", "get", "-u", "github.com/shirou/gopsutil"]
+RUN ["go", "get", "-u", "gopkg.in/guregu/null.v3"]
+RUN ["go", "get", "-u", "gopkg.in/yaml.v2"]
+RUN ["go", "get", "-u", "golang.org/x/sys/unix"]
