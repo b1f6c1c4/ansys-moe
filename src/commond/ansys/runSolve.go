@@ -39,9 +39,11 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
+	logCancel1 := make(chan struct{})
+
 	// Log to `data/{cId}/solve.log`
 	logFile := filepath.Join(common.DataPath, id, "solve.log")
-	go common.WatchLog(cmd.Raw, logFile, cancel)
+	go common.WatchLog(cmd.Raw, logFile, logCancel1)
 
 	// Run `batchsolve` over `data/{cId}/{file.name}`
 	jobFile := filepath.Join(common.DataPath, id, fileName)
@@ -52,6 +54,7 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 		"-batchsolve",
 		jobFile,
 	}, cancel)
+	close(logCancel1)
 	if err != nil {
 		return err
 	}
@@ -69,9 +72,11 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
+	logCancel2 := make(chan struct{})
+
 	// Log to `data/{cId}/extract.log`
 	logFile = filepath.Join(common.DataPath, id, "extract.log")
-	go common.WatchLog(cmd.Raw, logFile, cancel)
+	go common.WatchLog(cmd.Raw, logFile, logCancel2)
 
 	// Run `batchextract` over `data/{cId}/{file.name}`
 	err = m.execAnsys(cmd.Raw, []string{
@@ -83,6 +88,7 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 		"-batchextract",
 		jobFile,
 	}, cancel)
+	close(logCancel2)
 	if err != nil {
 		return err
 	}

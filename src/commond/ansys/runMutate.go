@@ -46,9 +46,11 @@ func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
+	logCancel := make(chan struct{})
+
 	// Log to `data/{cId}/mutate.log`
 	logFile := filepath.Join(common.DataPath, id, "ansys.log")
-	go common.WatchLog(cmd.Raw, logFile, cancel)
+	go common.WatchLog(cmd.Raw, logFile, logCancel)
 
 	// Run `batchsave` over `data/{cId}/{file.name}`
 	jobFile := filepath.Join(common.DataPath, id, fileName)
@@ -61,6 +63,7 @@ func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
 		"-batchsave",
 		jobFile,
 	}, cancel)
+	close(logCancel)
 	if err != nil {
 		return err
 	}

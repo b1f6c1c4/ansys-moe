@@ -2,6 +2,7 @@ package rlang
 
 import (
 	"commond/common"
+	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -47,17 +48,18 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 		case <-cancel:
 			if ctx.Process == nil {
 				common.RL.Warn(e, "rlang/execRLang", "Killing: already exited")
-				killing <- nil
+				killing <- errors.New("Cancelled")
 				return
 			}
 			common.RL.Info(e, "rlang/execRLang", "Killing process")
 			err := ctx.Process.Kill()
-			killing <- err
 			if err != nil {
 				common.RL.Error(e, "rlang/execRLang", "Killing process: "+err.Error())
+				killing <- err
 				return
 			}
 			common.RL.Info(e, "rlang/execRLang", "Process killed")
+			killing <- errors.New("Cancelled")
 		case <-done:
 		}
 	}()

@@ -2,6 +2,7 @@ package ansys
 
 import (
 	"commond/common"
+	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -60,7 +61,7 @@ func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan stru
 	case <-cancel:
 		if ctx.Process == nil {
 			common.RL.Warn(e, "ansys/execAnsys", "Killing: already exited")
-			return nil
+			return errors.New("Cancelled")
 		}
 		err := ctx.Process.Kill()
 		if err != nil {
@@ -68,8 +69,8 @@ func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan stru
 			return err
 		}
 		common.RL.Info(e, "ansys/execAnsys", "Process killed")
+		return errors.New("Cancelled")
 	case err := <-done:
 		return err
 	}
-	return nil
 }

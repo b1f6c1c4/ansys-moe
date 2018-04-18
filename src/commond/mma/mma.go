@@ -2,6 +2,7 @@ package mma
 
 import (
 	"commond/common"
+	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -48,17 +49,18 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 		case <-cancel:
 			if ctx.Process == nil {
 				common.RL.Warn(e, "mma/execMma", "Killing: already exited")
-				killing <- nil
+				killing <- errors.New("Cancelled")
 				return
 			}
 			common.RL.Info(e, "mma/execMma", "Killing process")
 			err := ctx.Process.Kill()
-			killing <- err
 			if err != nil {
 				common.RL.Error(e, "mma/execMma", "Killing process: "+err.Error())
+				killing <- err
 				return
 			}
 			common.RL.Info(e, "mma/execMma", "Process killed")
+			killing <- errors.New("Cancelled")
 		case <-done:
 		}
 	}()
