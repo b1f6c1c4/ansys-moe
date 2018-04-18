@@ -1,69 +1,39 @@
 const _ = require('lodash');
+const Channel = require('@nodeguy/channel');
 const etcd = require('../etcd');
-const { newId, dedent } = require('../util');
-const { run, parse } = require('../integration');
+const { PetriNet } = require('../petri');
+const EtcdAdapter = require('../adapter');
+const { virtualQueue } = require('../integration');
+const logic = require('./logic');
 const logger = require('../logger')('core');
 
-module.exports = (petri) => {
-  petri.register({
-    name: 'init',
-    external: true,
-  }, async (r, { action }, proj) => {
-    logger.info(`Initializing ${proj}`, action);
-    const cfg = action;
-    await etcd.put(`/${proj}/config`).json(cfg).exec();
-    const script = _.template(dedent`
-      <% _.forEach(D, (d) => { %>
-        <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.step %>)
-      <% }); %>
-      rst <- expand.grid(
-        <% _.forEach(D, (d) => { %>
-          <%= d.name %>=<%= d.name %>
-        <% }); %>
-      )
-      toJSON(rst)
-    `)(cfg);
-    run('rlang', script, {}, { proj, name: 'inited' });
-    await r.incr({ '/initing': 1 });
-  });
+const channel = new Channel();
 
-  petri.register({
-    name: 'inited',
-    external: true,
-  }, async (r, payload, proj) => {
-    if (await r.decr({ '/initing': 1 })) {
-      const rst = parse(payload);
-      if (!rst) {
-        logger.error('Init failed', payload);
-        await r.incr({ '/failure': 1 });
-        return;
+const petri = new PetriNet(new EtcdAdapter(etcd));
+logic(petri);
+
+module.exports.channel = channel;
+
+module.exports.run = async () => {
+  for (;;) {
+    const obj = await channel.shift();
+    try {
+      const { payload, proj } = obj;
+      const cfg = await etcd.get(`/${proj}/config`).json();
+      logger.info('Dispatching payload', payload);
+      logger.debug('With config', cfg);
+      await petri.dispatch(payload, proj, cfg);
+      while (virtualQueue.length !== 0) {
+        const evpld = virtualQueue.shift();
+        logger.info('Dispatching eval payload', evpld);
+        await petri.dispatch(evpld, proj, cfg);
       }
-      logger.info('Init succeed', rst);
-      await r.dyn('/scan');
-      for (const dpars of rst[0]) {
-        const id = newId();
-        await etcd.put(`/${proj}/params/scan/${id}`).json(dpars).exec();
-        await r.incr({ [`/scan/${id}/init`]: 1 });
+    } catch (e) {
+      logger.error('Processing channel', e);
+    } finally {
+      if (_.isFunction(obj.fin)) {
+        obj.fin();
       }
     }
-  });
-
-  petri.register({
-    name: 'scan/init',
-    root: /^\/scan\/([a-z0-9]+)/,
-  }, async (r, payload, proj, cfg) => {
-    if (await r.decr({ '/init': 1 })) {
-      const variables = await etcd.get(`/${proj}/params/scan/${r.param[0]}`).json();
-      await r.dyn('/G');
-      for (const gpars of cfg.G) {
-        const { name, kind, code } = gpars;
-        run(kind, code, variables, {
-          proj,
-          name: 'checkG',
-          root: `${r.proj}/G/${name}`,
-        });
-        await r.incr({ [`/G/${name}`]: 1 });
-      }
-    }
-  });
+  }
 };

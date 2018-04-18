@@ -6,12 +6,9 @@ const nocache = require('nocache');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const { schema } = require('./graphql');
-const { PetriNet } = require('./petri');
-const EtcdAdapter = require('./adapter');
 const etcd = require('./etcd');
 const amqp = require('./amqp');
 const core = require('./core');
-const { virtualQueue } = require('./integration');
 const status = require('./status');
 const logger = require('./logger')('index');
 
@@ -115,11 +112,8 @@ function runApp() {
   });
 }
 
-const petri = new PetriNet(new EtcdAdapter(etcd));
-
-core(petri);
-
 amqp.emitter.on('action', async (msg) => {
+  let fin = () => msg.obj.acknowledge(false);
   try {
     const id = msg.correlationId;
     logger.info(`Received action ${msg.kind} ${id}`, msg.body);
@@ -132,28 +126,25 @@ amqp.emitter.on('action', async (msg) => {
       logger.warn('correlation_id malformed');
       return;
     }
-    const pld = {
+    const payload = {
       name,
       base: `/${proj}/state`,
       root: rest.length === 0 ? undefined : `/${rest.join('/')}`,
       kind: msg.headers.kind,
       action: msg.body,
     };
-    const cfg = await etcd.get(`/${proj}/cfg`).json();
-    logger.info('Dispatching payload', pld);
-    logger.debug('With config', cfg);
-    await petri.dispatch(pld, proj, cfg);
-    while (virtualQueue.length !== 0) {
-      const evpld = virtualQueue.shift();
-      logger.info('Dispatching eval payload', evpld);
-      await petri.dispatch(pld, proj, cfg);
-    }
+    await core.channel.push({ payload, proj, fin });
+    fin = undefined;
   } catch (e) {
     logger.error('Processing action', e);
   } finally {
-    msg.obj.acknowledge(false);
+    if (fin) {
+      fin();
+    }
   }
 });
+
+core.run();
 
 const inits = [];
 inits.push(amqp.connect());
