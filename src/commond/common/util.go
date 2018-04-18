@@ -38,6 +38,7 @@ func WatchLog(e ExeContext, fn string, cancel <-chan struct{}) error {
 		RL.Error(e, "watchLog", "Open log file: "+err.Error())
 		return err
 	}
+	defer file.Close()
 	var pos int64
 	for {
 		_, err = file.Seek(pos, 0)

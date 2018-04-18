@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
@@ -98,6 +99,8 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 	if err != nil {
 		return err
 	}
+
+	<-time.After(2 * time.Second)
 
 	// Drop directory `data/{cId}/`
 	err = common.DropDir(cmd.Raw, id)
