@@ -8,7 +8,7 @@ endif
 
 include .env
 
-VENDOR_IMAGE=b1f6c1c4/ansys-controller-vendor
+VENDOR_IMAGE=b1f6c1c4/ansys-moe:controller
 CFG_VENDOR=$(shell docker-machine config $(VENDOR_BUILD_MACHINE))
 CFG_SRC=$(shell docker-machine config $(SRC_BUILD_MACHINE))
 

@@ -73,8 +73,10 @@
         "ignoreChainWithDepth": 3
       }
     ],
+    "no-await-in-loop": "off",
     "no-confusing-arrow": "off",
     "no-console": "warn",
+    "no-restricted-syntax": "off",
     "no-underscore-dangle": "off",
     "no-use-before-define": "error",
     "object-curly-newline": [

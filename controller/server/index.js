@@ -6,8 +6,6 @@ const nocache = require('nocache');
 const bodyParser = require('body-parser');
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
 const { schema } = require('./graphql');
-const { PetriNet } = require('./petri');
-const EtcdAdapter = require('./adapter');
 const etcd = require('./etcd');
 const amqp = require('./amqp');
 const core = require('./core');
@@ -114,39 +112,38 @@ function runApp() {
   });
 }
 
-const petri = new PetriNet(new EtcdAdapter(etcd), (base) => ({
-  proj: base.match(/^\/([a-z0-9]+)/)[1],
-  mer(p) { return `/${this.proj}${p}`; },
-}));
-core(petri);
-
 amqp.emitter.on('action', async (msg) => {
+  let fin = () => msg.obj.acknowledge(false);
   try {
     const id = msg.correlationId;
-    logger.info(`Received action ${msg.kind} ${id}`, msg.body);
     if (!id) {
       logger.warn('correlation_id not found');
       return;
     }
-    const index = id.indexOf('.');
-    if (index < 0) {
+    const [proj, name, ...rest] = id.split('.');
+    if (!proj || !name) {
       logger.warn('correlation_id malformed');
       return;
     }
-    const ac = {
-      name: id.substr(index + 1),
-      base: `/${id.substr(0, index)}/state`,
+    const payload = {
+      name,
+      base: `/${proj}/state`,
+      root: rest.length === 0 ? undefined : `/${rest.join('/')}`,
       kind: msg.headers.kind,
       action: msg.body,
     };
-    logger.info('Dispatching action', ac);
-    await petri.dispatch(ac);
+    await core.channel.push({ payload, proj, fin });
+    fin = undefined;
   } catch (e) {
     logger.error('Processing action', e);
   } finally {
-    msg.obj.acknowledge(false);
+    if (fin) {
+      fin();
+    }
   }
 });
+
+core.run();
 
 const inits = [];
 inits.push(amqp.connect());

@@ -7,11 +7,17 @@ class PetriRuntime {
     this.db = db;
     this.base = base;
     this.root = '';
+    this.param = {};
     this.cache = {};
     this.dirty = false;
     this.dyns = [];
 
     this.ensure = this.ensure.bind(this);
+  }
+
+  setRoot([r, ...rest] = []) {
+    this.root = r || '';
+    this.param = rest;
   }
 
   makeDbPath(k) {

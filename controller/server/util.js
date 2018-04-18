@@ -1,6 +1,7 @@
 const _ = require('lodash');
 
-module.exports.newId = () => Math.random().toString(36).substr(2);
+module.exports.newId = (l = 8) =>
+  Math.round((36 ** (l + 1)) - (Math.random() * (36 ** l))).toString(36).slice(1);
 
 // https://gist.github.com/zenparsing/5dffde82d9acef19e43c
 module.exports.dedent = (callSite, ...args) => {
