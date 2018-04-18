@@ -11,7 +11,7 @@ var mainCh, auxCh *amqp.Channel
 var cancels map[string]*amqp.Queue
 
 func setupAmqp(stop <-chan struct{}) error {
-	hb, _ := time.ParseDuration("30s")
+	hb, _ := time.ParseDuration("5s")
 	conn, err := amqp.DialConfig(common.C.RabbitUrl, amqp.Config{
 		Heartbeat: hb,
 	})
@@ -96,7 +96,7 @@ func setupAmqp(stop <-chan struct{}) error {
 	return nil
 }
 
-func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
+func subscribeCommand(kind string, cmd chan<- *common.RawCommand) error {
 	_, err := mainCh.QueueDeclare(
 		kind,  // name
 		true,  // durable
@@ -107,7 +107,7 @@ func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
 	)
 	if err != nil {
 		common.SL("Declare main queue: " + err.Error())
-		return
+		return err
 	}
 
 	msgs, err := mainCh.Consume(
@@ -121,15 +121,19 @@ func subscribeCommand(kind string, cmd chan<- *common.RawCommand) {
 	)
 	if err != nil {
 		common.SL("Consume main queue: " + err.Error())
-		return
+		return err
 	}
 
-	for d := range msgs {
-		ack := func() {
-			d.Ack(false)
+	go func() {
+		for d := range msgs {
+			ack := func() {
+				d.Ack(false)
+			}
+			cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body, ack}
 		}
-		cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body, ack}
-	}
+	}()
+
+	return nil
 }
 
 func publishAction(act <-chan common.ExeContext) {

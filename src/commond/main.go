@@ -34,7 +34,10 @@ func Entry(theLogger func(string)) {
 func addModule(m common.Module, stop <-chan struct{}) {
 	common.SL("Adding module " + m.GetKind())
 	ch := make(chan *common.RawCommand)
-	go subscribeCommand(m.GetKind(), ch)
+	err := subscribeCommand(m.GetKind(), ch)
+	if err != nil {
+		panic(err)
+	}
 	common.RL.Info(m, "main", "Added module")
 	go func() {
 		for {
