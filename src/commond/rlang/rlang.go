@@ -45,6 +45,11 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 	go func() {
 		select {
 		case <-cancel:
+			if ctx.Process == nil {
+				common.RL.Warn(e, "rlang/execRLang", "Killing: already exited")
+				killing <- nil
+				return
+			}
 			common.RL.Info(e, "rlang/execRLang", "Killing process")
 			err := ctx.Process.Kill()
 			killing <- err

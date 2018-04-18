@@ -220,7 +220,11 @@ func subscribeCancel(e common.ExeContext, cll chan struct{}) {
 	go func() {
 		for cli.Loop() {
 			select {
-			case <-cns.Deliveries():
+			case _, ok := <-cns.Deliveries():
+				if !ok {
+					// Unsubscribed, don't close the same channel twice
+					return
+				}
 				close(cll)
 			case err := <-cns.Errors():
 				common.SL("Consumer of cancel: " + err.Error())

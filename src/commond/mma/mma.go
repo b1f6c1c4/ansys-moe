@@ -46,6 +46,11 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 	go func() {
 		select {
 		case <-cancel:
+			if ctx.Process == nil {
+				common.RL.Warn(e, "mma/execMma", "Killing: already exited")
+				killing <- nil
+				return
+			}
 			common.RL.Info(e, "mma/execMma", "Killing process")
 			err := ctx.Process.Kill()
 			killing <- err
