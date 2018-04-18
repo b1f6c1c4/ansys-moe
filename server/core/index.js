@@ -1,4 +1,4 @@
-// const _ = require('lodash');
+const _ = require('lodash');
 const etcd = require('../etcd');
 const amqp = require('../amqp');
 const { dedent } = require('./util');
@@ -14,11 +14,18 @@ module.exports = (petri) => {
     const cfg = action;
     await etcd.put(`/${proj}/config`).json(cfg).exec();
     const id = `${proj}.inited`;
-    const script = dedent`
-      rst <- seq(0, 10, by=2)
+    const script = _.template(dedent`
+      <% _.forEach(D, (d) => { %>
+        <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.step %>)
+      <% }); %>
+      rst <- expand.grid(
+        <% _.forEach(D, (d) => { %>
+          <%= d.name %>=<%= d.name %>
+        <% }); %>
+      )
       library(jsonlite)
       toJSON(rst)
-    `;
+    `)(cfg);
     amqp.publish('rlang', { script }, id);
     await r.incr({ '/initing': 1 });
   });
