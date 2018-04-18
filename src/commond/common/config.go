@@ -11,12 +11,11 @@ import (
 
 // GlobalConfigT describes ./config.yaml
 type GlobalConfigT struct {
-	RemoteUrl   string `yaml:"url"`
-	RabbitUrl   string `yaml:"mq"`
-	Prefetch    int    `yaml:"prefetch"`
-	EnableAnsys bool   `yaml:"ansys"`
-	EnableMma   bool   `yaml:"mathematica"`
-	EnableRLang bool   `yaml:"rlang"`
+	RemoteUrl     string `yaml:"url"`
+	RabbitUrl     string `yaml:"mq"`
+	PrefetchAnsys int    `yaml:"ansys"`
+	PrefetchMma   int    `yaml:"mathematica"`
+	PrefetchRLang int    `yaml:"rlang"`
 }
 
 func loadConfig(exeDir string) GlobalConfigT {
@@ -29,10 +28,9 @@ func loadConfig(exeDir string) GlobalConfigT {
 		os.Getenv("RABBIT_HOST"),
 		os.Getenv("RABBIT_PORT"),
 	)
-	cfg.Prefetch, _ = strconv.Atoi(os.Getenv("PREFETCH"))
-	cfg.EnableAnsys = os.Getenv("ANSYS") != ""
-	cfg.EnableMma = os.Getenv("MATHEMATICA") != ""
-	cfg.EnableRLang = os.Getenv("RLANG") != ""
+	cfg.PrefetchAnsys, _ = strconv.Atoi(os.Getenv("ANSYS"))
+	cfg.PrefetchMma, _ = strconv.Atoi(os.Getenv("MATHEMATICA"))
+	cfg.PrefetchRLang, _ = strconv.Atoi(os.Getenv("RLANG"))
 	txt, err := ioutil.ReadFile(filepath.Join(exeDir, "config.yaml"))
 	if err != nil {
 		SL("Cannot open config.yaml")

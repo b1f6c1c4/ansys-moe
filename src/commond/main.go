@@ -10,6 +10,7 @@ import (
 
 // VERSION is defined during compilation
 var VERSION string
+
 // COMMITHASH is defined during compilation
 var COMMITHASH string
 
@@ -34,10 +35,10 @@ func Entry(theLogger func(string)) {
 	common.SL("COMMITHASH: " + COMMITHASH)
 }
 
-func addModule(m common.Module, stop <-chan struct{}) {
+func addModule(m common.Module, pref int, stop <-chan struct{}) {
 	common.SL("Adding module " + m.GetKind())
 	ch := make(chan *common.RawCommand)
-	err := subscribeCommand(m.GetKind(), ch)
+	err := subscribeCommand(m.GetKind(), pref, ch)
 	if err != nil {
 		panic(err)
 	}
@@ -76,14 +77,14 @@ func Loop(stop <-chan struct{}) {
 
 	common.RL.Info(common.Core, "main", "Start adding modules")
 
-	if common.C.EnableAnsys {
-		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.PrefetchAnsys > 0 {
+		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchAnsys, stop)
 	}
-	if common.C.EnableMma {
-		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.PrefetchMma > 0 {
+		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchMma, stop)
 	}
-	if common.C.EnableRLang {
-		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.PrefetchRLang > 0 {
+		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchRLang, stop)
 	}
 
 	common.SL("Started event loop")

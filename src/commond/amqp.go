@@ -70,7 +70,7 @@ func setupAmqp(stop <-chan struct{}) error {
 	return nil
 }
 
-func subscribeCommand(kind string, cmd chan<- *common.RawCommand) error {
+func subscribeCommand(kind string, pref int, cmd chan<- *common.RawCommand) error {
 	queue := &cony.Queue{
 		Name:       kind,
 		Durable:    true,
@@ -81,7 +81,7 @@ func subscribeCommand(kind string, cmd chan<- *common.RawCommand) error {
 		cony.DeclareQueue(queue),
 	})
 
-	cns := cony.NewConsumer(queue, cony.Qos(common.C.Prefetch))
+	cns := cony.NewConsumer(queue, cony.Qos(pref))
 
 	cli.Consume(cns)
 
