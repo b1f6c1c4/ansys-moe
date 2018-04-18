@@ -91,11 +91,9 @@ app.post(
   }),
 );
 
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/graphql', graphiqlExpress({
-    endpointURL: '/graphql',
-  }));
-}
+app.get('/graphql', graphiqlExpress({
+  endpointURL: '/graphql',
+}));
 
 app.use('/', (req, res) => res.status(404).send());
 
