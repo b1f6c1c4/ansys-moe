@@ -14,7 +14,22 @@ router.use(express.static(dataPath, {
   dotfiles: 'allow',
 }));
 
-const isAllowed = (fn) => /^[-.a-zA-Z0-9_]+(\/[-.a-zA-Z0-9_]+){0,3}$/.test(fn);
+const invalidDos = /^(PRN|AUX|NUL|CON|COM[1-9]|LPT[1-9]$)(\..*)?$/i;
+// eslint-disable-next-line no-control-regex
+const invalidChar = /[\x00-\x1f\\?*:";|/<>]/;
+const invalidSuffix = /[. ]+$/;
+const isAllowed = (fn) => {
+  if (fn.length > 1000) return false;
+  const sp = fn.split('/');
+  if (sp.length > 12) return false;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const s of sp) {
+    if (invalidDos.test(s)) return false;
+    if (invalidChar.test(s)) return false;
+    if (invalidSuffix.test(s)) return false;
+  }
+  return true;
+};
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
@@ -73,3 +88,4 @@ router.post('/', upload.any(), (req, res) => {
 });
 
 module.exports = router;
+module.exports.isAllowed = isAllowed;
