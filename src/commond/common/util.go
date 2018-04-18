@@ -167,7 +167,7 @@ func UploadDir(e ExeContext, remote, local string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", C.RemoteUrl, body)
+	req, err := http.NewRequest("POST", C.RemoteUrl+"storage/", body)
 	if err != nil {
 		RL.Error(e, "uploadDir", "Make request: "+err.Error())
 		return err
@@ -182,7 +182,7 @@ func UploadDir(e ExeContext, remote, local string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 204 {
-		err = errors.New("StatusCode " + string(resp.StatusCode))
+		err = errors.New("StatusCode " + strconv.Itoa(resp.StatusCode))
 		RL.Error(e, "uploadDir", err.Error())
 		return err
 	}
