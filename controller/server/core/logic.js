@@ -1,7 +1,9 @@
 const _ = require('lodash');
 const etcd = require('../etcd');
-const { newId, dedent } = require('../util');
+const { hash, dedent } = require('../util');
 const { run, parse } = require('../integration');
+const ansys = require('./ansys');
+const expression = require('../integration/expression');
 const logger = require('../logger')('core/logic');
 
 module.exports = (petri) => {
@@ -39,7 +41,7 @@ module.exports = (petri) => {
       logger.info('Init succeed', rst);
       await r.dyn('/scan');
       for (const dpars of rst[0]) {
-        const id = newId();
+        const id = hash(dpars);
         await etcd.put(`/${proj}/params/scan/${id}`).json(dpars).exec();
         await r.incr({ [`/scan/${id}/init`]: 1 });
       }
@@ -100,7 +102,60 @@ module.exports = (petri) => {
         _.set(variables, name, val);
       }
       logger.info('G pars done', variables);
-      // TODO: ansys
+      await etcd.put(`/${proj}/params/scan/${r.param[0]}`).json(variables).exec();
+      const ruleId = _.findIndex(cfg.ansys.rules, ({ condition }) =>
+        !condition || expression.run(condition, variables) > 0);
+      const rule = cfg.ansys.rules[ruleId];
+      await etcd.put(`/${proj}/params/scan/${r.param[0]}/M`).value(ruleId).exec();
+      const vars = _.pick(variables, _.map(rule.inputs, 'variable'));
+      // const id = hash({
+      //   proj,
+      //   filename: rule.filename,
+      //   vars,
+      // });
+      ansys.mutate(rule, vars, {
+        proj,
+        name: 'scan-M-solve',
+        root: r.root,
+      });
+      await r.incr({ '/M/mutate': 1 });
+    }
+  });
+
+  petri.register({
+    name: 'scan-M-solve',
+    external: true,
+    root: /^\/scan\/([a-z0-9]+)/,
+  }, async (r, payload, proj, cfg) => {
+    if (await r.decr({ '/M/mutate': 1 })) {
+      // const variables = await etcd.get(`/${proj}/params/scan/${r.param[0]}`).json();
+      const ruleId = await etcd.get(`/${proj}/params/scan/${r.param[0]}/M`).number();
+      const rule = cfg.ansys.rules[ruleId];
+      // TODO: parse ansys
+      const file = `${proj}.scan-M-solve${r.root.replace(/\//g, '.')}/${rule.filename}`;
+      logger.info('M mutate done', file);
+      ansys.solve(file, rule, {
+        proj,
+        name: 'scan-M-done',
+        root: r.root,
+      });
+      await r.incr({ '/M/solve': 1 });
+    }
+  });
+
+  petri.register({
+    name: 'scan-M-done',
+    external: true,
+    root: /^\/scan\/([a-z0-9]+)/,
+  }, async (r, payload, proj, cfg) => {
+    if (await r.decr({ '/M/solve': 1 })) {
+      // const variables = await etcd.get(`/${proj}/params/scan/${r.param[0]}`).json();
+      const ruleId = await etcd.get(`/${proj}/params/scan/${r.param[0]}/M`).number();
+      const rule = cfg.ansys.rules[ruleId];
+      // TODO: parse ansys
+      const file = `${proj}.scan-M-done${r.root.replace(/\//g, '.')}/${rule.filename}`;
+      logger.info('M solve done', file);
+      await r.incr({ '/success': 1 });
     }
   });
 };

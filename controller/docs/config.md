@@ -71,6 +71,19 @@
 
 - filename (string, required)
 - condition (string) - kind expression
-- inputs (array[string], required)
-- outputs (array[string], required)
+- inputs (array[AnsysInput], required)
+- outputs (array[AnsysOutput], required)
+
+## AnsysInput (object)
+
+- name (string, required)
+- design (stirng)
+- variable (string, required)
+
+## AnsysOutput (object)
+
+- name (string, required)
+- design (string, required)
+- table (string, required)
+- column (number, required)
 

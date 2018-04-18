@@ -14,7 +14,7 @@ module.exports.run = (kind, code, variables, { proj, name, root }) => {
     : `${proj}.${name}`;
   switch (kind) {
     case 'expression':
-      theQueue.push(expression(code, variables, {
+      theQueue.push(expression.wrapped(code, variables, {
         name,
         base: `/${proj}/state`,
         root,

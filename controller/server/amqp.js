@@ -44,6 +44,7 @@ const connect = () => new Promise((resolve, reject) => {
     port: process.env.RABBIT_PORT || 5672,
     login: process.env.RABBIT_USER || 'guest',
     password: process.env.RABBIT_PASS || 'guest',
+    heartbeat: 5,
   });
 
   connection.on('error', (e) => {

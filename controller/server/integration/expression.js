@@ -1,7 +1,17 @@
 const { Parser } = require('expr-eval');
 const logger = require('../logger')('integration/expression');
 
-module.exports = (code, variables, info) => {
+module.exports.run = (code, variables) => {
+  try {
+    const parser = new Parser();
+    const expr = parser.parse(code);
+    return expr.evaluate(variables);
+  } catch (e) {
+    return null;
+  }
+};
+
+module.exports.wrapped = (code, variables, info) => {
   logger.debug(`Run expr ${code}`, info);
   let action;
   try {
