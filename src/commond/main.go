@@ -8,11 +8,7 @@ import (
 	"time"
 )
 
-func delayed(ch <-chan struct{}, dur string) chan struct{} {
-	m, err := time.ParseDuration(dur)
-	if err != nil {
-		m = time.Second
-	}
+func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 	c := make(chan struct{})
 	go func() {
 		select {
@@ -54,7 +50,7 @@ func addModule(m common.Module, stop <-chan struct{}) {
 
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
-	err := setupAmqp(delayed(stop, "1s"))
+	err := setupAmqp(delayed(stop, time.Second))
 	if err != nil {
 		panic(err)
 	}
@@ -86,7 +82,6 @@ func Loop(stop <-chan struct{}) {
 	common.SL("Started event loop")
 	common.RL.Info(common.Core, "main", "Started event loop")
 
-	m, _ := time.ParseDuration("60s")
 rpt:
 	for {
 		common.SR.Report(common.Core)
@@ -95,11 +90,10 @@ rpt:
 			common.SL("Received signal to stop")
 			common.RL.Fatal(common.Core, "main", "Received signal to stop")
 			break rpt
-		case <-time.After(m):
+		case <-time.After(60 * time.Second):
 		}
 	}
-	m, _ = time.ParseDuration("2s")
 	select {
-	case <-time.After(m):
+	case <-time.After(2 * time.Second):
 	}
 }

@@ -30,7 +30,6 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 	done := make(chan struct{})
 	killing := make(chan error, 1)
 	go func() {
-		m, _ := time.ParseDuration("60s")
 		for {
 			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
 				return
@@ -39,7 +38,7 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 			select {
 			case <-cancel:
 				return
-			case <-time.After(m):
+			case <-time.After(60 * time.Second):
 			}
 		}
 	}()
