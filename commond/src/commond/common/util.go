@@ -14,11 +14,17 @@ import (
 	"time"
 )
 
-// EnsurePath is mkdir -p
-func EnsurePath(e ExeContext, path string) error {
-	err := os.Mkdir(filepath.Join(DataPath, path), os.ModePerm)
+// EmptyPath is rm -rf && mkdir -p
+func EmptyPath(e ExeContext, path, subPath string) error {
+	p := filepath.Join(DataPath, path)
+	err := os.RemoveAll(p)
 	if err != nil {
-		RL.Error(e, "ensurePath", "Create folder: "+err.Error())
+		RL.Error(e, "emptyPath", "Remove folder: "+err.Error())
+		return err
+	}
+	err = os.MkdirAll(filepath.Join(p, subPath), os.ModePerm)
+	if err != nil {
+		RL.Error(e, "emptyPath", "Create folder: "+err.Error())
 		return err
 	}
 	return nil
@@ -32,6 +38,7 @@ func WatchLog(e ExeContext, fn string, cancel <-chan struct{}) error {
 		RL.Error(e, "watchLog", "Open log file: "+err.Error())
 		return err
 	}
+	defer file.Close()
 	var pos int64
 	for {
 		_, err = file.Seek(pos, 0)
@@ -161,7 +168,7 @@ func UploadDir(e ExeContext, remote, local string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", C.RemoteUrl, body)
+	req, err := http.NewRequest("POST", C.RemoteUrl+"storage/", body)
 	if err != nil {
 		RL.Error(e, "uploadDir", "Make request: "+err.Error())
 		return err
@@ -176,7 +183,7 @@ func UploadDir(e ExeContext, remote, local string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 204 {
-		err = errors.New("StatusCode " + string(resp.StatusCode))
+		err = errors.New("StatusCode " + strconv.Itoa(resp.StatusCode))
 		RL.Error(e, "uploadDir", err.Error())
 		return err
 	}

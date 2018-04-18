@@ -46,6 +46,11 @@ func (m Module) Run(raw *common.RawCommand) {
 		if r := recover(); r != nil {
 			common.RL.Error(raw, "mma", fmt.Sprintf("Recovered panic: %v", r))
 		}
+		if result.Type != "done" {
+			common.RL.Error(raw, "mma", "Command execution failure")
+		} else {
+			common.RL.Info(raw, "mma", "Command execution done")
+		}
 		m.rpt <- result
 	}()
 
