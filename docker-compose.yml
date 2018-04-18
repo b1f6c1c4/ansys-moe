@@ -64,8 +64,7 @@ services:
       RABBIT_PORT: 5672
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
-      PREFETCH: 2
-      RLANG: "true"
+      RLANG: 2
     depends_on:
       rabbit:
         condition: service_healthy
