@@ -9,7 +9,7 @@ import (
 )
 
 var possiblePaths = []string{
-	"C:\\Program Files\\AnsysEM\\AnsysEM15.0\\Win64\\maxwell.exe",
+	"D:\\Program Files\\Ansoft\\Maxwell14.0\\maxwell.exe",
 	"D:\\Program Files\\AnsysEM\\AnsysEM18.0\\Win64\\ansysedt.exe",
 }
 

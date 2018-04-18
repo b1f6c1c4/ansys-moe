@@ -14,9 +14,15 @@ import (
 	"time"
 )
 
-// EnsurePath is mkdir -p
-func EnsurePath(e ExeContext, path string) error {
-	err := os.Mkdir(filepath.Join(DataPath, path), os.ModePerm)
+// EmptyPath is rm -rf && mkdir -p
+func EmptyPath(e ExeContext, path string) error {
+	p := filepath.Join(DataPath, path)
+	err := os.RemoveAll(p)
+	if err != nil {
+		RL.Error(e, "ensurePath", "Remove folder: "+err.Error())
+		return err
+	}
+	err = os.Mkdir(p, os.ModePerm)
 	if err != nil {
 		RL.Error(e, "ensurePath", "Create folder: "+err.Error())
 		return err
