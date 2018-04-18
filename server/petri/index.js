@@ -59,6 +59,7 @@ class PetriNet {
     const root = _.get(payload, 'root');
     const { name, root: rootRegex } = option;
     logger.trace('Will execute', name);
+    logger.trace('Using args', args);
     if (!rootRegex) {
       r.setRoot();
       logger.trace('Will use root', r.root);

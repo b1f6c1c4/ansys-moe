@@ -1289,6 +1289,10 @@ expect@^22.4.3:
     jest-message-util "^22.4.3"
     jest-regex-util "^22.4.3"
 
+expr-eval@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/expr-eval/-/expr-eval-1.2.1.tgz#1425caf4d7ccb7439ce72d0488b20c3f6e4ea25a"
+
 express@^4.16.3:
   version "4.16.3"
   resolved "https://registry.yarnpkg.com/express/-/express-4.16.3.tgz#6af8a502350db3246ecc4becf6b5a34d22f7ed53"

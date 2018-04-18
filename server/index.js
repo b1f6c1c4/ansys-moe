@@ -11,6 +11,7 @@ const EtcdAdapter = require('./adapter');
 const etcd = require('./etcd');
 const amqp = require('./amqp');
 const core = require('./core');
+const { virtualQueue } = require('./integration');
 const status = require('./status');
 const logger = require('./logger')('index');
 
@@ -142,6 +143,11 @@ amqp.emitter.on('action', async (msg) => {
     logger.info('Dispatching payload', pld);
     logger.debug('With config', cfg);
     await petri.dispatch(pld, proj, cfg);
+    while (virtualQueue.length !== 0) {
+      const evpld = virtualQueue.shift();
+      logger.info('Dispatching eval payload', evpld);
+      await petri.dispatch(pld, proj, cfg);
+    }
   } catch (e) {
     logger.error('Processing action', e);
   } finally {

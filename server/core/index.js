@@ -1,8 +1,7 @@
 const _ = require('lodash');
 const etcd = require('../etcd');
-const amqp = require('../amqp');
-const { newId, dedent } = require('./util');
-const parse = require('../parser');
+const { newId, dedent } = require('../util');
+const { run, parse } = require('../integration');
 const logger = require('../logger')('core');
 
 module.exports = (petri) => {
@@ -13,7 +12,6 @@ module.exports = (petri) => {
     logger.info(`Initializing ${proj}`, action);
     const cfg = action;
     await etcd.put(`/${proj}/config`).json(cfg).exec();
-    const id = `${proj}.inited`;
     const script = _.template(dedent`
       <% _.forEach(D, (d) => { %>
         <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.step %>)
@@ -23,10 +21,9 @@ module.exports = (petri) => {
           <%= d.name %>=<%= d.name %>
         <% }); %>
       )
-      library(jsonlite)
       toJSON(rst)
     `)(cfg);
-    amqp.publish('rlang', { script }, id);
+    run('rlang', script, {}, { proj, name: 'inited' });
     await r.incr({ '/initing': 1 });
   });
 
@@ -54,10 +51,19 @@ module.exports = (petri) => {
   petri.register({
     name: 'scan/init',
     root: /^\/scan\/([a-z0-9]+)/,
-  }, async (r) => {
-    if (await r.decr('/init')) {
-      // TODO
-      await r.incr({ '/calcG': 1 });
+  }, async (r, payload, proj, cfg) => {
+    if (await r.decr({ '/init': 1 })) {
+      const variables = await etcd.get(`/${proj}/params/scan/${r.param[0]}`).json();
+      await r.dyn('/G');
+      for (const gpars of cfg.G) {
+        const { name, kind, code } = gpars;
+        run(kind, code, variables, {
+          proj,
+          name: 'checkG',
+          root: `${r.proj}/G/${name}`,
+        });
+        await r.incr({ [`/G/${name}`]: 1 });
+      }
     }
   });
 };
