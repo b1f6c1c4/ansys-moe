@@ -31,7 +31,6 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 	done := make(chan struct{})
 	killing := make(chan error, 1)
 	go func() {
-		m, _ := time.ParseDuration("60s")
 		for {
 			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
 				return
@@ -40,13 +39,18 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 			select {
 			case <-cancel:
 				return
-			case <-time.After(m):
+			case <-time.After(60 * time.Second):
 			}
 		}
 	}()
 	go func() {
 		select {
 		case <-cancel:
+			if ctx.Process == nil {
+				common.RL.Warn(e, "mma/execMma", "Killing: already exited")
+				killing <- nil
+				return
+			}
 			common.RL.Info(e, "mma/execMma", "Killing process")
 			err := ctx.Process.Kill()
 			killing <- err

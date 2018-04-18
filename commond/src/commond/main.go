@@ -8,11 +8,13 @@ import (
 	"time"
 )
 
-func delayed(ch <-chan struct{}, dur string) chan struct{} {
-	m, err := time.ParseDuration(dur)
-	if err != nil {
-		m = time.Second
-	}
+// VERSION is defined during compilation
+var VERSION string
+
+// COMMITHASH is defined during compilation
+var COMMITHASH string
+
+func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 	c := make(chan struct{})
 	go func() {
 		select {
@@ -29,12 +31,17 @@ func delayed(ch <-chan struct{}, dur string) chan struct{} {
 // Entry setup commond
 func Entry(theLogger func(string)) {
 	common.Entry(theLogger)
+	common.SL("VERSION: " + VERSION)
+	common.SL("COMMITHASH: " + COMMITHASH)
 }
 
-func addModule(m common.Module, stop <-chan struct{}) {
+func addModule(m common.Module, pref int, stop <-chan struct{}) {
 	common.SL("Adding module " + m.GetKind())
 	ch := make(chan *common.RawCommand)
-	go subscribeCommand(m.GetKind(), ch)
+	err := subscribeCommand(m.GetKind(), pref, ch)
+	if err != nil {
+		panic(err)
+	}
 	common.RL.Info(m, "main", "Added module")
 	go func() {
 		for {
@@ -51,7 +58,7 @@ func addModule(m common.Module, stop <-chan struct{}) {
 
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
-	err := setupAmqp(delayed(stop, "1s"))
+	err := setupAmqp(delayed(stop, time.Second))
 	if err != nil {
 		panic(err)
 	}
@@ -70,20 +77,19 @@ func Loop(stop <-chan struct{}) {
 
 	common.RL.Info(common.Core, "main", "Start adding modules")
 
-	if common.C.EnableAnsys {
-		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.PrefetchAnsys > 0 {
+		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchAnsys, stop)
 	}
-	if common.C.EnableMma {
-		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.PrefetchMma > 0 {
+		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchMma, stop)
 	}
-	if common.C.EnableRLang {
-		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), stop)
+	if common.C.PrefetchRLang > 0 {
+		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchRLang, stop)
 	}
 
 	common.SL("Started event loop")
 	common.RL.Info(common.Core, "main", "Started event loop")
 
-	m, _ := time.ParseDuration("60s")
 rpt:
 	for {
 		common.SR.Report(common.Core)
@@ -92,11 +98,10 @@ rpt:
 			common.SL("Received signal to stop")
 			common.RL.Fatal(common.Core, "main", "Received signal to stop")
 			break rpt
-		case <-time.After(m):
+		case <-time.After(60 * time.Second):
 		}
 	}
-	m, _ = time.ParseDuration("2s")
 	select {
-	case <-time.After(m):
+	case <-time.After(2 * time.Second):
 	}
 }
