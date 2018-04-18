@@ -28,7 +28,7 @@ func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
 	script := cmd.Script.String
 
 	// Create `data/{cId}`
-	err := common.EmptyPath(cmd.Raw, id)
+	err := common.EmptyPath(cmd.Raw, id, "")
 	if err != nil {
 		return err
 	}

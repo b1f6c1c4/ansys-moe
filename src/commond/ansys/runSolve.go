@@ -29,7 +29,7 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 	script := cmd.Script.String
 
 	// Create `data/{cId}/output`
-	err := common.EmptyPath(cmd.Raw, filepath.Join(id, "output"))
+	err := common.EmptyPath(cmd.Raw, id, "output")
 	if err != nil {
 		return err
 	}

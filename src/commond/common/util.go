@@ -15,16 +15,16 @@ import (
 )
 
 // EmptyPath is rm -rf && mkdir -p
-func EmptyPath(e ExeContext, path string) error {
+func EmptyPath(e ExeContext, path, subPath string) error {
 	p := filepath.Join(DataPath, path)
 	err := os.RemoveAll(p)
 	if err != nil {
-		RL.Error(e, "ensurePath", "Remove folder: "+err.Error())
+		RL.Error(e, "emptyPath", "Remove folder: "+err.Error())
 		return err
 	}
-	err = os.Mkdir(p, os.ModePerm)
+	err = os.MkdirAll(filepath.Join(p, subPath), os.ModePerm)
 	if err != nil {
-		RL.Error(e, "ensurePath", "Create folder: "+err.Error())
+		RL.Error(e, "emptyPath", "Create folder: "+err.Error())
 		return err
 	}
 	return nil
