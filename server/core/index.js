@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const etcd = require('../etcd');
 const amqp = require('../amqp');
-const { dedent } = require('./util');
+const { newId, dedent } = require('./util');
 const parse = require('../parser');
 const logger = require('../logger')('core');
 
@@ -33,7 +33,7 @@ module.exports = (petri) => {
   petri.register({
     name: 'inited',
     external: true,
-  }, async (r, payload) => {
+  }, async (r, payload, proj) => {
     if (await r.decr({ '/initing': 1 })) {
       const rst = parse(payload);
       if (!rst) {
@@ -42,7 +42,22 @@ module.exports = (petri) => {
         return;
       }
       logger.info('Init succeed', rst);
-      await r.incr({ '/success': 1 });
+      await r.dyn('/scan');
+      for (const dpars of rst[0]) {
+        const id = newId();
+        await etcd.put(`/${proj}/params/scan/${id}`).json(dpars).exec();
+        await r.incr({ [`/scan/${id}/init`]: 1 });
+      }
+    }
+  });
+
+  petri.register({
+    name: 'scan/init',
+    root: /^\/scan\/([a-z0-9]+)/,
+  }, async (r) => {
+    if (await r.decr('/init')) {
+      // TODO
+      await r.incr({ '/calcG': 1 });
     }
   });
 };

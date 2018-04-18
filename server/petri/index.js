@@ -42,9 +42,7 @@ class PetriNet {
     let maxDepth = 10;
     while (r.dirty) {
       r.dirty = false;
-      // eslint-disable-next-line no-restricted-syntax
       for (const rg of _.values(this.internals)) {
-        // eslint-disable-next-line no-await-in-loop
         await PetriNet.execute(r, rg, undefined, args);
       }
       /* istanbul ignore if */
@@ -82,11 +80,9 @@ class PetriNet {
       .filter()
       .uniq()
       .value();
-    // eslint-disable-next-line no-restricted-syntax
     for (const v of vals) {
       r.setRoot(v.match(rootRegex));
       logger.trace('Will use root', r.root);
-      // eslint-disable-next-line no-await-in-loop
       await func(r, payload, ...args);
     }
     return undefined;
