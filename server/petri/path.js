@@ -52,6 +52,9 @@ class CompiledPath {
           break;
         }
         case 'any':
+          if (!/^[-_a-zA-Z0-9]*$/.test(match[1])) {
+            return undefined;
+          }
           result.path += match[0];
           _.set(result, sg.name, match[1]);
           break;
@@ -61,6 +64,7 @@ class CompiledPath {
           }
           result.path += match[0];
           break;
+        /* istanbul ignore next */
         default:
           throw new Error('Type not supported');
       }
@@ -81,6 +85,7 @@ class CompiledPath {
         case 'fixed':
           result += `/${sg.value}`;
           break;
+        /* istanbul ignore next */
         default:
           throw new Error('Type not supported');
       }

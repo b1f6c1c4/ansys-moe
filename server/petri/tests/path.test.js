@@ -1,5 +1,14 @@
 const { match, build } = require('../path');
 
+describe('error', () => {
+  const p = 'haha';
+
+  it('should error', () => {
+    expect(() => match(p, '/a/b')).toThrow();
+    expect(() => build(p, { a: 'x' })).toThrow();
+  });
+});
+
 describe('simple', () => {
   const p = '/a/b/c';
 
@@ -30,6 +39,7 @@ describe('any', () => {
     expect(match(p, '/a/b')).toBeUndefined();
     expect(match(p, '/a/b/d')).toBeUndefined();
     expect(match(p, '/x/a/b/c')).toBeUndefined();
+    expect(match(p, '/a/#/c')).toBeUndefined();
     expect(match(p, '/a/x/c')).toEqual({
       path: '/a/x/c',
       rest: '',

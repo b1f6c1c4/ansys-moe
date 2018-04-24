@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const PetriRuntime = require('./runtime');
+const { CompiledPath } = require('./path');
 const logger = require('../logger')('petri');
 
 class PetriNet {
@@ -16,6 +17,8 @@ class PetriNet {
     }
 
     const { name, external } = option;
+
+    _.update(option, 'root', (r) => r && new CompiledPath(r));
 
     const registry = external ? this.externals : this.internals;
     /* istanbul ignore if */
@@ -69,7 +72,7 @@ class PetriNet {
       return go();
     }
     if (root) {
-      const rt = root.match(rootRegex);
+      const rt = rootRegex.match(root);
       if (!rt) {
         throw new Error('Root not match');
       }
@@ -77,13 +80,13 @@ class PetriNet {
     }
     const vals = _.chain(r.cache)
       .keys()
-      .map((k) => k.match(rootRegex))
-      .map(0)
+      .map((v) => rootRegex.match(v))
+      .map('path')
       .filter()
       .uniq()
       .value();
     for (const v of vals) {
-      await go(v.match(rootRegex));
+      await go(rootRegex.match(v));
     }
     return undefined;
   }

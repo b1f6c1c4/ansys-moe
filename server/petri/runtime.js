@@ -15,9 +15,9 @@ class PetriRuntime {
     this.ensure = this.ensure.bind(this);
   }
 
-  setRoot([r, ...rest] = []) {
-    this.root = r || '';
-    this.param = rest;
+  setRoot(param = {}) {
+    this.root = param.path || '';
+    this.param = param;
   }
 
   makeDbPath(k) {
