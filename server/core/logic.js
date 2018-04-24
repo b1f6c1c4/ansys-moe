@@ -11,19 +11,6 @@ module.exports = (petri) => {
     external: true,
   }, async (r) => {
     logger.info(`Initializing ${r.proj}`);
-    const script = _.template(dedent`
-      <% _.forEach(D, (d) => { %>
-        <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.step %>)
-      <% }); %>
-      rst <- expand.grid(
-        <% _.forEach(D, (d) => { %>
-          <%= d.name %>=<%= d.name %>
-        <% }); %>
-      )
-      toJSON(rst)
-    `)(r.cfg);
-    run('rlang', script, {}, { proj: r.proj, name: 'inited' });
-    await r.incr({ '/initing': 1 });
   });
 
   petri.register({

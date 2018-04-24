@@ -1,9 +1,7 @@
 const _ = require('lodash');
-const { hash, dedent } = require('../util');
-// const { run, parse } = require('../integration');
-// const ansys = require('./ansys');
+const { hash } = require('../util');
 const expression = require('../integration/expression');
-const logger = require('../logger')('core/logic');
+const logger = require('../logger')('core/global');
 
 function enumerateCategories(values, results, catDVars, dict) {
   const id = _.findIndex(values, (v, i) => {
@@ -60,6 +58,10 @@ module.exports = (petri) => {
       for (const values of results) {
         const vars = _.mapKeys(values, (v, i) => catDVars[i].name);
         const cHash = hash(vars);
+        const vard = _.mapValues(vars, (v, k) =>
+          _.get(catDVars, [dict[k], 'descriptions', v - 1], v));
+        logger.info(`Will create category ${cHash}`, vard);
+        await r.store('/:proj/hashs/cHash/:cHash', { cHash }, vars);
         await r.incr({ '/cat/:cHash/init': 1 }, { cHash });
       }
     }
