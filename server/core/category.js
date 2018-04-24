@@ -27,11 +27,7 @@ module.exports = (petri) => {
         )
         toJSON(rst)
       `)({ D: disDVars });
-      run('rlang', script, {}, {
-        proj: r.proj,
-        name: 'c-inited',
-        root: `/cat/${r.param.cHash}`,
-      });
+      run('rlang', script, {}, r.action('c-inited', '/cat/:cHash'));
       await r.incr({ '/initing': 1 });
     }
   });
@@ -49,7 +45,7 @@ module.exports = (petri) => {
         await r.incr({ '/failure': 1, '../@': 1 });
         return;
       }
-      logger.info('Init succeed', rst);
+      logger.debug('Init succeed', rst);
       const vard = _.mapValues(cVars, (v, k) =>
         _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
       await r.dyn('/scan');

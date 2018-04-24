@@ -35,6 +35,19 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
           }
           return etcd.put(p).value(value).exec();
         };
+      case 'action':
+        return (name, root, ...pars) => {
+          if (!root) {
+            return { proj: obj.proj, name };
+          }
+          const compiled = new CompiledPath(root);
+          const p = compiled.build(target.context, target.param, ...pars);
+          return {
+            proj: obj.proj,
+            name,
+            root: p,
+          };
+        };
       default:
         if (prop in obj) {
           return obj[prop];
