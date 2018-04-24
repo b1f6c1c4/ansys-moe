@@ -14,18 +14,13 @@ logic(petri);
 
 const customizer = (obj) => (proxy) => new Proxy(proxy, {
   get(target, prop, receiver) {
-    const retriver = (key, ...pars) => {
-      const compiled = new CompiledPath(key);
-      const p = compiled.build(target.context, target.param, ...pars);
-      return etcd.get(p);
-    };
     switch (prop) {
-      case 'retriveJson':
-        return (...args) => retriver(...args).json();
-      case 'retriveNumber':
-        return (...args) => retriver(...args).number();
-      case 'retriveString':
-        return (...args) => retriver(...args).string();
+      case 'retrive':
+        return (key, ...pars) => {
+          const compiled = new CompiledPath(key);
+          const p = compiled.build(target.context, target.param, ...pars);
+          return etcd.get(p);
+        };
       case 'store':
         return (key, ...args) => {
           const compiled = new CompiledPath(key);
