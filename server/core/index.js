@@ -4,13 +4,14 @@ const etcd = require('../etcd');
 const { PetriNet, CompiledPath } = require('../petri');
 const EtcdAdapter = require('../adapter');
 const { virtualQueue } = require('../integration');
-const logic = require('./logic');
+const logicGlobal = require('./global');
 const logger = require('../logger')('core');
 
 const channel = new Channel();
 
 const petri = new PetriNet(new EtcdAdapter(etcd));
-logic(petri);
+
+logicGlobal(petri);
 
 const customizer = (obj) => (proxy) => new Proxy(proxy, {
   get(target, prop, receiver) {
