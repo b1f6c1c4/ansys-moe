@@ -6,6 +6,8 @@ const logger = require('../logger')('petri');
 const makeProxy = (r, context) => new Proxy(r, {
   get(target, prop) {
     switch (prop) {
+      case 'context':
+        return context;
       case 'ensure':
       case 'dyn':
       case 'done':
@@ -48,11 +50,10 @@ const makeProxy = (r, context) => new Proxy(r, {
 });
 
 class PetriNet {
-  constructor(db, customizer) {
+  constructor(db) {
     this.db = db;
     this.internals = {};
     this.externals = {};
-    this.customizer = customizer || _.identity;
   }
 
   register(option, func) {
@@ -78,7 +79,7 @@ class PetriNet {
     }
   }
 
-  async dispatch(payload, context, ...args) {
+  async dispatch(payload, context, customizer, ...args) {
     const { name, base } = payload;
     const reg = this.externals[name];
     if (!reg) {
@@ -86,7 +87,7 @@ class PetriNet {
       return undefined;
     }
     const r = new PetriRuntime(this.db, base);
-    const proxy = this.customizer(makeProxy(r, context));
+    const proxy = customizer(makeProxy(r, context));
     const rv = await this.execute(r, proxy, reg, payload, args);
     let maxDepth = 10;
     while (r.dirty) {
@@ -142,4 +143,5 @@ class PetriNet {
 module.exports = {
   PetriNet,
   makeProxy,
+  CompiledPath,
 };
