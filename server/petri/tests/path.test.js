@@ -32,6 +32,28 @@ describe('simple', () => {
   });
 });
 
+describe('prefixed', () => {
+  const p = '../../a/b/c';
+
+  it('should match', () => {
+    expect(match(p, '/a/b/c')).toBeUndefined();
+    expect(match(p, '../a/b/c')).toBeUndefined();
+    expect(match(p, '../../a/b/c')).toEqual({
+      path: '../../a/b/c',
+      rest: '',
+    });
+    expect(match(p, '../../a/b/c/d')).toEqual({
+      path: '../../a/b/c',
+      rest: '/d',
+    });
+  });
+
+  it('should build', () => {
+    expect(build(p)).toEqual('../../a/b/c');
+    expect(build(p, { a: 'x' })).toEqual('../../a/b/c');
+  });
+});
+
 describe('any', () => {
   const p = '/a/:b/c';
 

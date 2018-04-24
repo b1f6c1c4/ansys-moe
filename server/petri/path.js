@@ -3,8 +3,18 @@ const _ = require('lodash');
 const patternSgmt = /^\/:([a-zA-Z][-_a-zA-Z0-9]*)(=(?:[^\\/]|\\\\|\\\/)+)?|\/[^:/][^/]*/;
 const plainSgmt = /^\/([^/]*)/;
 
+const sepPrefix = (raw) => {
+  const xmatch = raw.match(/^(?:(?:\.\.\/)*\.\.)?/);
+  const [prefix] = xmatch;
+  const rest = raw.substr(prefix.length);
+  return [prefix, rest];
+};
+
 class CompiledPath {
-  constructor(r) {
+  constructor(raw) {
+    const [prefix, p] = sepPrefix(raw);
+    let r = p;
+    this.prefix = prefix;
     this.segments = [];
     while (r.length) {
       const match = r.match(patternSgmt);
@@ -28,13 +38,16 @@ class CompiledPath {
           value: match[0].substr(1),
         });
       }
-      // eslint-disable-next-line no-param-reassign
       r = r.substr(match[0].length);
     }
   }
 
-  match(p) {
-    const result = { path: '', rest: p };
+  match(raw) {
+    const [prefix, p] = sepPrefix(raw);
+    if (this.prefix !== prefix) {
+      return undefined;
+    }
+    const result = { path: prefix, rest: p };
     for (const sg of this.segments) {
       const match = result.rest.match(plainSgmt);
       if (!match) {
@@ -75,7 +88,7 @@ class CompiledPath {
 
   build(...args) {
     const pars = _.merge({}, ...args);
-    let result = '';
+    let result = this.prefix;
     for (const sg of this.segments) {
       switch (sg.type) {
         case 'regex':

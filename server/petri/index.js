@@ -3,11 +3,56 @@ const PetriRuntime = require('./runtime');
 const { CompiledPath } = require('./path');
 const logger = require('../logger')('petri');
 
+const makeProxy = (r, context) => new Proxy(r, {
+  get(target, prop) {
+    switch (prop) {
+      case 'ensure':
+      case 'dyn':
+      case 'done':
+        return (p, ...pars) => {
+          const compiled = new CompiledPath(p);
+          const q = compiled.build(context, target.param, ...pars);
+          return target[prop](q);
+        };
+      case 'incr':
+      case 'decr':
+        return (raw, ...pars) => {
+          const obj = _.mapKeys(raw, (v, p) => {
+            const compiled = new CompiledPath(p);
+            return compiled.build(context, target.param, ...pars);
+          });
+          return target[prop](obj);
+        };
+      case 'root':
+      case 'param':
+        return target[prop];
+      default:
+        return undefined;
+    }
+  },
+  set(target, prop) {
+    throw new TypeError(`Cannot set ${prop}`);
+  },
+  defineProperty(target, prop) {
+    throw new TypeError(`Cannot defineProperty ${prop}`);
+  },
+  deleteProperty(target, prop) {
+    throw new TypeError(`Cannot deleteProperty ${prop}`);
+  },
+  preventExtensions(target, prop) {
+    throw new TypeError(`Cannot preventExtensions ${prop}`);
+  },
+  setPrototypeOf(target, prop) {
+    throw new TypeError(`Cannot setPrototypeOf ${prop}`);
+  },
+});
+
 class PetriNet {
-  constructor(db) {
+  constructor(db, customizer) {
     this.db = db;
     this.internals = {};
     this.externals = {};
+    this.customizer = customizer || _.identity;
   }
 
   register(option, func) {
@@ -33,7 +78,7 @@ class PetriNet {
     }
   }
 
-  async dispatch(payload, ...args) {
+  async dispatch(payload, context, ...args) {
     const { name, base } = payload;
     const reg = this.externals[name];
     if (!reg) {
@@ -41,12 +86,13 @@ class PetriNet {
       return undefined;
     }
     const r = new PetriRuntime(this.db, base);
-    const rv = await PetriNet.execute(r, reg, payload, args);
+    const proxy = this.customizer(makeProxy(r, context));
+    const rv = await this.execute(r, proxy, reg, payload, args);
     let maxDepth = 10;
     while (r.dirty) {
       r.dirty = false;
       for (const rg of _.values(this.internals)) {
-        await PetriNet.execute(r, rg, undefined, args);
+        await this.execute(r, proxy, rg, undefined, args);
       }
       /* istanbul ignore if */
       // eslint-disable-next-line no-plusplus
@@ -58,12 +104,13 @@ class PetriNet {
     return rv;
   }
 
-  static async execute(r, { option, func }, payload, args) {
+  // eslint-disable-next-line class-methods-use-this
+  async execute(r, proxy, { option, func }, payload, args) {
     const go = (rt) => {
       r.setRoot(rt);
       _.set(r, 'dyns', []);
       logger.trace('Will use root', r.root);
-      return func(r, payload, ...args);
+      return func(proxy, payload, ...args);
     };
     const root = _.get(payload, 'root');
     const { name, root: rootRegex } = option;
@@ -94,4 +141,5 @@ class PetriNet {
 
 module.exports = {
   PetriNet,
+  makeProxy,
 };

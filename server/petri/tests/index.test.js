@@ -1,5 +1,37 @@
 const _ = require('lodash');
-const { PetriNet } = require('../');
+const { PetriNet, makeProxy } = require('../');
+
+describe('makeProxy', () => {
+  it('should get', (done) => {
+    const proxy = makeProxy({
+      ensure: (p) => {
+        expect(p).toEqual('/ga/ha');
+        done();
+      },
+      root: 1,
+      param: { v: 'ha' },
+    });
+    expect(proxy.root).toEqual(1);
+    expect(proxy.param).toEqual({ v: 'ha' });
+    expect(proxy.a).toBeUndefined();
+    proxy.ensure('/:k/:v', { k: 'ga' });
+  });
+  it('should not set', () => {
+    expect(() => { makeProxy({}).a = 1; }).toThrow();
+  });
+  it('should not defineProperty', () => {
+    expect(() => { Object.defineProperty(makeProxy({}), 'a', {}); }).toThrow();
+  });
+  it('should not deleteProperty', () => {
+    expect(() => { delete makeProxy({}).a; }).toThrow();
+  });
+  it('should not preventExtensions', () => {
+    expect(() => { Object.preventExtensions(makeProxy({})); }).toThrow();
+  });
+  it('should not setPrototypeOf', () => {
+    expect(() => { Object.setPrototypeOf(makeProxy({}), null); }).toThrow();
+  });
+});
 
 describe('PetriNet', () => {
   let db;
