@@ -51,6 +51,7 @@ class PetriRuntime {
       const res = await this.db.get(this.makeDbPath(key)) || 0;
       this.cache[key] = res;
     }
+    return this.cache[key];
   }
 
   async incr(obj) {
