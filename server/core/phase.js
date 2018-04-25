@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { hash, dedent } = require('../util');
+const { hash } = require('../util');
 const { run, parse } = require('../integration');
 const ansys = require('./ansys');
 const expression = require('../integration/expression');
@@ -11,6 +11,8 @@ module.exports = (petri) => {
     root: '/cat/:cHash/:phase=scan|iterate/:dHash',
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
+      const dVars = await r.retrive('/:proj/hashs/dHash/:dHash').json();
+      await r.store('/:proj/results/d/:dHash/var', dVars);
       await r.dyn('/G');
       for (const gpar of r.cfg.G) {
         const { name } = gpar;
@@ -24,7 +26,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash/:phase=scan|iterate/:dHash',
   }, async (r) => {
     if (await r.done('/G')) {
-      const xVars = await r.retrive('/:proj/hashs/dHash/:dHash').json();
+      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
       for (const gpar of r.cfg.G) {
         const { name, lowerBound, upperBound } = gpar;
         const val = await r.retrive('/:proj/results/d/:dHash/G/:name', { name }).number();
@@ -54,14 +56,51 @@ module.exports = (petri) => {
   });
 
   petri.register({
+    name: 'p-m-mutated',
+    external: true,
+    root: '/cat/:cHash/:phase=scan|iterate/:dHash',
+  }, async (r, payload) => {
+    if (await r.done('/M/mutate')) {
+      const ruleId = await r.retrive('/:proj/results/d/:dHash/Mid').number();
+      const rule = r.cfg.ansys.rules[ruleId];
+      // TODO: parse ansys
+      logger.warn('TODO: parse ansys', payload);
+      const file = `${r.proj}.p-m-mutated${r.root.replace(/\//g, '.')}/${rule.filename}`;
+      logger.info('M mutate done', file);
+      ansys.solve(file, rule, r.action('p-m-solved'));
+      await r.incr({ '/M/solve': 1 });
+    }
+  });
+
+  petri.register({
+    name: 'p-m-solved',
+    external: true,
+    root: '/cat/:cHash/:phase=scan|iterate/:dHash',
+  }, async (r, payload) => {
+    if (await r.done('/M/solve')) {
+      const ruleId = await r.retrive('/:proj/results/d/:dHash/Mid').number();
+      const rule = r.cfg.ansys.rules[ruleId];
+      // TODO: parse ansys
+      logger.warn('TODO: parse ansys', payload);
+      const file = `${r.proj}.p-m-solved${r.root.replace(/\//g, '.')}/${rule.filename}`;
+      logger.info('M solve done', file);
+      await r.dyn('/E');
+      for (const epar of r.cfg.E) {
+        const { name } = epar;
+        await r.incr({ '/E/:name/init': 1 }, { name });
+      }
+    }
+  });
+
+  petri.register({
     name: 'p-gep-init',
     root: '/cat/:cHash/:phase=scan|iterate/:dHash/:phase2=G|E|P/:name',
   }, async (r) => {
     if (await r.ensure('/init') > 0 &&
       await r.ensure('/prep') === 0) {
-      const dVars = await r.retrive('/:proj/hashs/dHash/:dHash').json();
+      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
       const { kind, code, dependsOn } = _.find(r.cfg[r.param.phase2], { name: r.param.name });
-      const vars = { ...dVars };
+      const vars = { ...xVars };
       if (dependsOn) {
         for (const n of dependsOn) {
           if (await r.ensure('../:n/init', { n }) !== 0) {

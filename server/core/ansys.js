@@ -9,7 +9,7 @@ module.exports.mutate = ({ filename, inputs }, variables, { proj, name, root }) 
   const id = root
     ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
-  const fn = filename.substr(0, filename.lastIndexOf('.'));
+  const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
   const script = _.template(dedent`
     Dim oAnsoftApp
     Dim oProject
@@ -58,7 +58,7 @@ module.exports.solve = (filename, { outputs }, { proj, name, root }) => {
   const id = root
     ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
-  const fn = filename.substr(0, filename.lastIndexOf('.'));
+  const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
   const grps = _.groupBy(outputs, fp.compose(hash, fp.omit('name')));
   const script = _.template(dedent`
     Dim oAnsoftApp
@@ -67,6 +67,7 @@ module.exports.solve = (filename, { outputs }, { proj, name, root }) => {
     Dim oModule
     Set oAnsoftApp = CreateObject("AnsoftMaxwell.MaxwellScriptInterface")
     Set oProject = oAnsoftApp.GetAppDesktop().SetActiveProject("<%= fn %>")
+    oProject.AnalyzeAll
     <% _.forEach(grps, ([g], k) => { %>
       Set oDesign = oProject.SetActiveDesign("<%= g.design %>")
       Set oModule = oDesign.GetModule("ReportSetup")
