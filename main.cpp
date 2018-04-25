@@ -35,6 +35,8 @@ RpcAnswer Main::handler(const std::string &method, const json &data)
 // LCOV_EXCL_START
 void Main::Setup(const po::variables_map &vm)
 {
+    void TryMoe();
+    TryMoe();
     auto &&verbose = vm["verbose"].as<std::string>();
     if (verbose == "trace") {
         spdlog::set_level(spdlog::level::trace);
