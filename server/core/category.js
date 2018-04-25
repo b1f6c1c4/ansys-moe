@@ -27,7 +27,7 @@ module.exports = (petri) => {
         )
         toJSON(rst)
       `)({ D: disDVars });
-      run('rlang', script, {}, r.action('c-inited', '/cat/:cHash'));
+      run('rlang', script, {}, r.action('c-inited'));
       await r.incr({ '/initing': 1 });
     }
   });

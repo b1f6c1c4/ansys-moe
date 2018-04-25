@@ -48,7 +48,7 @@ module.exports = (petri) => {
       };
       const mHash = hash(mHashContent);
       await r.store('/:proj/hashs/m/:mHash', { mHash }, mHashContent);
-      ansys.mutate(rule, vars, r.action('p-m-mutated', '/cat/:cHash/:phase=scan|iterate/:dHash'));
+      ansys.mutate(rule, vars, r.action('p-m-mutated'));
       await r.incr({ '/M/mutate': 1 });
     }
   });
@@ -70,7 +70,7 @@ module.exports = (petri) => {
           vars[n] = await r.retrive('/:proj/results/d/:dHash/:phase2/:n', { n }).number();
         }
       }
-      run(kind, code, vars, r.action('p-gep-done', '/cat/:cHash/:phase=scan|iterate/:dHash/:phase2=G|E|P/:name'));
+      run(kind, code, vars, r.action('p-gep-done'));
       await r.incr({ '/prep': 1 });
     }
   });

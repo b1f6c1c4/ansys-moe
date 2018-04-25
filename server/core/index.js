@@ -39,7 +39,10 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
         };
       case 'action':
         return (name, root, ...pars) => {
-          if (!root) {
+          if (root === undefined) {
+            return { proj: obj.proj, name, root: target.root };
+          }
+          if (root === null) {
             return { proj: obj.proj, name };
           }
           const compiled = new CompiledPath(root);
