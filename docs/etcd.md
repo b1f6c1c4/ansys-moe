@@ -47,6 +47,8 @@ Models the Petri net.
 
 #### /d/:dHash
 
+- /var
+- /Mid
 - /G/:name
 - /M/:name
 - /E/:name
