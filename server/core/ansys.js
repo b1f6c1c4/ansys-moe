@@ -6,12 +6,13 @@ const amqp = require('../amqp');
 const { hash, dedent } = require('../util');
 const logger = require('../logger')('core/ansys');
 
-module.exports.mutate = ({ filename, inputs }, variables, { proj, name, root }) => {
-  logger.info('Run ansys mutate', { proj, name, root });
+module.exports.solve = ({ filename, inputs, outputs }, variables, { proj, name, root }) => {
+  logger.info('Run ansys solve', { proj, name, root });
   const id = root
     ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
   const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
+  const grps = _.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column'])));
   const script = _.template(dedent`
     Dim oAnsoftApp
     Dim oProject
@@ -47,39 +48,17 @@ module.exports.mutate = ({ filename, inputs }, variables, { proj, name, root }) 
             ) _
           )
     <% }); %>
-  `)({ fn, inputs, variables });
-  amqp.publish('ansys', {
-    type: 'mutate',
-    file: filename,
-    script: script.replace(/\n\s*\n/g, '\n'),
-  }, id);
-};
-
-module.exports.solve = (filename, { outputs }, { proj, name, root }) => {
-  logger.info('Run ansys solve', { proj, name, root });
-  const id = root
-    ? `${proj}.${name}${root.replace(/\//g, '.')}`
-    : `${proj}.${name}`;
-  const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
-  const grps = _.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column'])));
-  const script = _.template(dedent`
-    Dim oAnsoftApp
-    Dim oProject
-    Dim oDesign
-    Dim oModule
-    Set oAnsoftApp = CreateObject("AnsoftMaxwell.MaxwellScriptInterface")
-    Set oProject = oAnsoftApp.GetAppDesktop().SetActiveProject("<%= fn %>")
     oProject.AnalyzeAll
     <% _.forEach(grps, ([g], k) => { %>
       Set oDesign = oProject.SetActiveDesign("<%= g.design %>")
       Set oModule = oDesign.GetModule("ReportSetup")
       oModule.ExportToFile "<%= g.table %>", "$OUT_DIR/<%= k %>.csv"
     <% }); %>
-  `)({ fn, grps });
+  `)({ fn, inputs, variables, grps });
   amqp.publish('ansys', {
     type: 'solve',
     file: filename,
-    script,
+    script: script.replace(/\n\s*\n/g, '\n'),
   }, id);
 };
 

@@ -50,30 +50,13 @@ module.exports = (petri) => {
       };
       const mHash = hash(mHashContent);
       await r.store('/:proj/hashs/m/:mHash', { mHash }, mHashContent);
-      ansys.mutate(rule, vars, r.action('p-m-mutated'));
-      await r.incr({ '/M/mutate': 1 });
-    }
-  });
-
-  petri.register({
-    name: 'p-m-mutated',
-    external: true,
-    root: '/cat/:cHash/:phase=scan|iterate/:dHash',
-  }, async (r, payload) => {
-    if (await r.done('/M/mutate')) {
-      const ruleId = await r.retrive('/:proj/results/d/:dHash/Mid').number();
-      const rule = r.cfg.ansys.rules[ruleId];
-      // TODO: parse ansys
-      logger.warn('TODO: parse ansys', payload);
-      const file = `${payload.id}/${rule.filename}`;
-      logger.info('M mutate done', file);
-      ansys.solve(file, rule, r.action('p-m-solved'));
+      ansys.solve(rule, vars, r.action('p-m-done'));
       await r.incr({ '/M/solve': 1 });
     }
   });
 
   petri.register({
-    name: 'p-m-solved',
+    name: 'p-m-done',
     external: true,
     root: '/cat/:cHash/:phase=scan|iterate/:dHash',
   }, async (r, payload) => {
