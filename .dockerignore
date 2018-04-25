@@ -1,0 +1,5 @@
+*
+!*.h
+!*.cpp
+!Makefile
+!cpld.bash
