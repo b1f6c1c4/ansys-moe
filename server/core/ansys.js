@@ -63,7 +63,7 @@ module.exports.solve = ({ filename, inputs, outputs }, variables, { proj, name, 
 };
 
 const parseCsv = (file) => new Promise((resolve, reject) => {
-  const url = `${process.env.STORAGE_URL}storage/${file}`;
+  const url = process.env.STORAGE_URL + file;
   logger.trace('Will fetch csv', url);
   axios({
     method: 'get',
@@ -82,7 +82,7 @@ const parseCsv = (file) => new Promise((resolve, reject) => {
 
 module.exports.parse = async (payload, { outputs }) => {
   const grps = _.toPairs(_.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column']))));
-  const res = await Promise.all(grps.map(([k]) => parseCsv(`${payload.id}/output/${k}.csv`)));
+  const res = await Promise.all(grps.map(([k]) => parseCsv(`/${payload.id}/output/${k}.csv`)));
   const mVars = _.fromPairs(_.flatten(_.zipWith(
     grps,
     res,
