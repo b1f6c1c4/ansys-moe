@@ -23,6 +23,7 @@ services:
       RABBIT_PORT: 5672
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
+      STORAGE_URL: "http://storage:3000"
     depends_on:
       rabbit:
         condition: service_healthy
@@ -133,6 +134,7 @@ services:
 
   rabbit:
     image: rabbitmq:management-alpine
+    hostname: rabbit
     restart: always
     ports:
       - "9511:5672"
