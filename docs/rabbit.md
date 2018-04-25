@@ -56,13 +56,11 @@
 
     Make directory `data/{cId}/output`
     Download `storage/{file}` to `data/{cId}/{file.name}`
-    Run `batchsolve` over `data/{cId}/{file.name}`
+    Replace `$OUT_DIR` in `script` to `data/{cId}/output`
+    Save `script` to `data/{cId}/script.vbs`
+    Run `batchsave` over `data/{cId}/{file.name}`
     Log to `data/{cId}/solve.log`
     Report system status and log difference
-    Save `script` to `data/{cId}/script.vbs`
-    Replace `$OUT_DIR` in `script` to `data/{cId}/output`
-    Run `batchextract` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/extract.log`
     Upload `data/{cId}/` to `storage/{cId}/`
     Drop directory `data/{cId}/`
 
