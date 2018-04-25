@@ -1,5 +1,7 @@
 const _ = require('lodash');
 const fp = require('lodash/fp');
+const axios = require('axios');
+const Papa = require('papaparse');
 const amqp = require('../amqp');
 const { hash, dedent } = require('../util');
 const logger = require('../logger')('core/ansys');
@@ -59,7 +61,7 @@ module.exports.solve = (filename, { outputs }, { proj, name, root }) => {
     ? `${proj}.${name}${root.replace(/\//g, '.')}`
     : `${proj}.${name}`;
   const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
-  const grps = _.groupBy(outputs, fp.compose(hash, fp.omit('name')));
+  const grps = _.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column'])));
   const script = _.template(dedent`
     Dim oAnsoftApp
     Dim oProject
@@ -79,4 +81,33 @@ module.exports.solve = (filename, { outputs }, { proj, name, root }) => {
     file: filename,
     script,
   }, id);
+};
+
+const parseCsv = (file) => new Promise((resolve, reject) => {
+  const url = `${process.env.STORAGE_URL}storage/${file}`;
+  logger.trace('Will fetch csv', url);
+  axios({
+    method: 'get',
+    url,
+    responseType: 'stream',
+  }).then((res) => {
+    Papa.parse(res.data, {
+      dynamicTyping: true,
+      error: reject,
+      complete: ({ data }) => {
+        resolve(data);
+      },
+    });
+  });
+});
+
+module.exports.parse = async (payload, { outputs }) => {
+  const grps = _.toPairs(_.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column']))));
+  const res = await Promise.all(grps.map(([k]) => parseCsv(`${payload.id}/output/${k}.csv`)));
+  const mVars = _.fromPairs(_.flatten(_.zipWith(
+    grps,
+    res,
+    ([, os], tbl) => os.map(({ name, column }) => [name, tbl[1][column]]),
+  )));
+  return mVars;
 };

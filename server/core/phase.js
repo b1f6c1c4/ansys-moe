@@ -65,7 +65,7 @@ module.exports = (petri) => {
       const rule = r.cfg.ansys.rules[ruleId];
       // TODO: parse ansys
       logger.warn('TODO: parse ansys', payload);
-      const file = `${r.proj}.p-m-mutated${r.root.replace(/\//g, '.')}/${rule.filename}`;
+      const file = `${payload.id}/${rule.filename}`;
       logger.info('M mutate done', file);
       ansys.solve(file, rule, r.action('p-m-solved'));
       await r.incr({ '/M/solve': 1 });
@@ -78,12 +78,17 @@ module.exports = (petri) => {
     root: '/cat/:cHash/:phase=scan|iterate/:dHash',
   }, async (r, payload) => {
     if (await r.done('/M/solve')) {
+      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
       const ruleId = await r.retrive('/:proj/results/d/:dHash/Mid').number();
       const rule = r.cfg.ansys.rules[ruleId];
-      // TODO: parse ansys
-      logger.warn('TODO: parse ansys', payload);
-      const file = `${r.proj}.p-m-solved${r.root.replace(/\//g, '.')}/${rule.filename}`;
-      logger.info('M solve done', file);
+      const mVars = await ansys.parse(payload, rule);
+      if (!mVars) {
+        logger.warn('M failed', r.param);
+        await r.incr({ '../@': 1 });
+        return;
+      }
+      _.assign(xVars, mVars);
+      await r.store('/:proj/results/d/:dHash/var', xVars);
       await r.dyn('/E');
       for (const epar of r.cfg.E) {
         const { name } = epar;
