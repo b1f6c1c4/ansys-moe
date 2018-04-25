@@ -40,26 +40,6 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
-	logCancel1 := make(chan struct{})
-
-	// Log to `data/{cId}/solve.log`
-	logFile := filepath.Join(common.DataPath, id, "solve.log")
-	go common.WatchLog(cmd.Raw, logFile, logCancel1)
-
-	// Run `batchsolve` over `data/{cId}/{file.name}`
-	jobFile := filepath.Join(common.DataPath, id, fileName)
-	err = m.execAnsys(cmd.Raw, []string{
-		"-ng",
-		"-logfile",
-		logFile,
-		"-batchsolve",
-		jobFile,
-	}, cancel)
-	close(logCancel1)
-	if err != nil {
-		return err
-	}
-
 	// Replace `$OUT_DIR` in `script` to `data/{cId}/output`
 	// In VBScript, only '"' needs to be escaped.
 	outputPath := filepath.Join(common.DataPath, id, "output")
@@ -73,23 +53,24 @@ func (m Module) runSolve(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
-	logCancel2 := make(chan struct{})
+	logCancel := make(chan struct{})
 
-	// Log to `data/{cId}/extract.log`
-	logFile = filepath.Join(common.DataPath, id, "extract.log")
-	go common.WatchLog(cmd.Raw, logFile, logCancel2)
+	// Log to `data/{cId}/solve.log`
+	logFile := filepath.Join(common.DataPath, id, "solve.log")
+	go common.WatchLog(cmd.Raw, logFile, logCancel)
 
-	// Run `batchextract` over `data/{cId}/{file.name}`
+	// Run `batchsave` over `data/{cId}/{file.name}`
+	jobFile := filepath.Join(common.DataPath, id, fileName)
 	err = m.execAnsys(cmd.Raw, []string{
 		"-ng",
 		"-logfile",
 		logFile,
 		"-runscript",
 		scriptFile,
-		"-batchextract",
+		"-batchsave",
 		jobFile,
 	}, cancel)
-	close(logCancel2)
+	close(logCancel)
 	if err != nil {
 		return err
 	}
