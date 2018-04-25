@@ -81,6 +81,55 @@ module.exports = (petri) => {
   });
 
   petri.register({
+    name: 'p-e-done',
+    root: '/cat/:cHash/:phase=scan|iterate/:dHash',
+  }, async (r) => {
+    if (await r.done('/E')) {
+      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
+      for (const epar of r.cfg.E) {
+        const { name, lowerBound, upperBound } = epar;
+        const val = await r.retrive('/:proj/results/d/:dHash/E/:name', { name }).number();
+        if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
+          logger.warn(`E ${name} out of bound`, r.param);
+          await r.incr({ '../@': 1 });
+          return;
+        }
+        xVars[name] = val;
+      }
+      logger.info('E pars done', xVars);
+      await r.store('/:proj/results/d/:dHash/var', xVars);
+      await r.dyn('/P');
+      for (const ppar of r.cfg.P) {
+        const { name } = ppar;
+        await r.incr({ '/P/:name/init': 1 }, { name });
+      }
+    }
+  });
+
+  petri.register({
+    name: 'p-p-done',
+    root: '/cat/:cHash/:phase=scan|iterate/:dHash',
+  }, async (r) => {
+    if (await r.done('/P')) {
+      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
+      for (const ppar of r.cfg.P) {
+        const { name, lowerBound, upperBound } = ppar;
+        const val = await r.retrive('/:proj/results/d/:dHash/P/:name', { name }).number();
+        if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
+          logger.warn(`P ${name} out of bound`, r.param);
+          await r.incr({ '../@': 1 });
+          return;
+        }
+        xVars[name] = val;
+      }
+      logger.info('P pars done', xVars);
+      await r.store('/:proj/results/d/:dHash/var', xVars);
+      // TODO: P0
+      await r.incr({ '../@': 1 });
+    }
+  });
+
+  petri.register({
     name: 'p-gep-init',
     root: '/cat/:cHash/:phase=scan|iterate/:dHash/:phase2=G|E|P/:name',
   }, async (r) => {
