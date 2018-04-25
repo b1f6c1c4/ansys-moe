@@ -1,0 +1,11 @@
+FROM b1f6c1c4/ballot-builder
+
+WORKDIR /root/cryptor
+
+COPY . .
+
+RUN make ci-test
+RUN make all
+RUN ./cpld.bash build/cryptor build
+
+CMD ["/bin/sh"]
