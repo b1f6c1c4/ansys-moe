@@ -124,6 +124,7 @@ amqp.emitter.on('action', async (msg) => {
       return;
     }
     const payload = {
+      id,
       name,
       base: `/${proj}/state`,
       root: rest.length === 0 ? undefined : `/${rest.join('/')}`,

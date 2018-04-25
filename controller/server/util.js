@@ -5,7 +5,7 @@ const stringify = require('json-stable-stringify');
 module.exports.hash = (obj) => {
   const str = stringify(obj);
   const hash = crypto.createHash('md5').update(str).digest('hex');
-  return hash.slice(8, 24);
+  return hash.slice(8, 16);
 };
 
 module.exports.newId = (l = 8) =>

@@ -1,5 +1,37 @@
 const _ = require('lodash');
-const { PetriNet } = require('../');
+const { PetriNet, makeProxy } = require('../');
+
+describe('makeProxy', () => {
+  it('should get', (done) => {
+    const proxy = makeProxy({
+      ensure: (p) => {
+        expect(p).toEqual('/ga/ha');
+        done();
+      },
+      root: 1,
+      param: { v: 'ha' },
+    });
+    expect(proxy.root).toEqual(1);
+    expect(proxy.param).toEqual({ v: 'ha' });
+    expect(proxy.a).toBeUndefined();
+    proxy.ensure('/:k/:v', { k: 'ga' });
+  });
+  it('should not set', () => {
+    expect(() => { makeProxy({}).a = 1; }).toThrow();
+  });
+  it('should not defineProperty', () => {
+    expect(() => { Object.defineProperty(makeProxy({}), 'a', {}); }).toThrow();
+  });
+  it('should not deleteProperty', () => {
+    expect(() => { delete makeProxy({}).a; }).toThrow();
+  });
+  it('should not preventExtensions', () => {
+    expect(() => { Object.preventExtensions(makeProxy({})); }).toThrow();
+  });
+  it('should not setPrototypeOf', () => {
+    expect(() => { Object.setPrototypeOf(makeProxy({}), null); }).toThrow();
+  });
+});
 
 describe('PetriNet', () => {
   let db;
@@ -99,9 +131,9 @@ describe('PetriNet', () => {
 
     petri.register({
       name: 'f/init',
-      root: /^\/f\/([a-z0-9]+)/,
+      root: '/f/:fv',
     }, async (r) => {
-      expect(['a', 'b']).toContain(r.param[0]);
+      expect(['a', 'b']).toContain(r.param.fv);
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
         await r.incr({ '../../x': 1 });
@@ -130,14 +162,14 @@ describe('PetriNet', () => {
     petri.register({
       name: 'f/init',
       external: true,
-      root: /^\/f\/[a-z0-9]+/,
+      root: '/f/:fv',
     }, async (r) => {
       await r.incr({ '/init': 1 });
     });
 
     petri.register({
       name: 'f/st',
-      root: /^\/f\/[a-z0-9]+/,
+      root: '/f/:fv',
     }, async (r) => {
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
@@ -166,14 +198,14 @@ describe('PetriNet', () => {
     petri.register({
       name: 'f/init',
       external: true,
-      root: /^\/f\/[a-z0-9]+/,
+      root: '/f/:fv',
     }, async (r) => {
       await r.incr({ '/init': 1 });
     });
 
     petri.register({
       name: 'f/st',
-      root: /^\/f\/[a-z0-9]+/,
+      root: '/f/:fv',
     }, async (r) => {
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
@@ -208,7 +240,7 @@ describe('PetriNet', () => {
 
     petri.register({
       name: 'f/gather',
-      root: /^\/f\/[a-z0-9]+/,
+      root: '/f/:fv',
     }, async (r) => {
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '../@': 1 });

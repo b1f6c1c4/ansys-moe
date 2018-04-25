@@ -15,9 +15,9 @@ class PetriRuntime {
     this.ensure = this.ensure.bind(this);
   }
 
-  setRoot([r, ...rest] = []) {
-    this.root = r || '';
-    this.param = rest;
+  setRoot(param = {}) {
+    this.root = param.path || '';
+    this.param = param;
   }
 
   makeDbPath(k) {
@@ -51,6 +51,7 @@ class PetriRuntime {
       const res = await this.db.get(this.makeDbPath(key)) || 0;
       this.cache[key] = res;
     }
+    return this.cache[key];
   }
 
   async incr(obj) {

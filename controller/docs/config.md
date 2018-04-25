@@ -1,5 +1,7 @@
 # config json in ansys-moe
 
+All strings MUST match `/^[-_a-z0-9]+$/`, unless specified.
+
 # Data Structures
 
 ## Config (object)
@@ -20,6 +22,8 @@
 - lowerBound (number) - 1 if categorical
 - upperBound (number) - steps if categorical
 - steps (number, required) - at least 2
+- descriptions (array[string]) - only applicable if categorical
+- dependsOn (array[string]) - required if has condition
 - condition (string) - kind expression
 
 ## GParameter (object)
@@ -31,6 +35,7 @@
   - `mathematica`
   - `matlab`
 - code (string, required)
+- dependsOn (array[string])
 - lowerBound (number)
 - upperBound (number)
 
@@ -43,6 +48,7 @@
   - `mathematica`
   - `matlab`
 - code (string, required)
+- dependsOn (array[string])
 - lowerBound (number)
 - upperBound (number)
 
@@ -55,6 +61,7 @@
   - `mathematica`
   - `matlab`
 - code (string, required)
+- dependsOn (array[string])
 - lowerBound (number)
 - upperBound (number)
 
@@ -69,7 +76,7 @@
 
 ## AnsysRule (object)
 
-- filename (string, required)
+- filename (string, required) - any string is acceptable
 - condition (string) - kind expression
 - inputs (array[AnsysInput], required)
 - outputs (array[AnsysOutput], required)
@@ -77,13 +84,13 @@
 ## AnsysInput (object)
 
 - name (string, required)
-- design (stirng)
+- design (string)
 - variable (string, required)
 
 ## AnsysOutput (object)
 
 - name (string, required)
-- design (string, required)
-- table (string, required)
+- design (string, required) - any string is acceptable
+- table (string, required) - any string is acceptable
 - column (number, required)
 
