@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <json.hpp>
+#include <gpp_covariance.hpp>
 
 using json = nlohmann::json;
 
@@ -51,4 +52,11 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
         out << "[]";
     }
     return out;
+}
+
+inline std::ostream &operator<<(std::ostream &out, const optimal_learning::CovarianceInterface &v)
+{
+    std::vector<double> tmp(v.GetNumberOfHyperparameters());
+    v.GetHyperparameters(tmp.data());
+    return out << tmp;
 }
