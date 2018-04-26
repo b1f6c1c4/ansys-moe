@@ -8,6 +8,7 @@ RUN go install \
 
 FROM r-base:latest
 RUN Rscript -e "install.packages('jsonlite')"
+RUN Rscript -e "install.packages('GPfit')"
 WORKDIR /root/
 COPY --from=builder /go/bin/commond-std .
 CMD ["./commond-std"]
