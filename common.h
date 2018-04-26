@@ -1,7 +1,9 @@
 #pragma once
+#include <vector>
 #include <string>
 #include <boost/core/noncopyable.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 #include <json.hpp>
 
 using json = nlohmann::json;
@@ -34,3 +36,19 @@ protected:
 
     std::shared_ptr<spdlog::logger> logger;
 };
+
+template <typename T>
+std::ostream &operator<<(std::ostream &out, const std::vector<T> &v)
+{
+    if (!v.empty())
+    {
+        out << "[";
+        std::copy(v.begin(), v.end(), std::ostream_iterator<T>(out, ", "));
+        out << "\b\b]";
+    }
+    else
+    {
+        out << "[]";
+    }
+    return out;
+}
