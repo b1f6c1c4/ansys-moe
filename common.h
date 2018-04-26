@@ -18,7 +18,7 @@ using json = nlohmann::json;
     private: \
         inline cls() : Logger(#cls) \
         { \
-            logger->info(#cls " initialized"); \
+            logger->debug(#cls " initialized"); \
         } \
     public: \
         static inline cls &Inst() \
@@ -30,7 +30,7 @@ using json = nlohmann::json;
 class Logger : private boost::noncopyable
 {
 protected:
-    inline explicit Logger(std::string &&name) : logger(spdlog::stdout_color_mt(name)) {}
+    inline explicit Logger(std::string &&name) : logger(spdlog::stderr_color_mt(name)) {}
 
     std::shared_ptr<spdlog::logger> logger;
 };
