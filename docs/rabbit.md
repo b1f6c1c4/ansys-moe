@@ -4,15 +4,16 @@
 
 * Majors:
   * ansys (AnsysCommand) - every single ansys execution.
-  * moe - every single moe execution.
+  * moe (MoeCommand) - every single moe execution.
 * Calculators:
   * rlang (RLangCommand) - rlang as a calculator.
   * mathematica (MmaCommand) - mathematica as a calculator.
   * matlab - matlab as a calculator.
 * Callback:
   * action - trigger state change after execution.
-    - kind:rlang (RLangAction)
     - kind:ansys (AnsysAction)
+    - kind:moe (MoeAction)
+    - kind:rlang (RLangAction)
     - kind:mathematica (MmaAction)
 * Exchange:
   * monitor - system status, don't persist.
@@ -77,6 +78,37 @@
   - `done`
 
     If the procedure finished successfully
+
+## MoeCommand (object)
+
+- type (enum, required)
+  - `EI`
+- D (array[object], required)
+  - lowerBound (number, required)
+  - upperBound (number, required)
+  - steps (number, required)
+- q (number, required)
+- current (array[object], required)
+  - D (array[number], required)
+- done (array[object], required)
+  - D (array[number], required)
+  - P0 (number, required)
+
+## MoeAction (object)
+
+- type (enum, required)
+  - `failure`
+
+    If anything wrong happens
+
+  - `done`
+
+    If nothing wrong happens
+
+- result (enum)
+  - string
+  - object
+    - next (array[number])
 
 ## RLangCommand (object)
 
