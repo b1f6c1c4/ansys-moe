@@ -1,42 +1,8 @@
 #include "main.h"
 #include <iostream>
-#include "rpc.h"
 
-RpcAnswer Main::handler(const std::string &method, const json &data)
-{
-    try
-    {
-        if (method == "status")
-        {
-            logger->info("Method {} called", method);
-            json j;
-            j["version"] = VERSION;
-            j["commitHash"] = COMMITHASH;
-            return j;
-        }
-        else
-        {
-            logger->error("Method {} not found", method);
-            return RpcAnswer(-32601, "Method not found");
-        }
-    }
-    catch (const nlohmann::detail::type_error &ex)
-    {
-        logger->error(ex.what());
-        return RpcAnswer(-32602, "Invalid params");
-    }
-    catch (const std::exception &ex)
-    {
-        logger->error(ex.what());
-        throw;
-    }
-}
-
-// LCOV_EXCL_START
 void Main::Setup(const po::variables_map &vm)
 {
-    void TryMoe();
-    TryMoe();
     auto &&verbose = vm["verbose"].as<std::string>();
     if (verbose == "trace") {
         spdlog::set_level(spdlog::level::trace);
@@ -60,33 +26,15 @@ void Main::Setup(const po::variables_map &vm)
     logger->info("Version {}", VERSION);
     logger->info("CommitHash {}", COMMITHASH);
 
-    auto &&sub = vm["subscribe"].as<std::string>();
-    logger->debug("Will subscribe {}", sub);
-    Rpc::Inst().setupRpc(sub);
     logger->debug("Setup done");
 }
-// LCOV_EXCL_STOP
 
-void Main::EventLoop()
+void Main::Execute()
 {
-    logger->info("Main::EventLoop");
-
-    try
-    {
-        using namespace std::placeholders;
-        logger->debug("Run rpc");
-        Rpc::Inst().runRpc(std::bind(&Main::handler, this, _1, _2));
-    }
-    catch (const std::exception &ex)
-    {
-        logger->error(ex.what());
-    }
-
-    logger->warn("Crypto Exited.");
+    void TryMoe();
+    TryMoe();
 }
 
-// LCOV_EXCL_START
-#ifndef IS_TEST
 int main(int argc, char *argv[])
 {
     try
@@ -95,7 +43,6 @@ int main(int argc, char *argv[])
         desc.add_options()
             ("help,h", "produce help message")
             ("verbose,v", po::value<std::string>()->default_value("info"), "set logging level")
-            ("subscribe,s", po::value<std::string>()->default_value("moe"), "channel to listen")
         ;
 
         po::variables_map vm;
@@ -108,7 +55,7 @@ int main(int argc, char *argv[])
         }
 
         Main::Inst().Setup(vm);
-        Main::Inst().EventLoop();
+        Main::Inst().Execute();
     }
     catch (const spdlog::spdlog_ex &ex)
     {
@@ -119,5 +66,3 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
-#endif
-// LCOV_EXCL_STOP
