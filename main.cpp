@@ -49,6 +49,9 @@ void Main::Execute()
         logger->error(ex.what());
         std::cout << "ERROR" << std::endl;
         std::cout << ex.what();
+        if (isatty(fileno(stdout))) {
+            std::cout << std::endl;
+        }
     }
 }
 
