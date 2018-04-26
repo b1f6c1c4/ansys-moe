@@ -84,9 +84,12 @@
 - type (enum, required)
   - `EI`
 - D (array[object], required)
+  - kind (enum, required)
+    - `discrete`
+    - `continuous`
   - lowerBound (number, required)
   - upperBound (number, required)
-  - steps (number, required)
+  - precision (number, required)
 - q (number, required)
 - current (array[object], required)
   - D (array[number], required)
@@ -108,7 +111,8 @@
 - result (enum)
   - string
   - object
-    - next (array[number])
+    - next (array[object])
+      - D (array[number], required)
 
 ## RLangCommand (object)
 
