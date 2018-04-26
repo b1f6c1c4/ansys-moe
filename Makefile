@@ -9,7 +9,7 @@ TARGETS=main moe
 DEPS=common.h $(addsuffix .h, $(TARGETS))
 LIBS=-lboost_program_options -lgomp \
      /usr/local/lib/python2.7/dist-packages/moe/build/GPP.so
-CFLAGS=-std=c++17 -Wall -pthread -DVERSION=\"$(VERSION)\" -DCOMMITHASH=\"$(COMMITHASH)\" -O3 \
+CFLAGS=-std=c++17 -Wall -Wno-unknown-pragmas -pthread -DVERSION=\"$(VERSION)\" -DCOMMITHASH=\"$(COMMITHASH)\" -O3 \
        -I/usr/local/lib/python2.7/dist-packages/moe/optimal_learning/cpp
 
 -include $(patsubst %, build/%.o.d, $(TARGETS))

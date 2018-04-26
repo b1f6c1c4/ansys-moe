@@ -1,5 +1,6 @@
 #include "main.h"
 #include <iostream>
+#include "moe.h"
 
 void Main::Setup(const po::variables_map &vm)
 {
@@ -31,8 +32,24 @@ void Main::Setup(const po::variables_map &vm)
 
 void Main::Execute()
 {
-    void TryMoe();
-    TryMoe();
+    try {
+        json input;
+        std::cin >> input;
+        logger->info("Input parsed");
+        logger->trace("Input {}", input.dump());
+        auto &&output = Moe::Inst().Execute(input);
+        logger->info("Done");
+        logger->trace("Output {}", output.dump());
+        if (isatty(fileno(stdout))) {
+            std::cout << std::setw(2) << output << std::endl;
+        } else {
+            std::cout << output;
+        }
+    } catch (const std::exception &ex) {
+        logger->error(ex.what());
+        std::cout << "ERROR" << std::endl;
+        std::cout << ex.what();
+    }
 }
 
 int main(int argc, char *argv[])

@@ -35,6 +35,7 @@
   before going through this example.  It also wouldn't hurt to look at gpp_covariance.hpp.
 \endrst*/
 
+#include "moe.h"
 #include <cstdio>
 
 #include <algorithm>
@@ -54,7 +55,7 @@ using namespace optimal_learning;  // NOLINT, i'm lazy in this file which has no
 
 #define OL_USER_INPUTS 0
 
-void TryMoe() {
+json Moe::Execute(const json &command) {
   using DomainType = TensorProductDomain;
   // here we set some configurable parameters
   // feel free to change them (and recompile) as you explore
@@ -170,7 +171,7 @@ void TryMoe() {
   }
 #endif
 
-  printf(OL_ANSI_COLOR_CYAN "BUILDING GAUSSIAN PROCESS...\n" OL_ANSI_COLOR_RESET);
+  logger->info("BUILDING GAUSSIAN PROCESS...");
 
   // construct GP
   // first, we simulate not knowing the actual hyperparameters by picking a new set of random ones that are roughly
@@ -195,10 +196,10 @@ void TryMoe() {
   double gamma = 0.1;  // we decrease step size by a factor of 1/(iteration)^gamma
   double pre_mult = 1.0;  // scaling factor
   double max_relative_change = 1.0;
-  double tolerance = 1.0e-7;
-  int num_multistarts = 30;  // max number of multistarted locations
-  int max_num_steps = 500;  // maximum number of GD iterations per restart
-  int max_num_restarts = 20;  // number of restarts to run with GD
+  double tolerance = 1.0e-3;
+  int num_multistarts = 3;  // max number of multistarted locations
+  int max_num_steps = 50;  // maximum number of GD iterations per restart
+  int max_num_restarts = 2;  // number of restarts to run with GD
   int num_steps_averaged = 0;  // number of steps to use in polyak-ruppert averaging
   GradientDescentParameters gd_params(num_multistarts, max_num_steps, max_num_restarts,
                                       num_steps_averaged, gamma,
@@ -225,7 +226,7 @@ void TryMoe() {
   // Finally: optimize EI!
   // Note: this generates a large amount of output to stdout.  This could be surpressed and it's unclear what is due to
   // poor GD configuration vs insufficient accuracy/consistency in the EI computation
-  printf(OL_ANSI_COLOR_CYAN "OPTIMIZING EXPECTED IMPROVEMENT...\n" OL_ANSI_COLOR_RESET);
+  logger->info("OPTIMIZING EXPECTED IMPROVEMENT...");
   std::vector<double> next_point_winner(dim);
   bool found_flag = false;
   ComputeOptimalPointsToSampleWithRandomStarts(gp, gd_params, domain, thread_schedule,
@@ -233,12 +234,13 @@ void TryMoe() {
                                                num_being_sampled, best_so_far, max_int_steps,
                                                &found_flag, &uniform_generator, normal_rng_vec.data(),
                                                next_point_winner.data());
-  printf(OL_ANSI_COLOR_CYAN "EI OPTIMIZATION FINISHED. Success status: %s\n" OL_ANSI_COLOR_RESET, found_flag ? "True" : "False");
-  printf("Next best sample point according to EI:\n");
-  PrintMatrix(next_point_winner.data(), 1, dim);
+  logger->info("EI OPTIMIZATION FINISHED. Success status: {}", found_flag ? "True" : "False");
 
   // check what the actual improvement would've been by sampling from our GP and comparing to best_so_far
   double function_value = gp.SamplePointFromGP(next_point_winner.data(), 0.0);  // sample w/o noise
-  printf(OL_ANSI_COLOR_CYAN "RESULT OF SAMPLING AT THE NEXT BEST POINT (positive improvement is better):\n" OL_ANSI_COLOR_RESET);
-  printf("new function value: %.18E, previous best: %.18E, difference (improvement): %.18E\n", function_value, best_so_far, best_so_far - function_value);
+  logger->info("RESULT OF SAMPLING AT THE NEXT BEST POINT (positive improvement is better):");
+  logger->info("new function value: {}, previous best: {}, difference (improvement): {}", function_value, best_so_far, best_so_far - function_value);
+  json j;
+  j["next"] = next_point_winner;
+  return j;
 }
