@@ -5,13 +5,18 @@ const logger = require('../logger')('integration');
 
 const theQueue = [];
 
+const getId = ({ proj, name, root }) => root
+  ? `${proj}.${name}${root.replace(/\//g, '.')}`
+  : `${proj}.${name}`;
+
 module.exports.virtualQueue = theQueue;
 
-module.exports.run = (kind, code, variables, { proj, name, root }) => {
-  logger.info(`Run integration ${kind}`, { proj, name, root });
-  const id = root
-    ? `${proj}.${name}${root.replace(/\//g, '.')}`
-    : `${proj}.${name}`;
+module.exports.getId = getId;
+
+module.exports.run = (kind, code, variables, info) => {
+  logger.info(`Run integration ${kind}`, info);
+  const { proj, name, root } = info;
+  const id = getId(info);
   switch (kind) {
     case 'expression':
       theQueue.push(expression.wrapped(code, variables, {
@@ -35,11 +40,8 @@ module.exports.run = (kind, code, variables, { proj, name, root }) => {
   }
 };
 
-module.exports.cancel = (kind, { proj, name, root }) => {
-  const id = root
-    ? `${proj}.${name}${root.replace(/\//g, '.')}`
-    : `${proj}.${name}`;
-  amqp.cancel(kind, id);
+module.exports.cancel = (kind, info) => {
+  amqp.cancel(kind, getId(info));
 };
 
 module.exports.parse = ({ kind, action }) => {

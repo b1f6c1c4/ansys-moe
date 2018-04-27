@@ -125,14 +125,18 @@ module.exports = (petri) => {
       }
       logger.info('P pars done', xVars);
       await r.store('/:proj/results/d/:dHash/var', xVars);
-      const p0 = expression.run(r.cfg.P0, xVars);
-      const dpars = await r.retrive('/:proj/hashs/d/:dHash').json();
+      const p0 = expression.run(r.cfg.P0.code, xVars);
+      logger.info('P0 done', p0);
+      const dpars = await r.retrive('/:proj/hashs/dHash/:dHash').json();
       const history = await r.retrive('/:proj/results/cat/:cHash/history').json();
-      history.push({ D: dpars, P0: p0 });
+      const item = { D: dpars, P0: p0 };
+      logger.info('New history item', item);
+      history.push(item);
       await r.store('/:proj/results/cat/:cHash/history', history);
       const ongoing = await r.retrive('/:proj/results/cat/:cHash/ongoing').json();
       delete ongoing[r.param.dHash];
       await r.store('/:proj/results/cat/:cHash/ongoing', ongoing);
+      await r.decr({ '../#': 1 });
       await r.incr({ '../@': 1, '../../iter/req': 1 });
     }
   });

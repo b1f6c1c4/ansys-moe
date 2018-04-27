@@ -20,7 +20,7 @@ module.exports = (petri) => {
       // r.cfg.initEvals
       const script = _.template(dedent`
         <% _.forEach(D, (d) => { %>
-          <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.steps %>)
+          <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.steps / 8 %>)
         <% }); %>
         rst <- expand.grid(
           <% _.forEach(D, (d) => { %>

@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const { hash, newId, dedent } = require('../util');
-const { run, cancel, parse } = require('../integration');
+const amqp = require('../amqp');
+const { getId, cancel, parse } = require('../integration');
 const expression = require('../integration/expression');
 const logger = require('../logger')('core/iter');
 
@@ -20,19 +21,23 @@ module.exports = (petri) => {
     if (await r.decr({ '/iter/req': 1 })) {
       // Check if category still running
       if (!await r.ensure('/eval')) {
+        logger.warn('Category quited');
         return;
       }
       // Check if enough evals have done
       if (await r.ensure('/eval/@') < r.cfg.minEvals) {
+        logger.warn('Evals not enough');
         return;
       }
       const concurrent = await r.retrive('/:proj/concurrent').number();
       // Check if concurrent evals are enough
       if (await r.ensure('/eval/#') >= concurrent) {
+        logger.warn('Enough concurrent evals');
         return;
       }
       // Cancel ongoing iter calculation
       if (await r.decr({ '/iter/calc': 1 })) {
+        logger.warn('Detected old eval');
         const oldId = await r.retrive('/:proj/results/cat/:cHash/iterate').string();
         cancel('rlang', oldId);
       }
@@ -56,7 +61,11 @@ module.exports = (petri) => {
         rngs <- c(<%= rngs.join(', ') %>);
         sampled <- t(matrix(c(<%= sampled.join(', ') %>), nrow=<%= rngs.length %>));
         values <- c(<%= values.join(', ') %>);
-        being_sampled <- t(matrix(c(<%= beingSampled.join(', ') %>), nrow=<%= rngs.length %>));
+        <% if (beingSampled.length) { %>
+          being_sampled <- t(matrix(c(<%= beingSampled.join(', ') %>), nrow=<%= rngs.length %>));
+        <% } else { %>
+          being_sampled <- NULL
+        <% } %>
         rst <- eiopt(rngs, sampled, values, being_sampled);
         sink();
         print(toJSON(rst));
@@ -75,7 +84,12 @@ module.exports = (petri) => {
           .value(),
       });
       const iId = newId();
-      run('rlang', script, {}, r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId }));
+      logger.info('Iter calculation started', iId);
+      amqp.publish(
+        'rlang',
+        { script },
+        getId(r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId })),
+      );
       await r.store('/:proj/results/cat/:cHash/iterate', iId);
       await r.incr({ '/iter/calc': 1 });
     }
@@ -86,7 +100,12 @@ module.exports = (petri) => {
     external: true,
     root: '/cat/:cHash/iter/t/:iId',
   }, async (r, payload) => {
-    if (await r.decr({ '../../calc': 1 })) {
+    if (await r.ensure('../../calc')) {
+      if (r.param.iId !== await r.retrive('/:proj/results/cat/:cHash/iterate').string()) {
+        logger.warn('iId not match, drop result');
+        return;
+      }
+      await r.decr({ '../../calc': 1 });
       const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
       const rst = parse(payload);
       if (!rst) {
