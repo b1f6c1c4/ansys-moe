@@ -28,6 +28,13 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 	ctx := exec.Command(m.rlangPath, args...)
 	jArgs := strings.Join(args, " ")
 
+	stderr, err := ctx.StderrPipe()
+	if err != nil {
+		common.RL.Error(e, "rlang/execRLang", "Cannot get StderrPipe: "+err.Error())
+	} else {
+		go common.PipeLog(e, stderr);
+	}
+
 	done := make(chan struct{})
 	killing := make(chan error, 1)
 	go func() {
@@ -65,7 +72,7 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 	}()
 
 	common.RL.Info(e, "rlang/execRLang", "Will execute: "+jArgs)
-	r, err := ctx.CombinedOutput()
+	r, err := ctx.Output()
 	close(done)
 	select {
 	case err := <-killing:
