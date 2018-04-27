@@ -1,9 +1,8 @@
 library("GPfit")
 library("lhs")
 library("randtoolbox")
-library("DEoptim")
 
-bgo <- function(object, Q, num_quasi=1000, being=c()) {
+ei <- function(object, Q, num_quasi=1000, being=c()) {
     X <- object$X;
     Y <- object$Y;
     best <- min(Y);
@@ -12,8 +11,12 @@ bgo <- function(object, Q, num_quasi=1000, being=c()) {
     corr <- object$correlation_param;
     power <- corr$power;
 
-    being <- matrix(being, ncol=d);
-    P <- nrow(being);
+    if (!is.null(being)) {
+        being <- matrix(being, ncol=d);
+        P <- nrow(being);
+    } else {
+        P <- 0;
+    }
 
     beta <- object$beta;
     sig2 <- object$sig2;
@@ -51,7 +54,9 @@ bgo <- function(object, Q, num_quasi=1000, being=c()) {
     quasi <- matrix(qnorm(sobol(num_quasi, Q), 0, 1), ncol=Q);
     quasifun <- function(xnew) {
         xnew <- matrix(xnew, ncol=d);
-        xnew <- rbind(being, xnew);
+        if (!is.null(being)) {
+            xnew <- rbind(being, xnew);
+        }
         for(jj in 1:Q) {
             if (done && jj <= P) {
                 continue;
@@ -78,12 +83,12 @@ bgo <- function(object, Q, num_quasi=1000, being=c()) {
         return(musx + sqrt(sig2) * (quasi %*% Ls));
     }
 
-    eifun <- function(xnew) {
-        q <- quasifun(xnew);
+    eifun <- function(cont, disc) {
+        # q <- quasifun(cbind(cont, disc/100));
+        q <- quasifun(cont);
         ei <- mean(pmax(apply(best - q, 1, max), 0));
-        return(-ei);
+        return(ei);
     }
 
-    res <- DEoptim(eifun, lower=rep(0, Q-P), upper=rep(1, Q-P), control=list(NP=200, itermax=4000, trace=TRUE));
-    return(res$optim);
+    return(eifun);
 }

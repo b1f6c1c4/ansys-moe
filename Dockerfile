@@ -9,8 +9,8 @@ RUN go install \
 FROM r-base:latest
 RUN Rscript -e "install.packages('jsonlite')"
 RUN Rscript -e "install.packages('randtoolbox')"
-RUN Rscript -e "install.packages('DEoptim')"
 RUN Rscript -e "install.packages('GPfit')"
+RUN Rscript -e "install.packages('CEoptim')"
 WORKDIR /root/
 COPY --from=builder /go/bin/commond-std .
 COPY R ./R
