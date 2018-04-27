@@ -35,6 +35,13 @@ module.exports.run = (kind, code, variables, { proj, name, root }) => {
   }
 };
 
+module.exports.cancel = (kind, { proj, name, root }) => {
+  const id = root
+    ? `${proj}.${name}${root.replace(/\//g, '.')}`
+    : `${proj}.${name}`;
+  amqp.cancel(kind, id);
+};
+
 module.exports.parse = ({ kind, action }) => {
   logger.info(`Parse integration ${kind}`, action);
   switch (kind) {

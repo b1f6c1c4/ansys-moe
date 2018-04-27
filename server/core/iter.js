@@ -1,10 +1,18 @@
 const _ = require('lodash');
-const { hash, dedent } = require('../util');
+const { hash, newId, dedent } = require('../util');
 const { run, parse } = require('../integration');
 const expression = require('../integration/expression');
 const logger = require('../logger')('core/iter');
 
 module.exports = (petri) => {
+  petri.register({
+    name: 'i-new-req',
+    external: true,
+    root: '/cat/:cHash',
+  }, async (r) => {
+    await r.incr({ '/iter/req': 1 });
+  });
+
   petri.register({
     name: 'i-req',
     root: '/cat/:cHash',
@@ -64,7 +72,9 @@ module.exports = (petri) => {
           .flatten()
           .value(),
       });
-      run('rlang', script, {}, r.action('i-done'));
+      const iId = newId();
+      run('rlang', script, {}, r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId }));
+      await r.store('/:proj/results/cat/:cHash/iterate', iId);
       await r.incr({ '/iter/calc': 1 });
     }
   });
@@ -72,14 +82,14 @@ module.exports = (petri) => {
   petri.register({
     name: 'i-done',
     external: true,
-    root: '/cat/:cHash',
+    root: '/cat/:cHash/iter/t/:iId',
   }, async (r, payload) => {
-    if (await r.decr({ '/iter/calc': 1 })) {
+    if (await r.decr({ '../../calc': 1 })) {
       const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
       const rst = parse(payload);
       if (!rst) {
         logger.error('Iter calc failed', payload);
-        await r.incr({ '/failure': 1, '../@': 1 });
+        await r.incr({ '../../../failure': 1, '../../../../@': 1 });
         return;
       }
       logger.debug('Iter succeed', rst);
@@ -92,7 +102,7 @@ module.exports = (petri) => {
       ongoing[dHash] = dpars;
       logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
       await r.store('/:proj/hashs/dHash/:dHash', { dHash }, dpars);
-      await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
+      await r.incr({ '../../../eval/:dHash/init': 1 }, { dHash });
     }
   });
 };
