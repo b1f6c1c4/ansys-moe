@@ -6,6 +6,8 @@ All strings MUST match `/^[-_a-z0-9]+$/`, unless specified.
 
 ## Config (object)
 
+- initEvals (number, required)
+- minEvals (number, required)
 - D (array[DParameter], required)
 - G (array[GParameter], required)
 - E (array[EParameter], required)
