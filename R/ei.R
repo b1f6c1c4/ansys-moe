@@ -2,7 +2,7 @@ library("GPfit")
 library("lhs")
 library("randtoolbox")
 
-ei <- function(object, Q, num_quasi=1000, being=c()) {
+ei <- function(object, num_quasi=1000, being=c()) {
     X <- object$X;
     Y <- object$Y;
     best <- min(Y);
@@ -17,6 +17,7 @@ ei <- function(object, Q, num_quasi=1000, being=c()) {
     } else {
         P <- 0;
     }
+    Q <- P + 1;
 
     beta <- object$beta;
     sig2 <- object$sig2;
@@ -48,33 +49,36 @@ ei <- function(object, Q, num_quasi=1000, being=c()) {
         }
     }
 
-    done <- FALSE;
     Ks <- matrix(0, n, Q);
     Kss <- matrix(0, Q, Q);
-    quasi <- matrix(qnorm(sobol(num_quasi, Q), 0, 1), ncol=Q);
-    quasifun <- function(xnew) {
-        xnew <- matrix(xnew, ncol=d);
-        if (!is.null(being)) {
-            xnew <- rbind(being, xnew);
-        }
-        for(jj in 1:Q) {
-            if (done && jj <= P) {
-                continue;
-            }
+    if (P > 0) {
+        for(jj in 1:P) {
             for(kk in 1:n) {
-                Ks[kk, jj] <- rfun(X[kk, ] - xnew[jj, ]);
+                Ks[kk, jj] <- rfun(X[kk, ] - being[jj, ]);
             }
-            for(kk in 1:Q) {
+            for(kk in 1:P) {
                 if (kk == jj) {
                     Kss[kk, jj] <- 1;
                 } else if (kk > jj) {
-                    Kss[kk, jj] <- rfun(xnew[kk, ] - xnew[jj, ]);
+                    Kss[kk, jj] <- rfun(being[kk, ] - being[jj, ]);
                 } else {
                     Kss[kk, jj] <- Kss[jj, kk];
                 }
             }
         }
-        done <- TRUE;
+    }
+    Kss[Q, Q] <- 1;
+    quasi <- matrix(qnorm(sobol(num_quasi, Q), 0, 1), ncol=Q);
+    quasifun <- function(xnew) {
+        for(kk in 1:n) {
+            Ks[kk, Q] <- rfun(X[kk, ] - xnew);
+        }
+        if (P > 0) {
+            for(kk in 1:P) {
+                Kss[kk, Q] <- rfun(being[kk, ] - xnew);
+                Kss[Q, kk] <- Kss[kk, Q];
+            }
+        }
         mus <- t(Ks) %*% SigIY;
         V <- solve(t(L), Ks);
         Sigs <- Kss - t(V) %*% V;
