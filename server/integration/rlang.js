@@ -4,13 +4,15 @@ const { dedent } = require('../util');
 module.exports.run = (code, variables) => {
   const imports = _.toPairs(variables).map(([key, value]) => {
     if (_.isArray(value)) {
-      return `${key} <- c(${value.map((v) => v.toString(10)).join(', ')})`;
+      return `${key} <- c(${value.map((v) => v.toString(10)).join(', ')});`;
     }
-    return `${key} <- ${value.toString(10)}`;
+    return `${key} <- ${value.toString(10)};`;
   }).join('\n');
   const script = dedent`
-    library(jsonlite)
+    sink(stderr());
+    library(jsonlite);
     ${imports}
+    sink();
     ${code}
   `;
   return { script };
