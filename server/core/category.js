@@ -49,21 +49,26 @@ module.exports = (petri) => {
       logger.debug('Init succeed', rst);
       const vard = _.mapValues(cVars, (v, k) =>
         _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
+      const ongoing = {};
       await r.dyn('/eval');
       if (rst[0].length) {
         for (const pars of rst[0]) {
           const dpars = _.assign({}, cVars, pars);
           const dHash = hash(dpars);
+          ongoing[dHash] = dpars;
           logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
           await r.store('/:proj/hashs/dHash/:dHash', { dHash }, dpars);
           await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
         }
       } else {
         const dHash = hash(cVars);
+        ongoing[dHash] = cVars;
         logger.info(`Will create eval ${dHash}`, _.assign({}, vard));
         await r.store('/:proj/hashs/dHash/:dHash', { dHash }, cVars);
         await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
       }
+      await r.store('/:proj/results/cat/:cHash/history', []);
+      await r.store('/:proj/results/cat/:cHash/ongoing', ongoing);
     }
   });
 };

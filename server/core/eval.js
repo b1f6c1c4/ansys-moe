@@ -3,7 +3,7 @@ const { hash } = require('../util');
 const { run, parse } = require('../integration');
 const ansys = require('./ansys');
 const expression = require('../integration/expression');
-const logger = require('../logger')('core/category');
+const logger = require('../logger')('core/eval');
 
 module.exports = (petri) => {
   petri.register({
@@ -124,8 +124,15 @@ module.exports = (petri) => {
       }
       logger.info('P pars done', xVars);
       await r.store('/:proj/results/d/:dHash/var', xVars);
-      // TODO: P0
-      await r.incr({ '../@': 1 });
+      const p0 = expression.run(r.cfg.P0, xVars);
+      const dpars = await r.retrive('/:proj/hashs/d/:dHash').json();
+      const history = await r.retrive('/:proj/results/cat/:cHash/history').json();
+      history.push({ D: dpars, P0: p0 });
+      await r.store('/:proj/results/cat/:cHash/history', history);
+      const ongoing = await r.retrive('/:proj/results/cat/:cHash/ongoing').json();
+      delete ongoing[r.param.dHash];
+      await r.store('/:proj/results/cat/:cHash/ongoing', ongoing);
+      await r.incr({ '../@': 1, '../../iter/req': 1 });
     }
   });
 
