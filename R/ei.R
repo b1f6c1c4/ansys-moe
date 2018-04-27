@@ -87,9 +87,8 @@ ei <- function(object, num_quasi=1000, being=c()) {
         return(musx + sqrt(sig2) * (quasi %*% Ls));
     }
 
-    eifun <- function(cont, disc) {
-        # q <- quasifun(cbind(cont, disc/100));
-        q <- quasifun(cont);
+    eifun <- function(xnew) {
+        q <- quasifun(xnew);
         ei <- mean(pmax(apply(best - q, 1, max), 0));
         return(ei);
     }
