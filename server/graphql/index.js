@@ -31,6 +31,8 @@ const resolvers = {
       const payload = {
         name: 'i-new-req',
         base: `/${proj}/state`,
+        // TODO: cannot enumerate over categories
+        // root: '',
       };
       await core.channel.push({ payload, proj });
       return true;

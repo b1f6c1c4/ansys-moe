@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const { hash, newId, dedent } = require('../util');
-const { run, parse } = require('../integration');
+const { run, cancel, parse } = require('../integration');
 const expression = require('../integration/expression');
 const logger = require('../logger')('core/iter');
 
@@ -31,9 +31,11 @@ module.exports = (petri) => {
       if (await r.ensure('/eval/#') >= concurrent) {
         return;
       }
-      // TODO: Cancel ongoing iter calculation
-      // if (await r.decr({ '/iter/calc': 1 })) {
-      // }
+      // Cancel ongoing iter calculation
+      if (await r.decr({ '/iter/calc': 1 })) {
+        const oldId = await r.retrive('/:proj/results/cat/:cHash/iterate').string();
+        cancel('rlang', oldId);
+      }
 
       // Run iter calculation
       // TODO: cache disDVars
