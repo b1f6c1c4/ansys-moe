@@ -10,6 +10,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash',
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
+      // TODO: cache disDVars
       const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
       const disDVars = _.chain(r.cfg.D)
         .filter({ kind: 'discrete' })
