@@ -4,7 +4,6 @@
 
 * Majors:
   * ansys (AnsysCommand) - every single ansys execution.
-  * moe - every single moe execution.
 * Calculators:
   * rlang (RLangCommand) - rlang as a calculator.
   * mathematica (MmaCommand) - mathematica as a calculator.

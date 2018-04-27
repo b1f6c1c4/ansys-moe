@@ -10,6 +10,9 @@ type Mutation {
 
   # Create new project and execute
   run(name: ID!, config: JSON!): Boolean
+
+  # Set concurrent evals
+  setConcurrent(name: ID!, concurrent: Int!): Boolean
 }
 
 # Inputs

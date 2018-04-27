@@ -6,6 +6,8 @@
 
 See config.md
 
+## /concurrent
+
 ## /state
 
 Models the Petri net.
@@ -16,7 +18,7 @@ Models the Petri net.
 
 #### /init
 
-#### /:phase=scan|iterate/:dHash
+#### /eval/:dHash
 
 - /init
 - /G/:name
@@ -31,9 +33,10 @@ Models the Petri net.
   - /init
   - /prep
 
-#### /estimate
+#### /iter
 
-#### /optimize
+- /req
+- /calc
 
 ### /done
 
@@ -57,7 +60,9 @@ Models the Petri net.
 
 #### /cat/:cHash
 
-- /estimate
+- /history
+- /ongoing
+- /iterate
 
 ### /final
 
