@@ -44,13 +44,13 @@ module.exports.cancel = (kind, info) => {
   amqp.cancel(kind, getId(info));
 };
 
-module.exports.parse = ({ kind, action }) => {
+module.exports.parse = ({ kind, action }, ...args) => {
   logger.info(`Parse integration ${kind}`, action);
   switch (kind) {
     case 'expression':
       return action.type === 'done' ? action.result : null;
     case 'rlang':
-      return rlang.parse(action);
+      return rlang.parse(action, ...args);
     default:
       logger.error('Kind not supported', kind);
       return null;

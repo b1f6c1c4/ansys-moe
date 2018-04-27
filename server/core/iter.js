@@ -2,7 +2,6 @@ const _ = require('lodash');
 const { hash, newId, dedent } = require('../util');
 const amqp = require('../amqp');
 const { getId, cancel, parse } = require('../integration');
-const expression = require('../integration/expression');
 const logger = require('../logger')('core/iter');
 
 module.exports = (petri) => {
@@ -37,18 +36,14 @@ module.exports = (petri) => {
       }
       // Cancel ongoing iter calculation
       if (await r.decr({ '/iter/calc': 1 })) {
+        // TODO: check hash
         logger.warn('Detected old eval');
         const oldId = await r.retrive('/:proj/results/cat/:cHash/iterate').string();
         cancel('rlang', oldId);
       }
 
       // Run iter calculation
-      // TODO: cache disDVars
-      const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
-      const disDVars = _.chain(r.cfg.D)
-        .filter({ kind: 'discrete' })
-        .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
-        .value();
+      const disDVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
       const rngs = disDVars.map((d) => d.steps);
       const history = await r.retrive('/:proj/results/cat/:cHash/history').json();
       const ongoing = await r.retrive('/:proj/results/cat/:cHash/ongoing').json();
@@ -106,15 +101,16 @@ module.exports = (petri) => {
         return;
       }
       await r.decr({ '../../calc': 1 });
-      const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
-      const rst = parse(payload);
+      const rst = parse(payload, false);
       if (!rst) {
         logger.error('Iter calc failed', payload);
         await r.incr({ '../../../failure': 1, '../../../../@': 1 });
         return;
       }
-      logger.debug('Iter succeed', rst);
-      const [pars] = rst;
+      logger.info('Iter succeed', rst);
+      const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
+      const disDVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
+      const pars = _.fromPairs(disDVars.map((v, i) => [v.name, rst[0][i]]));
       const vard = _.mapValues(cVars, (v, k) =>
         _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
       const dpars = _.assign({}, cVars, pars);
@@ -124,6 +120,8 @@ module.exports = (petri) => {
       logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
       await r.store('/:proj/hashs/dHash/:dHash', { dHash }, dpars);
       await r.incr({ '../../../eval/:dHash/init': 1 }, { dHash });
+      // TODO: loop
+      // await r.incr({ '/iter/req': 1 });
     }
   });
 };

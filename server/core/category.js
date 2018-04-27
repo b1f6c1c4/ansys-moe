@@ -10,12 +10,13 @@ module.exports = (petri) => {
     root: '/cat/:cHash',
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
-      // TODO: cache disDVars
       const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
       const disDVars = _.chain(r.cfg.D)
         .filter({ kind: 'discrete' })
         .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
         .value();
+      logger.info('Category\'s D vars', disDVars);
+      await r.store('/:proj/results/cat/:cHash/D', disDVars);
       // TODO: Use Design of Experiments algorithms
       // r.cfg.initEvals
       const script = _.template(dedent`
