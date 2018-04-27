@@ -1,6 +1,7 @@
 library("GPfit")
 library("lhs")
 library("randtoolbox")
+library("CEoptim")
 
 ei <- function(object, num_quasi=1000, being=c()) {
     X <- object$X;
@@ -94,4 +95,18 @@ ei <- function(object, num_quasi=1000, being=c()) {
     }
 
     return(eifun);
+}
+
+eiopt <- function(rngs, sampled, values, being_sampled) {
+    cats <- as.integer(rngs);
+    object <- GP_fit(x, y);
+    eifun <- ei(object, being=being_sampled);
+    rst <- CEoptim(
+                   f=function(disc) eifun(disc / (cats - 1)),
+                   maximize=TRUE,
+                   discrete=list(categories=cats,smoothProb=0.1),
+                   verbose=TRUE,
+                   );
+    print(rst);
+    return(rst$optimizer$discrete / rngs);
 }
