@@ -3,6 +3,7 @@ const EventEmitter = require('events');
 const logger = require('./logger')('amqp');
 
 let connection;
+let cExchange;
 const emitter = new EventEmitter();
 
 const makeQueueAction = () => new Promise((resolve) => {
@@ -34,6 +35,17 @@ const makeQueueAction = () => new Promise((resolve) => {
   });
 });
 
+const makeExchangeC = () => new Promise((resolve) => {
+  cExchange = connection.exchange('cancel', {
+    type: 'topic',
+    durable: false,
+    autoDelete: false,
+    noDeclare: false,
+  });
+  logger.debug('C exchange created');
+  resolve();
+});
+
 const connect = () => new Promise((resolve, reject) => {
   logger.info('Connecting AMQP...');
   logger.debug('AMQP host', process.env.RABBIT_HOST);
@@ -54,7 +66,8 @@ const connect = () => new Promise((resolve, reject) => {
   connection.on('ready', () => {
     logger.info('AMQP connection ready');
 
-    Promise.all([makeQueueAction()])
+    makeExchangeC()
+      .then(makeQueueAction)
       .then(resolve)
       .catch(reject);
   });
@@ -70,8 +83,18 @@ const publish = (queue, body, id) => {
   });
 };
 
+const cancel = (kind, id) => {
+  logger.info(`Cancel ${kind} #${id}`);
+  cExchange.publish(`cancel.${kind}.${id}`, '{}', {
+    mandatory: false,
+    contentType: 'application/json',
+    deliveryMode: 1,
+  });
+};
+
 module.exports = {
   connect,
   emitter,
   publish,
+  cancel,
 };

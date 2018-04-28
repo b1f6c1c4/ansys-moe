@@ -24,6 +24,19 @@ const resolvers = {
       await core.channel.push({ payload, proj });
       return true;
     },
+
+    async setConcurrent(parent, { name: proj, concurrent }) {
+      logger.info(`Set ${proj}/concurrent`, concurrent);
+      await etcd.put(`/${proj}/concurrent`).value(concurrent).exec();
+      const payload = {
+        name: 'i-new-req',
+        base: `/${proj}/state`,
+        // TODO: cannot enumerate over categories
+        // root: '',
+      };
+      await core.channel.push({ payload, proj });
+      return true;
+    },
   },
 };
 
