@@ -50,7 +50,7 @@ func WatchLog(e ExeContext, fn string, cancel <-chan struct{}) error {
 		scanner := bufio.NewScanner(buf)
 		for scanner.Scan() {
 			q := scanner.Text()
-			RL.Debug(e, "ansys/PIPE", q)
+			RL.Debug(e, e.GetKind() + "/PIPE", q)
 		}
 		err = scanner.Err()
 		if err != nil {
@@ -64,10 +64,22 @@ func WatchLog(e ExeContext, fn string, cancel <-chan struct{}) error {
 		}
 		select {
 		case <-cancel:
+			RL.Trace(e, "watchLog", "Done")
 			return nil
 		case <-time.After(time.Second):
 		}
 	}
+}
+
+// PipeLog report pipe to pipe
+func PipeLog(e ExeContext, raw io.Reader) {
+	buf := bufio.NewReader(raw)
+	scanner := bufio.NewScanner(buf)
+	for scanner.Scan() {
+		q := scanner.Text()
+		RL.Debug(e, e.GetKind() + "/PIPE", q)
+	}
+	RL.Trace(e, "pipeLog", "Done")
 }
 
 // Download a file from remote to data path

@@ -29,6 +29,13 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 	ctx := exec.Command(m.mmaPath, args...)
 	jArgs := strings.Join(args, " ")
 
+	stderr, err := ctx.StderrPipe()
+	if err != nil {
+		common.RL.Error(e, "mma/execMma", "Cannot get StderrPipe: "+err.Error())
+	} else {
+		go common.PipeLog(e, stderr);
+	}
+
 	done := make(chan struct{})
 	killing := make(chan error, 1)
 	go func() {
@@ -66,7 +73,7 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 	}()
 
 	common.RL.Info(e, "mma/execMma", "Will execute: "+jArgs)
-	r, err := ctx.CombinedOutput()
+	r, err := ctx.Output()
 	close(done)
 	select {
 	case err := <-killing:
