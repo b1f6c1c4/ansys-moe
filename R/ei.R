@@ -107,5 +107,5 @@ eiopt <- function(rngs, sampled, values, being_sampled, num_quasi = 1000) {
                    verbose = TRUE,
                    );
     print(rst);
-    return(rst$optimizer$discrete / (rngs - 1));
+    return(rst$optimizer$discrete);
 }
