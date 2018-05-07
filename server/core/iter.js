@@ -43,11 +43,11 @@ module.exports = (petri) => {
       }
 
       // Run iter calculation
-      const disDVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
-      const rngs = disDVars.map((d) => d.steps);
+      const dVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
+      const rngs = dVars.map((d) => d.steps);
       const history = await r.retrive('/:proj/results/cat/:cHash/history').json();
       const ongoing = await r.retrive('/:proj/results/cat/:cHash/ongoing').json();
-      const tDpar = (dpar) => disDVars.map(({ name, lowerBound, upperBound }) =>
+      const tDpar = (dpar) => dVars.map(({ name, lowerBound, upperBound }) =>
         (dpar[name] - lowerBound) / (upperBound - lowerBound));
       const script = _.template(dedent`
         sink(stderr());
@@ -109,8 +109,8 @@ module.exports = (petri) => {
       }
       logger.info('Iter succeed', rst);
       const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
-      const disDVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
-      const pars = _.fromPairs(disDVars.map((v, i) => [v.name, rst[0][i]]));
+      const dVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
+      const pars = _.fromPairs(dVars.map((v, i) => [v.name, rst[0][i]]));
       const vard = _.mapValues(cVars, (v, k) =>
         _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
       const dpars = _.assign({}, cVars, pars);
