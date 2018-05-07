@@ -21,11 +21,26 @@ All strings MUST match `/^[-_a-z0-9]+$/`, unless specified.
 - kind (enum, required)
   - `categorical`
   - `discrete`
-- lowerBound (number) - 1 if categorical
-- upperBound (number) - steps if categorical
+  - `continuous`
+
+If kind `categorical`: `[1, steps]`
 - steps (number, required) - at least 2
-- descriptions (array[string]) - only applicable if categorical
-- dependsOn (array[string]) - required if has condition
+- descriptions (array[string])
+- dependsOn (array[string]) - other kind `categorical`
+- condition (string) - kind expression
+
+If kind `discrete`:
+- lowerBound (number, required)
+- upperBound (number, required)
+- steps (number, required) - at least 2
+- dependsOn (array[string]) - other kind `categorical`
+- condition (string) - kind expression
+
+If kind `continuous`:
+- lowerBound (number, required)
+- upperBound (number, required)
+- precision (number, required)
+- dependsOn (array[string]) - other kind `categorical`
 - condition (string) - kind expression
 
 ## GParameter (object)

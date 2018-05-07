@@ -35,6 +35,7 @@ Models the Petri net.
 
 #### /iter
 
+- /hint
 - /req
 - /calc
 
@@ -60,6 +61,7 @@ Models the Petri net.
 
 #### /cat/:cHash
 
+- /D
 - /history
 - /ongoing
 - /iterate
