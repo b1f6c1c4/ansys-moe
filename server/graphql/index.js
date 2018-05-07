@@ -29,7 +29,7 @@ const resolvers = {
       logger.info(`Set ${proj}/concurrent`, concurrent);
       await etcd.put(`/${proj}/concurrent`).value(concurrent).exec();
       const payload = {
-        name: 'i-new-req',
+        name: 'i-new-hint',
         base: `/${proj}/state`,
         // TODO: cannot enumerate over categories
         // root: '',

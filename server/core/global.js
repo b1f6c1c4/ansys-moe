@@ -66,4 +66,14 @@ module.exports = (petri) => {
       }
     }
   });
+
+  petri.register({
+    name: 'categories-done',
+  }, async (r) => {
+    if (await r.done('/cat')) {
+      logger.info('All categories done!');
+      // TODO: find optimal
+      await r.incr({ '/done': 1 });
+    }
+  });
 };

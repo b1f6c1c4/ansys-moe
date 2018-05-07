@@ -25,9 +25,9 @@ module.exports = (petri) => {
             <%= d.lowerBound %>,
             <%= d.upperBound %>,
             <% if (d.kind === 'discrete') { %>
-              length.out=<%= d.steps / 8 %>
+              length.out=<%= (d.steps - 1) / 5 %>
             <% } else { %>
-              <%= d.precision * 8 %>
+              <%= d.precision * 5 %>
             <% } %>
             );
         <% }); %>
