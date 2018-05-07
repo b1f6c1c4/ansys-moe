@@ -14,7 +14,7 @@ module.exports.virtualQueue = theQueue;
 module.exports.getId = getId;
 
 module.exports.run = (kind, code, variables, info) => {
-  logger.info(`Run integration ${kind}`, info);
+  logger.debug(`Run integration ${kind}`, info);
   const { proj, name, root } = info;
   const id = getId(info);
   switch (kind) {
@@ -45,7 +45,7 @@ module.exports.cancel = (kind, info) => {
 };
 
 module.exports.parse = ({ kind, action }, ...args) => {
-  logger.info(`Parse integration ${kind}`, action);
+  logger.trace(`Parse integration ${kind}`, action);
   switch (kind) {
     case 'expression':
       return action.type === 'done' ? action.result : null;

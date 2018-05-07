@@ -15,7 +15,7 @@ module.exports = (petri) => {
         .reject({ kind: 'categorical' })
         .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
         .value();
-      logger.info('Category\'s D vars', dVars);
+      logger.debug('Category D vars', dVars);
       await r.store('/:proj/results/cat/:cHash/D', dVars);
       // TODO: Use Design of Experiments algorithms
       // r.cfg.initEvals

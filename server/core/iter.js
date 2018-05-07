@@ -96,7 +96,7 @@ module.exports = (petri) => {
         beingSampled,
       });
       const iId = newId();
-      logger.info('Iter calculation started', iId);
+      logger.debug('Iter calculation started', iId);
       amqp.publish(
         'rlang',
         { script },
@@ -151,7 +151,7 @@ module.exports = (petri) => {
         if (_.keys(ongoing).length) {
           logger.warn('Same eval ongoing or has done');
         } else {
-          logger.info('Iteration successfully converged!');
+          logger.debug('Iteration successfully converged!');
           // TODO: find optimal
           await r.incr({ '../../../../@': 1 });
         }

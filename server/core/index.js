@@ -74,12 +74,12 @@ module.exports.run = async () => {
       const cfg = await etcd.get(`/${proj}/config`).json();
       const context = { proj };
       const cust = customizer({ proj, cfg });
-      logger.info('Dispatching payload', payload);
-      logger.debug('With config', cfg);
+      logger.debug('Dispatching payload', payload);
+      logger.trace('With config', cfg);
       await petri.dispatch(payload, context, cust);
       while (virtualQueue.length !== 0) {
         const evpld = virtualQueue.shift();
-        logger.info('Dispatching eval payload', evpld);
+        logger.debug('Dispatching eval payload', evpld);
         await petri.dispatch(evpld, context, cust);
       }
     } catch (e) {

@@ -12,7 +12,7 @@ module.exports.run = (code, variables) => {
 };
 
 module.exports.wrapped = (code, variables, info) => {
-  logger.debug(`Run expr ${code}`, info);
+  logger.trace(`Run expr ${code}`, info);
   let action;
   try {
     const parser = new Parser();
@@ -32,6 +32,6 @@ module.exports.wrapped = (code, variables, info) => {
     kind: 'expression',
     action,
   };
-  logger.debug('Expr result', result);
+  logger.trace('Expr result', result);
   return result;
 };

@@ -18,7 +18,7 @@ const makeQueueAction = () => new Promise((resolve) => {
     q.bind('#');
     logger.debug('Action q.subscribe...');
     q.subscribe({ ack: true }, (body, headers, { correlationId }, obj) => {
-      logger.debug(`Received message #${correlationId}`, body);
+      logger.trace(`Received message #${correlationId}`, body);
       try {
         emitter.emit('action', {
           correlationId,
@@ -74,7 +74,7 @@ const connect = () => new Promise((resolve, reject) => {
 });
 
 const publish = (queue, body, id) => {
-  logger.info(`Publish #${id} to ${queue}`, body);
+  logger.trace(`Publish #${id} to ${queue}`, body);
   connection.publish(queue, JSON.stringify(body), {
     mandatory: true,
     contentType: 'application/json',
@@ -84,7 +84,7 @@ const publish = (queue, body, id) => {
 };
 
 const cancel = (kind, id) => {
-  logger.info(`Cancel ${kind} #${id}`);
+  logger.trace(`Cancel ${kind} #${id}`);
   cExchange.publish(`cancel.${kind}.${id}`, '{}', {
     mandatory: false,
     contentType: 'application/json',
