@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const { hash } = require('../util');
 const { run, parse } = require('../integration');
-// const ansys = require('./ansys');
+const ansys = require('./ansys');
 const expression = require('../integration/expression');
 const logger = require('../logger')('core/eval');
 
@@ -50,22 +50,21 @@ module.exports = (petri) => {
       };
       const mHash = hash(mHashContent);
       await r.store('/:proj/hashs/m/:mHash', { mHash }, mHashContent);
-      //      ansys.solve(rule, vars, r.action('e-m-done'));
-      //      await r.incr({ '/M/solve': 1 });
-      //    }
-      //  });
-      //
-      //  petri.register({
-      //    name: 'e-m-done',
-      //    external: true,
-      //    root: '/cat/:cHash/eval/:dHash',
-      //  }, async (r, payload) => {
-      //    if (await r.done('/M/solve')) {
-      //      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
-      //      const ruleId = await r.retrive('/:proj/results/d/:dHash/Mid').number();
-      //      const rule = r.cfg.ansys.rules[ruleId];
-      //      const mVars = await ansys.parse(payload, rule);
-      const mVars = {};
+      ansys.solve(rule, vars, r.action('e-m-done'));
+      await r.incr({ '/M/solve': 1 });
+    }
+  });
+
+  petri.register({
+    name: 'e-m-done',
+    external: true,
+    root: '/cat/:cHash/eval/:dHash',
+  }, async (r, payload) => {
+    if (await r.done('/M/solve')) {
+      const xVars = await r.retrive('/:proj/results/d/:dHash/var').json();
+      const ruleId = await r.retrive('/:proj/results/d/:dHash/Mid').number();
+      const rule = r.cfg.ansys.rules[ruleId];
+      const mVars = await ansys.parse(payload, rule);
       if (!mVars) {
         logger.warn('M failed', r.param);
         await r.incr({ '../@': 1 });
