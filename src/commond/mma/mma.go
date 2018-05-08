@@ -32,7 +32,7 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 	if err != nil {
 		common.RL.Error(e, "mma/execMma", "Cannot get StderrPipe: "+err.Error())
 	} else {
-		go common.PipeLog(e, stderr);
+		go common.PipeLog(e, stderr)
 	}
 
 	done := make(chan struct{})

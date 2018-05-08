@@ -30,6 +30,8 @@ func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 
 // Entry setup commond
 func Entry(theLogger func(string)) {
+	common.M.Version.Version = VERSION
+	common.M.Version.CommitHash = COMMITHASH
 	common.Entry(theLogger)
 	common.SL("VERSION: " + VERSION)
 	common.SL("COMMITHASH: " + COMMITHASH)
@@ -65,8 +67,7 @@ func Loop(stop <-chan struct{}) {
 	common.SL("Amqp Connected")
 
 	log := make(chan *common.LogReport)
-	// TODO: publishLog
-	// go publishLog(log)
+	go publishLog(log)
 	common.SetupRL(log)
 
 	act := make(chan common.ExeContext)

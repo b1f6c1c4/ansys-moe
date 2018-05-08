@@ -50,7 +50,7 @@ func WatchLog(e ExeContext, fn string, cancel <-chan struct{}) error {
 		scanner := bufio.NewScanner(buf)
 		for scanner.Scan() {
 			q := scanner.Text()
-			RL.Debug(e, e.GetKind() + "/PIPE", q)
+			RL.Debug(e, e.GetKind()+"/PIPE", q)
 		}
 		err = scanner.Err()
 		if err != nil {
@@ -77,7 +77,7 @@ func PipeLog(e ExeContext, raw io.Reader) {
 	scanner := bufio.NewScanner(buf)
 	for scanner.Scan() {
 		q := scanner.Text()
-		RL.Debug(e, e.GetKind() + "/PIPE", q)
+		RL.Debug(e, e.GetKind()+"/PIPE", q)
 	}
 	RL.Trace(e, "pipeLog", "Done")
 }

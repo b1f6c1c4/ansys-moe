@@ -29,6 +29,11 @@ func loadConfig(exeDir string) GlobalConfigT {
 		os.Getenv("RABBIT_HOST"),
 		os.Getenv("RABBIT_PORT"),
 	)
+	cfg.LogUrl = fmt.Sprintf(
+		"%s:%s",
+		os.Getenv("LOG_HOST"),
+		os.Getenv("LOG_PORT"),
+	)
 	cfg.PrefetchAnsys, _ = strconv.Atoi(os.Getenv("ANSYS"))
 	cfg.PrefetchMma, _ = strconv.Atoi(os.Getenv("MATHEMATICA"))
 	cfg.PrefetchRLang, _ = strconv.Atoi(os.Getenv("RLANG"))

@@ -31,7 +31,7 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 	if err != nil {
 		common.RL.Error(e, "rlang/execRLang", "Cannot get StderrPipe: "+err.Error())
 	} else {
-		go common.PipeLog(e, stderr);
+		go common.PipeLog(e, stderr)
 	}
 
 	done := make(chan struct{})
