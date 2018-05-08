@@ -11,17 +11,25 @@ module.exports = (petri) => {
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
       const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
-      const disDVars = _.chain(r.cfg.D)
-        .filter({ kind: 'discrete' })
+      const dVars = _.chain(r.cfg.D)
+        .reject({ kind: 'categorical' })
         .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
         .value();
-      logger.info('Category\'s D vars', disDVars);
-      await r.store('/:proj/results/cat/:cHash/D', disDVars);
+      logger.debug('Category D vars', dVars);
+      await r.store('/:proj/results/cat/:cHash/D', dVars);
       // TODO: Use Design of Experiments algorithms
       // r.cfg.initEvals
       const script = _.template(dedent`
         <% _.forEach(D, (d) => { %>
-          <%= d.name %> <- seq(<%= d.lowerBound %>, <%= d.upperBound %>, length.out=<%= d.steps / 8 %>)
+          <%= d.name %> <- seq(
+            <%= d.lowerBound %>,
+            <%= d.upperBound %>,
+            <% if (d.kind === 'discrete') { %>
+              length.out=<%= (d.steps - 1) / 5 %>
+            <% } else { %>
+              <%= d.precision * 5 %>
+            <% } %>
+            );
         <% }); %>
         rst <- expand.grid(
           <% _.forEach(D, (d) => { %>
@@ -29,7 +37,7 @@ module.exports = (petri) => {
           <% }); %>
         )
         toJSON(rst)
-      `)({ D: disDVars });
+      `)({ D: dVars });
       run('rlang', script, {}, r.action('c-inited'));
       await r.incr({ '/initing': 1 });
     }

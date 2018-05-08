@@ -73,9 +73,9 @@ class PetriNet {
     }
     registry[name] = { option, func };
     if (external) {
-      logger.info('Registered external', name);
+      logger.trace('Registered external', name);
     } else {
-      logger.info('Registered internal', name);
+      logger.trace('Registered internal', name);
     }
   }
 
