@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 var possiblePaths = []string{
@@ -43,19 +42,6 @@ func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan stru
 			common.RL.Info(e, "ansys/execAnsys", "Process exited")
 		}
 		done <- err
-	}()
-	go func() {
-		for {
-			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
-				return
-			}
-			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
-			select {
-			case <-cancel:
-				return
-			case <-time.After(60 * time.Second):
-			}
-		}
 	}()
 	select {
 	case <-cancel:

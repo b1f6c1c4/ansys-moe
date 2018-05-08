@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 var possiblePaths = []string{
@@ -37,19 +36,6 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 
 	done := make(chan struct{})
 	killing := make(chan error, 1)
-	go func() {
-		for {
-			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
-				return
-			}
-			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
-			select {
-			case <-cancel:
-				return
-			case <-time.After(60 * time.Second):
-			}
-		}
-	}()
 	go func() {
 		select {
 		case <-cancel:

@@ -10,7 +10,7 @@ import (
 
 var cli *cony.Client
 var actionQ *cony.Queue
-var monitorE, cancelE *cony.Exchange
+var cancelE *cony.Exchange
 var cancels map[string]func()
 
 func setupAmqp(stop <-chan struct{}) error {
@@ -27,13 +27,6 @@ func setupAmqp(stop <-chan struct{}) error {
 		Exclusive:  false,
 	}
 
-	monitorE = &cony.Exchange{
-		Name:       "monitor",
-		Kind:       "topic",
-		Durable:    false,
-		AutoDelete: false,
-	}
-
 	cancelE = &cony.Exchange{
 		Name:       "cancel",
 		Kind:       "topic",
@@ -43,7 +36,6 @@ func setupAmqp(stop <-chan struct{}) error {
 
 	cli.Declare([]cony.Declaration{
 		cony.DeclareQueue(actionQ),
-		cony.DeclareExchange(*monitorE),
 		cony.DeclareExchange(*cancelE),
 	})
 
@@ -125,73 +117,6 @@ func publishAction(act <-chan common.ExeContext) {
 			)
 			if err != nil {
 				common.SL("Publish action to main: " + err.Error())
-				break
-			}
-		}
-	}
-}
-
-func publishStatus(stt <-chan *common.StatusReport) {
-	pbl := cony.NewPublisher("monitor", "")
-	cli.Publish(pbl)
-	for {
-		select {
-		case st := <-stt:
-			key := "status." + st.Kind
-			if st.CommandID != "" {
-				key = key + "." + st.CommandID
-			}
-			str, err := json.Marshal(st)
-			if err != nil {
-				common.RL.Error(st, "amqp", "Stringify status: "+err.Error())
-				break
-			}
-			err = pbl.PublishWithRoutingKey(
-				amqp.Publishing{
-					Headers: map[string]interface{}{
-						"host": common.HostName,
-					},
-					ContentType: "application/json",
-					Body:        str,
-				},
-				key,
-			)
-			if err != nil {
-				common.SL("Publish status to main: " + err.Error())
-				break
-			}
-		}
-	}
-}
-
-func publishLog(log chan *common.LogReport) {
-	pbl := cony.NewPublisher("monitor", "")
-	cli.Publish(pbl)
-	for {
-		select {
-		case lg := <-log:
-			key := "log." + lg.Kind
-			if lg.CommandID != "" {
-				key = key + "." + lg.CommandID
-			}
-			str, err := json.Marshal(lg)
-			if err != nil {
-				common.SL("Stringify log: " + err.Error())
-				break
-			}
-			err = pbl.PublishWithRoutingKey(
-				amqp.Publishing{
-					Headers: map[string]interface{}{
-						"host": common.HostName,
-					},
-					ContentType: "application/json",
-					Body:        str,
-				},
-				key,
-			)
-			if err != nil {
-				common.SL(string(str))
-				common.SL("Publish log to main: " + err.Error())
 				break
 			}
 		}

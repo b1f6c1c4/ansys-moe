@@ -65,12 +65,9 @@ func Loop(stop <-chan struct{}) {
 	common.SL("Amqp Connected")
 
 	log := make(chan *common.LogReport)
-	go publishLog(log)
+	// TODO: publishLog
+	// go publishLog(log)
 	common.SetupRL(log)
-
-	stt := make(chan *common.StatusReport)
-	go publishStatus(stt)
-	common.SetupSR(stt)
 
 	act := make(chan common.ExeContext)
 	go publishAction(act)
@@ -90,16 +87,10 @@ func Loop(stop <-chan struct{}) {
 	common.SL("Started event loop")
 	common.RL.Info(common.Core, "main", "Started event loop")
 
-rpt:
-	for {
-		common.SR.Report(common.Core)
-		select {
-		case <-stop:
-			common.SL("Received signal to stop")
-			common.RL.Fatal(common.Core, "main", "Received signal to stop")
-			break rpt
-		case <-time.After(60 * time.Second):
-		}
+	select {
+	case <-stop:
+		common.SL("Received signal to stop")
+		common.RL.Fatal(common.Core, "main", "Received signal to stop")
 	}
 	select {
 	case <-time.After(2 * time.Second):

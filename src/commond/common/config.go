@@ -13,6 +13,7 @@ import (
 type GlobalConfigT struct {
 	RemoteUrl     string `yaml:"url"`
 	RabbitUrl     string `yaml:"mq"`
+	LogUrl        string `yaml:"log"`
 	PrefetchAnsys int    `yaml:"ansys"`
 	PrefetchMma   int    `yaml:"mathematica"`
 	PrefetchRLang int    `yaml:"rlang"`

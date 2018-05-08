@@ -1,6 +1,6 @@
 package common
 
-// RemoteLoggerT writes to amqp
+// RemoteLoggerT writes to remote logger
 type RemoteLoggerT struct {
 	Ch chan<- *LogReport
 }
