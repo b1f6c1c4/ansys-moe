@@ -6,18 +6,25 @@ services:
     restart: always
     ports:
       - "8888:80"
+    volumes:
+      - nginx-log:/var/log/nginx
     depends_on:
-      - storage
-      - monitor
-      - controller
+      storage:
+        condition: service_started
+      monitor:
+        condition: service_started
+      controller:
+        condition: service_started
+      filebeat:
+        condition: service_started
     networks:
-      - prod
+      - data
 
   controller:
     image: ansys-controller
     restart: always
     environment:
-      BACKEND_LOG: "${DEBUG_LEVEL}"
+      BACKEND_LOG: "warn"
       ETCD_ENDPOINTS: '["etcd1:2379","etcd2:2379","etcd3:2379"]'
       RABBIT_HOST: rabbit
       RABBIT_PORT: 5672
@@ -32,13 +39,13 @@ services:
       logstash:
         condition: service_healthy
     networks:
-      - prod
+      - data
 
   storage:
     image: ansys-storage
     restart: always
     environment:
-      BACKEND_LOG: "${DEBUG_LEVEL}"
+      BACKEND_LOG: "warn"
       DATA_PATH: "/ansys"
       LOG_HOST: logstash
       LOG_PORT: 5044
@@ -48,13 +55,13 @@ services:
       logstash:
         condition: service_healthy
     networks:
-      - prod
+      - data
 
   monitor:
     image: ansys-monitor
     restart: always
     environment:
-      BACKEND_LOG: "${DEBUG_LEVEL}"
+      BACKEND_LOG: "warn"
       RABBIT_HOST: rabbit
       RABBIT_PORT: 5672
       RABBIT_USER: "${RABBIT_USER}"
@@ -63,7 +70,7 @@ services:
       rabbit:
         condition: service_healthy
     networks:
-      - prod
+      - data
 
   rlangd:
     image: ansys-commond
@@ -83,7 +90,7 @@ services:
       logstash:
         condition: service_healthy
     networks:
-      - prod
+      - data
 
   etcd1:
     image: quay.io/coreos/etcd:v3.2.18
@@ -102,8 +109,15 @@ services:
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd1:2379
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://127.0.0.1:12201"
+    depends_on:
+      logstash:
+        condition: service_healthy
     networks:
-      - prod
+      - data
 
   etcd2:
     image: quay.io/coreos/etcd:v3.2.18
@@ -122,8 +136,15 @@ services:
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd2:2379
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://127.0.0.1:12201"
+    depends_on:
+      logstash:
+        condition: service_healthy
     networks:
-      - prod
+      - data
 
   etcd3:
     image: quay.io/coreos/etcd:v3.2.18
@@ -142,8 +163,15 @@ services:
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd3:2379
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://127.0.0.1:12201"
+    depends_on:
+      logstash:
+        condition: service_healthy
     networks:
-      - prod
+      - data
 
   rabbit:
     image: rabbitmq:management-alpine
@@ -152,15 +180,37 @@ services:
     ports:
       - "9511:5672"
       - "9512:15672"
+    environment:
+      RABBITMQ_LOGS: /var/log/rabbitmq/rabbit.log
+      RABBITMQ_DEFAULT_USER: ansys-moe
+      RABBITMQ_DEFAULT_PASS: "${RABBIT_PASS}"
     volumes:
+      - rabbit-log:/var/log/rabbitmq
       - /root/ansys-moe/rabbit:/var/lib/rabbitmq/mnesia
     healthcheck:
-      test: ["CMD", "wget", "-O-", "http://localhost:15672"]
+      test: ["CMD", "rabbitmqctl", "node_health_check"]
       interval: 15s
       timeout: 10s
       retries: 8
+    depends_on:
+      filebeat:
+        condition: service_started
+      logstash:
+        condition: service_healthy
     networks:
-      - prod
+      - data
+
+  filebeat:
+    build: ./filebeat
+    restart: always
+    volumes:
+      - nginx-log:/var/log/nginx:ro
+      - rabbit-log:/var/log/rabbitmq:ro
+    depends_on:
+      logstash:
+        condition: service_healthy
+    networks:
+      - ctrl
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.4
@@ -182,7 +232,7 @@ services:
       timeout: 10s
       retries: 8
     networks:
-      - prod
+      - ctrl
 
   kibana:
     image: docker.elastic.co/kibana/kibana-oss:6.2.4
@@ -194,36 +244,35 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      - prod
+      - ctrl
 
   logstash:
-    image: docker.elastic.co/logstash/logstash-oss:6.2.4
+    build: ./logstash
     ports:
+      - "12201:12201/udp"
+      - "5044:5044"
       - "5044:5044/udp"
-    command:
-      - -e
-      - >-
-        input {
-          udp {
-            codec => "json"
-            port => 5044
-          }
-        }
-        output {
-          stdout { }
-        }
     volumes:
       - /dev/urandom:/dev/random
     depends_on:
       - elasticsearch
     healthcheck:
       test: ["CMD", "curl", "http://localhost:9600/?pretty"]
-      interval: 15s
+      interval: 30s
       timeout: 10s
       retries: 8
     networks:
-      - prod
+      - data
+      - ctrl
+
+volumes:
+  nginx-log:
+    driver: local
+  rabbit-log:
+    driver: local
 
 networks:
-  prod:
+  data:
+    driver: bridge
+  ctrl:
     driver: bridge
