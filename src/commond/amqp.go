@@ -199,7 +199,7 @@ func publishLog(log chan *common.LogReport) {
 }
 
 func subscribeCancel(e common.ExeContext, cll chan struct{}) {
-	key := "log:" + e.GetKind() + ":" + e.GetCommandID()
+	key := "cancel:" + e.GetKind() + ":" + e.GetCommandID()
 	queue := &cony.Queue{
 		Name:       "",
 		Durable:    false,
