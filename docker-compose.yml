@@ -24,8 +24,12 @@ services:
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
       STORAGE_URL: "http://storage:3000"
+      LOG_HOST: logstash
+      LOG_PORT: 5044
     depends_on:
       rabbit:
+        condition: service_healthy
+      logstash:
         condition: service_healthy
     networks:
       - prod
@@ -36,8 +40,13 @@ services:
     environment:
       BACKEND_LOG: "${DEBUG_LEVEL}"
       DATA_PATH: "/ansys"
+      LOG_HOST: logstash
+      LOG_PORT: 5044
     volumes:
       - /root/ansys-moe/storage:/ansys
+    depends_on:
+      logstash:
+        condition: service_healthy
     networks:
       - prod
 
@@ -65,9 +74,13 @@ services:
       RABBIT_PORT: 5672
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
+      LOG_HOST: logstash
+      LOG_PORT: 5044
       RLANG: 2
     depends_on:
       rabbit:
+        condition: service_healthy
+      logstash:
         condition: service_healthy
     networks:
       - prod
@@ -159,27 +172,65 @@ services:
       memlock:
         soft: -1
         hard: -1
-    volumes:
-      - /root/ansys-moe/es:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
+    volumes:
+      - /root/ansys-moe/es:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "wget", "-O-", "http://localhost:9200"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
     networks:
       - prod
 
   kibana:
-    image: docker.elastic.co/kibana/kibana-oss:6.2.4
+    build: ./kibana
     environment:
       SERVER_NAME: elasticsearch
       ELASTICSEARCH_URL: http://elasticsearch:9200
     ports:
       - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     networks:
       - prod
 
   logstash:
     image: docker.elastic.co/logstash/logstash-oss:6.2.4
     ports:
-      - "5044:5044"
+      - "5044:5044/udp"
+    command:
+      - -e
+      - >-
+        input {
+          udp {
+            codec => "json"
+            port => 5044
+          }
+        }
+        output {
+          stdout { }
+        }
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:9600/?pretty"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+    networks:
+      - prod
+
+  elastalert:
+    image: bitsensor/elastalert:latest
+    ports:
+      - "3030:3030"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     networks:
       - prod
 
