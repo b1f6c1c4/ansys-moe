@@ -185,7 +185,7 @@ services:
       - prod
 
   kibana:
-    build: ./kibana
+    image: docker.elastic.co/kibana/kibana-oss:6.2.4
     environment:
       SERVER_NAME: elasticsearch
       ELASTICSEARCH_URL: http://elasticsearch:9200
@@ -221,16 +221,6 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
-    networks:
-      - prod
-
-  elastalert:
-    image: bitsensor/elastalert:latest
-    ports:
-      - "3030:3030"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
     networks:
       - prod
 
