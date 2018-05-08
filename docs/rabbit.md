@@ -4,7 +4,6 @@
 
 * Majors:
   * ansys (AnsysCommand) - every single ansys execution.
-  * moe - every single moe execution.
 * Calculators:
   * rlang (RLangCommand) - rlang as a calculator.
   * mathematica (MmaCommand) - mathematica as a calculator.
@@ -15,30 +14,10 @@
     - kind:ansys (AnsysAction)
     - kind:mathematica (MmaAction)
 * Exchange:
-  * monitor - system status, don't persist.
-    * `status.<kind>[.<cId>]` (StatusReport)
-    * `log.<kind>[.<cId>]` (LogReport)
   * cancel - kill execution.
     * `cancel.<kind>.<cId>` (null)
 
 # Data Structures
-
-## StatusReport (object)
-
-- cpu (object)
-- mem (object)
-
-## LogReport (object)
-
-- level (enum, required)
-  - `trace`
-  - `debug`
-  - `info`
-  - `warn`
-  - `error`
-  - `fatal`
-- source (string, required)
-- data (any)
 
 ## AnsysCommand (object)
 
@@ -49,6 +28,7 @@
     Save `script` to `data/{cId}/script.vbs`
     Run `batchsave` over `data/{cId}/{file.name}`
     Log to `data/{cId}/mutate.log`
+    Report log difference
     Upload `data/{cId}/` to `storage/{cId}/`
     Drop directory `data/{cId}/`
 
@@ -60,7 +40,7 @@
     Save `script` to `data/{cId}/script.vbs`
     Run `batchsave` over `data/{cId}/{file.name}`
     Log to `data/{cId}/solve.log`
-    Report system status and log difference
+    Report log difference
     Upload `data/{cId}/` to `storage/{cId}/`
     Drop directory `data/{cId}/`
 
