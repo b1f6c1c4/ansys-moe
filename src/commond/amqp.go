@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/assembla/cony"
 	"github.com/streadway/amqp"
+	"regexp"
 	"time"
 )
 
@@ -63,30 +64,58 @@ func setupAmqp(stop <-chan struct{}) error {
 }
 
 func subscribeCommand(kind string, pref int, cmd chan<- *common.RawCommand) error {
-	queue := &cony.Queue{
+	qCommand := &cony.Queue{
 		Name:       kind,
 		Durable:    true,
 		AutoDelete: false,
 		Exclusive:  false,
 	}
+	qCancel := &cony.Queue{
+		Name:       "",
+		Durable:    false,
+		AutoDelete: true,
+		Exclusive:  true,
+	}
+	bnd := &cony.Binding{
+		Queue:    qCancel,
+		Exchange: *cancelE,
+		Key:      "cancel." + kind + ".#",
+	}
 	cli.Declare([]cony.Declaration{
-		cony.DeclareQueue(queue),
+		cony.DeclareQueue(qCommand),
+		cony.DeclareQueue(qCancel),
+		cony.DeclareBinding(*bnd),
 	})
 
-	cns := cony.NewConsumer(queue, cony.Qos(pref))
+	cCommand := cony.NewConsumer(qCommand, cony.Qos(pref))
+	cCancel := cony.NewConsumer(qCancel, cony.AutoAck())
 
-	cli.Consume(cns)
+	cli.Consume(cCommand)
+	cli.Consume(cCancel)
+
+	reg := regexp.MustCompile(`^cancel\.` + kind + `\.(.*)$`)
 
 	go func() {
 		for cli.Loop() {
 			select {
-			case d := <-cns.Deliveries():
+			case d := <-cCommand.Deliveries():
 				ack := func() {
 					d.Ack(false)
 				}
 				cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body, ack}
-			case err := <-cns.Errors():
-				common.SL("Consumer of kind " + kind + ": " + err.Error())
+			case d := <-cCancel.Deliveries():
+				match := reg.FindStringSubmatch(d.RoutingKey)
+				if len(match) >= 2 {
+					fn, ok := cancels[match[1]]
+					if ok {
+						fn()
+						delete(cancels, match[1])
+					}
+				}
+			case err := <-cCommand.Errors():
+				common.SL("Command consumer of kind " + kind + ": " + err.Error())
+			case err := <-cCancel.Errors():
+				common.SL("Cancel consumer of kind " + kind + ": " + err.Error())
 			}
 		}
 	}()
@@ -124,48 +153,12 @@ func publishAction(act <-chan common.ExeContext) {
 }
 
 func subscribeCancel(e common.ExeContext, cll chan struct{}) {
-	key := "cancel:" + e.GetKind() + ":" + e.GetCommandID()
-	queue := &cony.Queue{
-		Name:       "",
-		Durable:    false,
-		AutoDelete: true,
-		Exclusive:  true,
-	}
-	bnd := &cony.Binding{
-		Queue:    queue,
-		Exchange: *cancelE,
-		Key:      key,
-	}
-	cli.Declare([]cony.Declaration{
-		cony.DeclareQueue(queue),
-		cony.DeclareBinding(*bnd),
-	})
-	cns := cony.NewConsumer(queue, cony.AutoAck())
-	cli.Consume(cns)
-	go func() {
-		for cli.Loop() {
-			select {
-			case _, ok := <-cns.Deliveries():
-				if !ok {
-					// Unsubscribed, don't close the same channel twice
-					return
-				}
-				close(cll)
-			case err := <-cns.Errors():
-				common.SL("Consumer of cancel: " + err.Error())
-			}
-		}
-	}()
 	cancels[e.GetCommandID()] = func() {
-		cns.Cancel()
+		common.SL("Received cancel of kind " + e.GetKind())
+		close(cll)
 	}
 }
 
 func unsubscribeCancel(e common.ExeContext) {
-	f := cancels[e.GetCommandID()]
-	if f == nil {
-		return
-	}
-	f()
-	cancels[e.GetCommandID()] = nil
+	delete(cancels, e.GetCommandID())
 }

@@ -46,7 +46,9 @@ func (m Module) Run(raw *common.RawCommand) {
 		if r := recover(); r != nil {
 			common.RL.Error(raw, "rlang", fmt.Sprintf("Recovered panic: %v", r))
 		}
-		if result.Type != "done" {
+		if result.Type == "cancel" {
+			common.RL.Warn(raw, "rlang", "Command execution canceled")
+		} else if result.Type != "done" {
 			common.RL.Error(raw, "rlang", "Command execution failure")
 		} else {
 			common.RL.Info(raw, "rlang", "Command execution done")
@@ -69,8 +71,15 @@ func (m Module) Run(raw *common.RawCommand) {
 	}()
 
 	r, err := m.run(&cmd, cancel)
-	if err == nil {
-		result.Type = "done"
-		result.Result = null.StringFrom(r)
+	select {
+	case _, ok := <-cancel:
+		if !ok {
+			result.Type = "cancel"
+		}
+	default:
+		if err == nil {
+			result.Type = "done"
+			result.Result = null.StringFrom(r)
+		}
 	}
 }

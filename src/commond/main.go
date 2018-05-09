@@ -58,6 +58,12 @@ func addModule(m common.Module, pref int, stop <-chan struct{}) {
 	}()
 }
 
+func wait() {
+	select {
+	case <-time.After(3 * time.Second):
+	}
+}
+
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
 	err := setupAmqp(delayed(stop, time.Second))
@@ -76,12 +82,15 @@ func Loop(stop <-chan struct{}) {
 	common.RL.Info(common.Core, "main", "Start adding modules")
 
 	if common.C.PrefetchAnsys > 0 {
+		wait()
 		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchAnsys, stop)
 	}
 	if common.C.PrefetchMma > 0 {
+		wait()
 		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchMma, stop)
 	}
 	if common.C.PrefetchRLang > 0 {
+		wait()
 		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchRLang, stop)
 	}
 
@@ -93,7 +102,5 @@ func Loop(stop <-chan struct{}) {
 		common.SL("Received signal to stop")
 		common.RL.Fatal(common.Core, "main", "Received signal to stop")
 	}
-	select {
-	case <-time.After(2 * time.Second):
-	}
+	wait()
 }

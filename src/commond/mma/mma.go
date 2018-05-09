@@ -26,6 +26,7 @@ func findMmaExecutable() string {
 
 func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct{}) ([]byte, error) {
 	ctx := exec.Command(m.mmaPath, args...)
+	common.PrepareKiller(ctx)
 	jArgs := strings.Join(args, " ")
 
 	stderr, err := ctx.StderrPipe()
@@ -46,7 +47,7 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 				return
 			}
 			common.RL.Info(e, "mma/execMma", "Killing process")
-			err := ctx.Process.Kill()
+			err := common.RunKiller(ctx)
 			if err != nil {
 				common.RL.Error(e, "mma/execMma", "Killing process: "+err.Error())
 				killing <- err

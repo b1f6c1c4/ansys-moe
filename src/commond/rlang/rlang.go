@@ -25,6 +25,7 @@ func findRLangExecutable() string {
 
 func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan struct{}) ([]byte, error) {
 	ctx := exec.Command(m.rlangPath, args...)
+	common.PrepareKiller(ctx)
 	jArgs := strings.Join(args, " ")
 
 	stderr, err := ctx.StderrPipe()
@@ -45,7 +46,7 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 				return
 			}
 			common.RL.Info(e, "rlang/execRLang", "Killing process")
-			err := ctx.Process.Kill()
+			err := common.RunKiller(ctx)
 			if err != nil {
 				common.RL.Error(e, "rlang/execRLang", "Killing process: "+err.Error())
 				killing <- err
