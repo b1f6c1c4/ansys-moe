@@ -38,12 +38,12 @@ const storage = multer.diskStorage({
   filename(req, file, cb) {
     const fn = file.fieldname;
     if (isAllowed(fn)) {
-      logger.info('Will store file', fn);
+      logger.trace('Will store file', fn);
       const fullPath = path.join(dataPath, fn);
       shell.mkdir('-p', path.dirname(fullPath));
       cb(null, fn);
     } else {
-      logger.debug('Declined file', fn);
+      logger.warn('Declined file', fn);
       cb(Error('Field name not allowed'));
     }
   },
@@ -56,11 +56,11 @@ const upload = multer({
 router.put(/.*/, (req, res) => {
   const fn = req.path.substr(1);
   if (!isAllowed(fn)) {
-    logger.debug('Declined file', fn);
+    logger.warn('Declined file', fn);
     res.status(403).send();
     return;
   }
-  logger.info('Will store file', fn);
+  logger.trace('Will store file', fn);
   try {
     const fullPath = path.join(dataPath, fn);
     shell.mkdir('-p', path.dirname(fullPath));
