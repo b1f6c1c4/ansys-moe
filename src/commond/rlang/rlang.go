@@ -8,17 +8,12 @@ import (
 	"strings"
 )
 
-var possiblePaths = []string{
-	"/usr/bin/Rscript",
-	"C:\\Program Files\\R\\R-3.4.4\\bin\\Rscript.exe",
-}
-
 func findRLangExecutable() string {
-	for i := 0; i < len(possiblePaths); i++ {
-		if _, err := os.Stat(possiblePaths[i]); err != nil {
-			continue
-		}
-		return possiblePaths[i]
+	if _, err := os.Stat(common.C.PathRLang); err == nil {
+		return common.C.PathRLang
+	}
+	if _, err := os.Stat("/usr/bin/Rscript"); err == nil {
+		return "/usr/bin/Rscript"
 	}
 	panic("RLang executable not found")
 }

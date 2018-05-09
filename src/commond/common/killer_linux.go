@@ -1,8 +1,8 @@
 package common
 
 import (
-	"syscall"
 	"os/exec"
+	"syscall"
 )
 
 // PrepareKiller prepare a process for killing it

@@ -8,17 +8,9 @@ import (
 	"strings"
 )
 
-var possiblePaths = []string{
-	"D:\\Program Files\\Ansoft\\Maxwell14.0\\maxwell.exe",
-	"D:\\Program Files\\AnsysEM\\AnsysEM18.0\\Win64\\ansysedt.exe",
-}
-
 func findAnsysExecutable() string {
-	for i := 0; i < len(possiblePaths); i++ {
-		if _, err := os.Stat(possiblePaths[i]); err != nil {
-			continue
-		}
-		return possiblePaths[i]
+	if _, err := os.Stat(common.C.PathAnsys); err == nil {
+		return common.C.PathAnsys
 	}
 	panic("Ansys executable not found")
 }

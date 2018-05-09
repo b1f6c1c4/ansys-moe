@@ -77,7 +77,7 @@ func PipeLog(e ExeContext, raw io.Reader) {
 	scanner := bufio.NewScanner(buf)
 	for scanner.Scan() {
 		q := scanner.Text()
-		RL.Debug(e, e.GetKind()+"/PIPE", q)
+		RL.Trace(e, e.GetKind()+"/PIPE", q)
 	}
 	RL.Trace(e, "pipeLog", "Done")
 }

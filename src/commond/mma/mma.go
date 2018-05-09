@@ -8,18 +8,9 @@ import (
 	"strings"
 )
 
-var possiblePaths = []string{
-	"C:\\Program Files\\Wolfram Research\\Mathematica\\11.2\\wolframscript.exe",
-	"C:\\Program Files\\Wolfram Research\\Mathematica\\11.1\\wolframscript.exe",
-	"C:\\Program Files\\Wolfram Research\\Mathematica\\11.0\\wolframscript.exe",
-}
-
 func findMmaExecutable() string {
-	for i := 0; i < len(possiblePaths); i++ {
-		if _, err := os.Stat(possiblePaths[i]); err != nil {
-			continue
-		}
-		return possiblePaths[i]
+	if _, err := os.Stat(common.C.PathMma); err == nil {
+		return common.C.PathMma
 	}
 	panic("Mma executable not found")
 }

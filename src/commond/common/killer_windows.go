@@ -2,13 +2,13 @@ package common
 
 import (
 	"os"
+	"os/exec"
 	"syscall"
 	"unsafe"
-	"os/exec"
 )
 
 const (
-	MAX_PATH		   = 260
+	MAX_PATH           = 260
 	TH32CS_SNAPPROCESS = 0x00000002
 )
 
@@ -19,26 +19,26 @@ type ProcessInfo struct {
 }
 
 type PROCESSENTRY32 struct {
-	DwSize				uint32
-	CntUsage			uint32
-	Th32ProcessID		uint32
-	Th32DefaultHeapID	uintptr
-	Th32ModuleID		uint32
-	CntThreads			uint32
+	DwSize              uint32
+	CntUsage            uint32
+	Th32ProcessID       uint32
+	Th32DefaultHeapID   uintptr
+	Th32ModuleID        uint32
+	CntThreads          uint32
 	Th32ParentProcessID uint32
-	PcPriClassBase		int32
-	DwFlags				uint32
-	SzExeFile			[MAX_PATH]uint16
+	PcPriClassBase      int32
+	DwFlags             uint32
+	SzExeFile           [MAX_PATH]uint16
 }
 
 type HANDLE uintptr
 
 var (
-	modkernel32					 = syscall.NewLazyDLL("kernel32.dll")
+	modkernel32                  = syscall.NewLazyDLL("kernel32.dll")
 	procCreateToolhelp32Snapshot = modkernel32.NewProc("CreateToolhelp32Snapshot")
-	procProcess32First			 = modkernel32.NewProc("Process32FirstW")
-	procProcess32Next			 = modkernel32.NewProc("Process32NextW")
-	procCloseHandle				 = modkernel32.NewProc("CloseHandle")
+	procProcess32First           = modkernel32.NewProc("Process32FirstW")
+	procProcess32Next            = modkernel32.NewProc("Process32NextW")
+	procCloseHandle              = modkernel32.NewProc("CloseHandle")
 )
 
 func SetPgid(pid, pgid int) error {

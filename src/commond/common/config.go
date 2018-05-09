@@ -17,6 +17,9 @@ type GlobalConfigT struct {
 	PrefetchAnsys int    `yaml:"ansys"`
 	PrefetchMma   int    `yaml:"mathematica"`
 	PrefetchRLang int    `yaml:"rlang"`
+	PathAnsys     string `yaml:"ansysPath"`
+	PathMma       string `yaml:"mmaPath"`
+	PathRLang     string `yaml:"rlangPath"`
 }
 
 func loadConfig(exeDir string) GlobalConfigT {
@@ -37,6 +40,9 @@ func loadConfig(exeDir string) GlobalConfigT {
 	cfg.PrefetchAnsys, _ = strconv.Atoi(os.Getenv("ANSYS"))
 	cfg.PrefetchMma, _ = strconv.Atoi(os.Getenv("MATHEMATICA"))
 	cfg.PrefetchRLang, _ = strconv.Atoi(os.Getenv("RLANG"))
+	cfg.PathAnsys = os.Getenv("ANSYS_PATH")
+	cfg.PathMma = os.Getenv("MATHEMATICA_PATH")
+	cfg.PathRLang = os.Getenv("RLANG_PATH")
 	txt, err := ioutil.ReadFile(filepath.Join(exeDir, "config.yaml"))
 	if err != nil {
 		SL("Cannot open config.yaml")

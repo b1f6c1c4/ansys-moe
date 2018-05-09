@@ -18,7 +18,14 @@ func setupAmqp(stop <-chan struct{}) error {
 	hb := 5 * time.Second
 	cli = cony.NewClient(
 		cony.URL(common.C.RabbitUrl),
-		cony.Config(amqp.Config{Heartbeat: hb}),
+		cony.Config(amqp.Config{
+			Properties: amqp.Table{
+				"product": "commond",
+				"platform": "golang",
+				"version": VERSION,
+			},
+			Heartbeat: hb,
+		}),
 	)
 
 	actionQ = &cony.Queue{
