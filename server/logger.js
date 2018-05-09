@@ -14,6 +14,7 @@ const lvls = {
     info: 3,
     debug: 4,
     trace: 5,
+    silly: 6,
   },
   colors: {
     fatal: 'underline dim red',
@@ -22,6 +23,7 @@ const lvls = {
     info: 'dim green',
     debug: 'dim cyan',
     trace: 'dim cyan',
+    silly: 'gray',
   },
 };
 
@@ -94,7 +96,7 @@ module.exports = (lbl) => {
   };
   const customApi = {};
   const emit = (j) => {
-    if (sendUdp) {
+    if (j.level !== 'silly' && sendUdp) {
       sendUdp(j);
     }
     logger.log(j);

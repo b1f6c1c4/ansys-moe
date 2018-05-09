@@ -12,7 +12,6 @@ module.exports.run = (code, variables) => {
 };
 
 module.exports.wrapped = (code, variables, info) => {
-  logger.trace(`Run expr ${code}`, info);
   let action;
   try {
     const parser = new Parser();
@@ -22,6 +21,7 @@ module.exports.wrapped = (code, variables, info) => {
       result: [expr.evaluate(variables)],
     };
   } catch (e) {
+    logger.warn('Expr fail', code);
     action = {
       type: 'failure',
       result: e.stack,
@@ -32,6 +32,6 @@ module.exports.wrapped = (code, variables, info) => {
     kind: 'expression',
     action,
   };
-  logger.trace('Expr result', result);
+  logger.silly('Expr result', { code, result });
   return result;
 };

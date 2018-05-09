@@ -75,7 +75,7 @@ module.exports.run = async () => {
       const context = { proj };
       const cust = customizer({ proj, cfg });
       logger.debug('Dispatching payload', payload);
-      logger.trace('With config', cfg);
+      logger.silly('With config', cfg);
       await petri.dispatch(payload, context, cust);
       while (virtualQueue.length !== 0) {
         const evpld = virtualQueue.shift();
