@@ -6,26 +6,18 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
-var possiblePaths = []string{
-	"D:\\Program Files\\Ansoft\\Maxwell14.0\\maxwell.exe",
-	"D:\\Program Files\\AnsysEM\\AnsysEM18.0\\Win64\\ansysedt.exe",
-}
-
 func findAnsysExecutable() string {
-	for i := 0; i < len(possiblePaths); i++ {
-		if _, err := os.Stat(possiblePaths[i]); err != nil {
-			continue
-		}
-		return possiblePaths[i]
+	if _, err := os.Stat(common.C.PathAnsys); err == nil {
+		return common.C.PathAnsys
 	}
 	panic("Ansys executable not found")
 }
 
 func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan struct{}) error {
 	ctx := exec.Command(m.ansysPath, args...)
+	common.PrepareKiller(ctx)
 	jArgs := strings.Join(args, " ")
 	common.RL.Info(e, "ansys/execAnsys", "Will execute: "+jArgs)
 	err := ctx.Start()
@@ -44,26 +36,13 @@ func (m Module) execAnsys(e common.ExeContext, args []string, cancel <-chan stru
 		}
 		done <- err
 	}()
-	go func() {
-		for {
-			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
-				return
-			}
-			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
-			select {
-			case <-cancel:
-				return
-			case <-time.After(60 * time.Second):
-			}
-		}
-	}()
 	select {
 	case <-cancel:
 		if ctx.Process == nil {
 			common.RL.Warn(e, "ansys/execAnsys", "Killing: already exited")
 			return errors.New("Cancelled")
 		}
-		err := ctx.Process.Kill()
+		err := common.RunKiller(ctx)
 		if err != nil {
 			common.RL.Error(e, "ansys/execAnsys", "Killing process: "+err.Error())
 			return err

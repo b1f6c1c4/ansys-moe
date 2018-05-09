@@ -30,6 +30,8 @@ func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 
 // Entry setup commond
 func Entry(theLogger func(string)) {
+	common.M.Version.Version = VERSION
+	common.M.Version.CommitHash = COMMITHASH
 	common.Entry(theLogger)
 	common.SL("VERSION: " + VERSION)
 	common.SL("COMMITHASH: " + COMMITHASH)
@@ -56,6 +58,12 @@ func addModule(m common.Module, pref int, stop <-chan struct{}) {
 	}()
 }
 
+func wait() {
+	select {
+	case <-time.After(3 * time.Second):
+	}
+}
+
 // Loop listen on events
 func Loop(stop <-chan struct{}) {
 	err := setupAmqp(delayed(stop, time.Second))
@@ -68,40 +76,31 @@ func Loop(stop <-chan struct{}) {
 	go publishLog(log)
 	common.SetupRL(log)
 
-	stt := make(chan *common.StatusReport)
-	go publishStatus(stt)
-	common.SetupSR(stt)
-
 	act := make(chan common.ExeContext)
 	go publishAction(act)
 
 	common.RL.Info(common.Core, "main", "Start adding modules")
 
 	if common.C.PrefetchAnsys > 0 {
+		wait()
 		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchAnsys, stop)
 	}
 	if common.C.PrefetchMma > 0 {
+		wait()
 		addModule(mma.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchMma, stop)
 	}
 	if common.C.PrefetchRLang > 0 {
+		wait()
 		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchRLang, stop)
 	}
 
 	common.SL("Started event loop")
 	common.RL.Info(common.Core, "main", "Started event loop")
 
-rpt:
-	for {
-		common.SR.Report(common.Core)
-		select {
-		case <-stop:
-			common.SL("Received signal to stop")
-			common.RL.Fatal(common.Core, "main", "Received signal to stop")
-			break rpt
-		case <-time.After(60 * time.Second):
-		}
-	}
 	select {
-	case <-time.After(2 * time.Second):
+	case <-stop:
+		common.SL("Received signal to stop")
+		common.RL.Fatal(common.Core, "main", "Received signal to stop")
 	}
+	wait()
 }

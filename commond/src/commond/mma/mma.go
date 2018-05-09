@@ -6,51 +6,29 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
-var possiblePaths = []string{
-	"C:\\Program Files\\Wolfram Research\\Mathematica\\11.2\\wolframscript.exe",
-	"C:\\Program Files\\Wolfram Research\\Mathematica\\11.1\\wolframscript.exe",
-	"C:\\Program Files\\Wolfram Research\\Mathematica\\11.0\\wolframscript.exe",
-}
-
 func findMmaExecutable() string {
-	for i := 0; i < len(possiblePaths); i++ {
-		if _, err := os.Stat(possiblePaths[i]); err != nil {
-			continue
-		}
-		return possiblePaths[i]
+	if _, err := os.Stat(common.C.PathMma); err == nil {
+		return common.C.PathMma
 	}
 	panic("Mma executable not found")
 }
 
 func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct{}) ([]byte, error) {
 	ctx := exec.Command(m.mmaPath, args...)
+	common.PrepareKiller(ctx)
 	jArgs := strings.Join(args, " ")
 
 	stderr, err := ctx.StderrPipe()
 	if err != nil {
 		common.RL.Error(e, "mma/execMma", "Cannot get StderrPipe: "+err.Error())
 	} else {
-		go common.PipeLog(e, stderr);
+		go common.PipeLog(e, stderr)
 	}
 
 	done := make(chan struct{})
 	killing := make(chan error, 1)
-	go func() {
-		for {
-			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
-				return
-			}
-			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
-			select {
-			case <-cancel:
-				return
-			case <-time.After(60 * time.Second):
-			}
-		}
-	}()
 	go func() {
 		select {
 		case <-cancel:
@@ -60,7 +38,7 @@ func (m Module) execMma(e common.ExeContext, args []string, cancel <-chan struct
 				return
 			}
 			common.RL.Info(e, "mma/execMma", "Killing process")
-			err := ctx.Process.Kill()
+			err := common.RunKiller(ctx)
 			if err != nil {
 				common.RL.Error(e, "mma/execMma", "Killing process: "+err.Error())
 				killing <- err

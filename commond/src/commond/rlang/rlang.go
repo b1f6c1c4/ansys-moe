@@ -6,50 +6,32 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
-var possiblePaths = []string{
-	"/usr/bin/Rscript",
-	"C:\\Program Files\\R\\R-3.4.4\\bin\\Rscript.exe",
-}
-
 func findRLangExecutable() string {
-	for i := 0; i < len(possiblePaths); i++ {
-		if _, err := os.Stat(possiblePaths[i]); err != nil {
-			continue
-		}
-		return possiblePaths[i]
+	if _, err := os.Stat(common.C.PathRLang); err == nil {
+		return common.C.PathRLang
+	}
+	if _, err := os.Stat("/usr/bin/Rscript"); err == nil {
+		return "/usr/bin/Rscript"
 	}
 	panic("RLang executable not found")
 }
 
 func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan struct{}) ([]byte, error) {
 	ctx := exec.Command(m.rlangPath, args...)
+	common.PrepareKiller(ctx)
 	jArgs := strings.Join(args, " ")
 
 	stderr, err := ctx.StderrPipe()
 	if err != nil {
 		common.RL.Error(e, "rlang/execRLang", "Cannot get StderrPipe: "+err.Error())
 	} else {
-		go common.PipeLog(e, stderr);
+		go common.PipeLog(e, stderr)
 	}
 
 	done := make(chan struct{})
 	killing := make(chan error, 1)
-	go func() {
-		for {
-			if ctx.ProcessState == nil || ctx.ProcessState.Exited() {
-				return
-			}
-			common.SR.ReportP(e, ctx.ProcessState.SysUsage)
-			select {
-			case <-cancel:
-				return
-			case <-time.After(60 * time.Second):
-			}
-		}
-	}()
 	go func() {
 		select {
 		case <-cancel:
@@ -59,7 +41,7 @@ func (m Module) execRLang(e common.ExeContext, args []string, cancel <-chan stru
 				return
 			}
 			common.RL.Info(e, "rlang/execRLang", "Killing process")
-			err := ctx.Process.Kill()
+			err := common.RunKiller(ctx)
 			if err != nil {
 				common.RL.Error(e, "rlang/execRLang", "Killing process: "+err.Error())
 				killing <- err
