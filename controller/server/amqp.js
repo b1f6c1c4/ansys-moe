@@ -1,5 +1,6 @@
 const amqp = require('amqp');
 const EventEmitter = require('events');
+const status = require('./status');
 const logger = require('./logger')('amqp');
 
 let connection;
@@ -57,6 +58,11 @@ const connect = () => new Promise((resolve, reject) => {
     login: process.env.RABBIT_USER || 'guest',
     password: process.env.RABBIT_PASS || 'guest',
     heartbeat: 5,
+    clientProperties: {
+      product: 'controller',
+      platform: 'nodejs',
+      version: status ? status.version : '',
+    },
   });
 
   connection.on('error', (e) => {

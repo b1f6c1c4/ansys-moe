@@ -110,12 +110,12 @@ class PetriNet {
     const go = (rt) => {
       r.setRoot(rt);
       _.set(r, 'dyns', []);
-      logger.trace('Will use root', r.root);
+      logger.silly('Will use root', r.root);
       return func(proxy, payload, ...args);
     };
     const root = _.get(payload, 'root');
     const { name, root: rootRegex } = option;
-    logger.trace('Will execute', name);
+    logger.silly('Will execute', name);
     if (!rootRegex) {
       return go();
     }
