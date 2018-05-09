@@ -1,6 +1,6 @@
 # config json in ansys-moe
 
-All strings MUST match `/^[-_a-z0-9]+$/`, unless specified.
+All strings MUST match `/^[a-z][-_a-z0-9]*$/`, unless specified.
 
 # Data Structures
 
@@ -8,6 +8,7 @@ All strings MUST match `/^[-_a-z0-9]+$/`, unless specified.
 
 - initEvals (number, required)
 - minEvals (number, required)
+- concurrent (number, required)
 - D (array[DParameter], required)
 - G (array[GParameter], required)
 - E (array[EParameter], required)
@@ -94,6 +95,7 @@ If kind `continuous`:
 ## AnsysRule (object)
 
 - filename (string, required) - any string is acceptable
+- ext (string, required)
 - condition (string) - kind expression
 - inputs (array[AnsysInput], required)
 - outputs (array[AnsysOutput], required)

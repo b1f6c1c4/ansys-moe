@@ -1,70 +1,61 @@
 # etcd in ansys-moe
 
-# /:proj
+# /hashs
+
+- /mHash/:mHash
+  - file - sha1 of ansys file content
+  - vars - dict of used variables
+- /cHash/:cHash
+  - dict of active categorical variables
+- /dHash/:dHash
+  - dict of active design variables
+
+# /p/:proj
 
 ## /config
 
-See config.md
-
-## /concurrent
-
 ## /state
 
-Models the Petri net.
-
-### /init
-
-### /cat/:cHash
-
-#### /init
-
-#### /eval/:dHash
-
+- /error
 - /init
-- /G/:name
+- /cat/:cHash
+  - /error
   - /init
-  - /prep
-- /M/mutate
-- /M/solve
-- /E/:name
-  - /init
-  - /prep
-- /P/:name
-  - /init
-  - /prep
-
-#### /iter
-
-- /hint
-- /req
-- /calc
-
-### /done
-
-## /hashs
-
-- /cHash/:cHash
-- /dHash/:dHash
-- /mHash/:mHash
+  - /eval/:dHash
+    - /error
+    - /init
+    - /G/:name
+      - /error
+      - /init
+      - /prep
+    - /M/solve
+    - /E/:name
+      - /error
+      - /init
+      - /prep
+    - /P/:name
+      - /error
+      - /init
+      - /prep
+  - /iter
+    - /hint
+    - /req
+    - /calc
+- /done
 
 ## /results
 
-#### /d/:dHash
-
-- /var
-- /Mid
-- /G/:name
-- /M/:name
-- /E/:name
-- /P/:name
-- /P0
-
-#### /cat/:cHash
-
-- /D
-- /history
-- /ongoing
-- /iterate
-
-### /final
+- /d/:dHash
+  - /var
+  - /Mid
+  - /G/:name
+  - /E/:name
+  - /P/:name
+  - /P0
+- /cat/:cHash
+  - /D
+  - /history
+  - /ongoing
+  - /iterate
+- /final
 

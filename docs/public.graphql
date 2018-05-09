@@ -2,17 +2,15 @@
 
 type Query {
 
-  # Check system status [GET /]
+  # Check system status
   status: Status
 }
 
 type Mutation {
 
-  # Create new project and execute
+  # Run a new project or modify an existing project
+  # name MUST match /^[a-z][-_a-zz0-9]*$/
   run(name: ID!, config: JSON!): Boolean
-
-  # Set concurrent evals
-  setConcurrent(name: ID!, concurrent: Int!): Boolean
 }
 
 # Inputs

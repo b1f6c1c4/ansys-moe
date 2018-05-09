@@ -6,7 +6,7 @@ FORMAT: 1A
 
 This API uses HTTP verbs (methods) as following:
 
-+ `GET` - *Download* - download resources
++ `GET` - *List/Download* - download resources
 + `PUT` - *Upload/Replace* - upload or replace resources
 + `POST` - *Upload/Replace/GraphQL* - upload using multiform, call **GraphQL** queryies and mutations
 
@@ -29,16 +29,6 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 ## Data Structures
 
-# Group Default
-
-## Check system status [GET /]
-
-+ Response 200 (application/json; charset=utf-8)
-
-    + Attributes
-        + version: `4907ca16`
-        + commitHash: `4907ca16faf693b76a71df0efd19ef9dcefaa309`
-
 # Group GraphQL
 
 ## Get GraphiQL instance [GET /graphql]
@@ -51,9 +41,13 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 # Group Storage
 
-## Upload or replace file [POST /storage/]
+## Upload file by content [POST /storage/]
 
-+ Response 204
++ Response 200 (application/json; charset=utf-8)
+
+    + Attributes
+        + old (string)
+        + new (string)
 
 ## File [/storage/{fn}]
 
@@ -65,6 +59,27 @@ This API uses HTTP status codes to communicate with the API consumer.
 + Response 200 (application/octet-stream)
 
 ### Upload [PUT]
+
++ Response 204
+
+### Delete [DELETE]
+
++ Response 204
+
+## Directory [/storage/{fn}/]
+
++ Parameters
+  + fn (string) - Directory name
+
+### List [GET]
+
++ Response 200 (application/json; charset=utf-8)
+
+    + Attributes
+        + name (string)
+        + dir (boolean)
+
+### Delete [DELETE]
 
 + Response 204
 
