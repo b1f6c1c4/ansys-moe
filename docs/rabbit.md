@@ -51,12 +51,8 @@
 
 - type (enum, required)
   - `failure`
-
-    If anything obviously wrong happens
-
+  - `cancel`
   - `done`
-
-    If the procedure finished successfully
 
 ## RLangCommand (object)
 
@@ -66,12 +62,8 @@
 
 - type (enum, required)
   - `failure`
-
-    If anything obviously wrong happens
-
+  - `cancel`
   - `done`
-
-    If the procedure finished successfully
 
 - result (string)
 
@@ -83,11 +75,7 @@
 
 - type (enum, required)
   - `failure`
-
-    If anything obviously wrong happens
-
+  - `cancel`
   - `done`
-
-    If the procedure finished successfully
 
 - result (string)
