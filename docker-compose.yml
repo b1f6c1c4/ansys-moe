@@ -97,8 +97,6 @@ services:
     restart: always
     ports:
       - "23791:2379"
-    volumes:
-      - /root/ansys-moe/etcd1:/etcd_data
     environment:
       ETCD_DATA_DIR: /etcd_data
       ETCD_NAME: etcd1
@@ -109,6 +107,8 @@ services:
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd1:2379
+    volumes:
+      - /root/ansys-moe/etcd1:/etcd_data
     logging:
       driver: gelf
       options:
@@ -124,8 +124,6 @@ services:
     restart: always
     ports:
       - "23792:2379"
-    volumes:
-      - /root/ansys-moe/etcd2:/etcd_data
     environment:
       ETCD_DATA_DIR: /etcd_data
       ETCD_NAME: etcd2
@@ -136,6 +134,8 @@ services:
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd2:2379
+    volumes:
+      - /root/ansys-moe/etcd2:/etcd_data
     logging:
       driver: gelf
       options:
@@ -151,8 +151,6 @@ services:
     restart: always
     ports:
       - "23793:2379"
-    volumes:
-      - /root/ansys-moe/etcd3:/etcd_data
     environment:
       ETCD_DATA_DIR: /etcd_data
       ETCD_NAME: etcd3
@@ -163,6 +161,8 @@ services:
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd3:2379
+    volumes:
+      - /root/ansys-moe/etcd3:/etcd_data
     logging:
       driver: gelf
       options:
@@ -203,6 +203,8 @@ services:
   filebeat:
     build: ./filebeat
     restart: always
+    environment:
+      LOGSTASH_HOST: logstash:5044
     volumes:
       - nginx-log:/var/log/nginx:ro
       - rabbit-log:/var/log/rabbitmq:ro
@@ -214,6 +216,7 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.4
+    restart: always
     ulimits:
       memlock:
         soft: -1
@@ -236,31 +239,34 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana-oss:6.2.4
+    restart: always
+    ports:
+      - "5601:5601"
     environment:
       SERVER_NAME: elasticsearch
       ELASTICSEARCH_URL: http://elasticsearch:9200
-    ports:
-      - "5601:5601"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_started
     networks:
       - ctrl
 
   logstash:
     build: ./logstash
+    restart: always
     ports:
       - "12201:12201/udp"
-      - "5044:5044"
       - "5044:5044/udp"
     volumes:
       - /dev/urandom:/dev/random
-    depends_on:
-      - elasticsearch
     healthcheck:
       test: ["CMD", "curl", "http://localhost:9600/?pretty"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
-      retries: 8
+      retries: 16
+    depends_on:
+      elasticsearch:
+        condition: service_started
     networks:
       - data
       - ctrl

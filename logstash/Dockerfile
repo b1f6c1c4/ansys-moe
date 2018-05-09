@@ -4,3 +4,5 @@ RUN bin/logstash-plugin install logstash-filter-json_encode
 
 RUN rm -rf ./pipeline
 COPY . ./pipeline
+
+EXPOSE 5044 5044/udp 12201/udp

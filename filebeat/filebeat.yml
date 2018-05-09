@@ -5,9 +5,12 @@ filebeat.config:
   modules:
     path: ${path.config}/modules.d/*.yml
     reload.enabled: false
+  close_inactive: 1m
+  ignore_older: 2m
+  clean_inactive: 5m
 
 processors:
 - add_cloud_metadata:
 
 output.logstash:
-  hosts: ['logstash:5044']
+  hosts: ${LOGSTASH_HOST}
