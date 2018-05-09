@@ -50,7 +50,7 @@ func WatchLog(e ExeContext, fn string, cancel <-chan struct{}) error {
 		scanner := bufio.NewScanner(buf)
 		for scanner.Scan() {
 			q := scanner.Text()
-			RL.Debug(e, e.GetKind()+"/PIPE", q)
+			RL.Trace(e, e.GetKind()+"/PIPE", q)
 		}
 		err = scanner.Err()
 		if err != nil {
@@ -120,7 +120,7 @@ func Download(e ExeContext, remote string, local string) error {
 }
 
 func upload(e ExeContext, remote, local string, writer *multipart.Writer) error {
-	RL.Debug(e, "upload", "Will upload "+remote)
+	RL.Trace(e, "upload", "Will upload "+remote)
 	file, err := os.Open(local)
 	if err != nil {
 		RL.Error(e, "upload", "Open file: "+err.Error())
@@ -165,7 +165,7 @@ func uploadDir(e ExeContext, remote, local string, writer *multipart.Writer) err
 
 // UploadDir a dir from data path to remote
 func UploadDir(e ExeContext, remote, local string) error {
-	RL.Debug(e, "uploadDir", "Will upload data/"+local+" to storage/"+remote)
+	RL.Debug(e, "uploadDir", "Will upload data/"+local)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 

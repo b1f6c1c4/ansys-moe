@@ -62,8 +62,8 @@ type MetaInfo struct {
 
 // LogReport to amqp
 type LogReport struct {
-	CommandID string    `json:"-"`
-	Kind      string    `json:"-"`
+	CommandID string    `json:"cId"`
+	Kind      string    `json:"kind"`
 	Meta      *MetaInfo `json:"meta"`
 	Level     string    `json:"level"`
 	Label     string    `json:"label"`
