@@ -1,4 +1,4 @@
-FROM ansys-facade-vendor
+FROM b1f6c1c4/ansys-moe:facade
 
 WORKDIR /usr/src/ansys-facade
 COPY . .
