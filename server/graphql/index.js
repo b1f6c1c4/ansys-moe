@@ -7,6 +7,7 @@ const fs = require('fs');
 const status = require('../status');
 
 const query = require('./query').resolvers;
+const mutation = require('./mutation').resolvers;
 const {
   onOperation,
   onOperationComplete,
@@ -25,6 +26,7 @@ const schema = makeExecutableSchema({
   resolvers: _.merge(
     resolvers,
     query,
+    mutation,
     subscription,
   ),
 });

@@ -5,7 +5,7 @@ module.exports = {
   resolvers: {
     Query: {
       async etcd(parent, args) {
-        logger.debug('Query.etcd', args);
+        logger.trace('Query.etcd');
 
         const { prefix } = args;
 

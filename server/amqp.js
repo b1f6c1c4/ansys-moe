@@ -62,18 +62,18 @@ const connect = () => new Promise((resolve, reject) => {
   });
 });
 
-const publish = (queue, body, id) => {
-  logger.trace(`Publish #${id} to ${queue}`, body);
+const publish = (queue, body) => {
+  logger.silly(`Publish core action to ${queue}`, body);
   connection.publish(queue, JSON.stringify(body), {
     mandatory: true,
     contentType: 'application/json',
     deliveryMode: 2,
-    correlationId: id,
+    headers: { kind: 'core' },
   });
 };
 
 const cancel = (kind, id) => {
-  logger.trace(`Cancel ${kind} #${id}`);
+  logger.silly(`Cancel ${kind} #${id}`);
   cExchange.publish(`cancel.${kind}.${id}`, '{}', {
     mandatory: false,
     contentType: 'application/json',
