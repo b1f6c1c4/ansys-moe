@@ -3,11 +3,21 @@ import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { Button } from 'material-ui/es';
+import TreeView from './treeview';
 
 const render = () => {
   ReactDOM.render(
-    <Button />,
+    <TreeView
+      entries={[
+        { key: '/', value: '1' },
+        { key: '/a', value: '2' },
+        { key: '/a/', value: '3' },
+        { key: '/a/b', value: '4' },
+        { key: '/a/b/c/d', value: '5' },
+        { key: '/a/c/e', value: '6' },
+        { key: '/a/f', value: '7' },
+      ]}
+    />,
     document.getElementById('root'),
   );
 };
