@@ -1,0 +1,39 @@
+# Entry points
+
+type Query {
+
+  # Check system status
+  status: Status
+
+  etcd(prefix: String): [EtcdEntry!]!
+}
+
+type Mutation {
+
+  # Run a new project or modify an existing project
+  # name MUST match /^[a-z][-_a-zz0-9]*$/
+  run(name: ID!, config: JSON!): Boolean
+}
+
+type Subscription {
+
+  watchEtcd(prefix: String): EtcdEntry
+}
+
+# Inputs
+
+# Objects
+
+type Status {
+  version: String
+  commitHash: String
+}
+
+type EtcdEntry {
+  key: String!
+  value: String
+}
+
+# Scalars
+
+scalar JSON

@@ -1,72 +1,33 @@
 const amqp = require('amqp');
-const EventEmitter = require('events');
+const status = require('./status');
 const logger = require('./logger')('amqp');
 
 let connection;
-let mExchange;
-const emitter = new EventEmitter();
+let cExchange;
 
-const makeQueueStatus = () => new Promise((resolve) => {
-  connection.queue('', {
-    durable: false,
-    exclusive: true,
-    autoDelete: true,
+const makeQueueAction = () => new Promise((resolve) => {
+  connection.queue('action', {
+    durable: true,
+    exclusive: false,
+    autoDelete: false,
     noDeclare: false,
-    closeChannelOnUnsubscribe: true,
+    closeChannelOnUnsubscribe: false,
   }, (q) => {
-    logger.debug('Status q.bind...');
-    q.bind(mExchange, 'status.#');
-    logger.debug('Status q.subscribe...');
-    q.subscribe({
-      routingKeyInPayload: true,
-    }, (msg) => {
-      try {
-        emitter.emit('status', msg);
-      } catch (e) {
-        logger.error('Emitting status', e);
-      }
-    });
-    logger.info(`Status queue ${q.name} ready`);
+    logger.debug('Action q.bind...');
+    q.bind('#');
     resolve();
   });
 });
 
-const makeQueueLog = () => new Promise((resolve) => {
-  connection.queue('', {
-    durable: false,
-    exclusive: true,
-    autoDelete: true,
-    noDeclare: false,
-    closeChannelOnUnsubscribe: true,
-  }, (q) => {
-    logger.debug('Log q.bind...');
-    q.bind(mExchange, 'log.#');
-    logger.debug('Log q.subscribe...');
-    q.subscribe({
-      routingKeyInPayload: true,
-    }, (msg) => {
-      try {
-        emitter.emit('log', msg);
-      } catch (e) {
-        logger.error('Emitting log', e);
-      }
-    });
-    logger.info(`Log queue ${q.name} ready`);
-    resolve();
-  });
-});
-
-const makeExchangeM = () => new Promise((resolve) => {
-  connection.exchange('monitor', {
+const makeExchangeC = () => new Promise((resolve) => {
+  cExchange = connection.exchange('cancel', {
     type: 'topic',
     durable: false,
     autoDelete: false,
     noDeclare: false,
-  }, (ex) => {
-    logger.debug('Exchange created');
-    mExchange = ex;
-    resolve();
   });
+  logger.debug('C exchange created');
+  resolve();
 });
 
 const connect = () => new Promise((resolve, reject) => {
@@ -79,6 +40,12 @@ const connect = () => new Promise((resolve, reject) => {
     port: process.env.RABBIT_PORT || 5672,
     login: process.env.RABBIT_USER || 'guest',
     password: process.env.RABBIT_PASS || 'guest',
+    heartbeat: 5,
+    clientProperties: {
+      product: 'facade',
+      platform: 'nodejs',
+      version: status ? status.version : '',
+    },
   });
 
   connection.on('error', (e) => {
@@ -88,17 +55,34 @@ const connect = () => new Promise((resolve, reject) => {
   connection.on('ready', () => {
     logger.info('AMQP connection ready');
 
-    makeExchangeM()
-      .then(() => {
-        Promise.all([makeQueueStatus(), makeQueueLog()])
-          .then(resolve)
-          .catch(reject);
-      })
+    makeExchangeC()
+      .then(makeQueueAction)
+      .then(resolve)
       .catch(reject);
   });
 });
 
+const publish = (queue, body) => {
+  logger.silly(`Publish core action to ${queue}`, body);
+  connection.publish(queue, JSON.stringify(body), {
+    mandatory: true,
+    contentType: 'application/json',
+    deliveryMode: 2,
+    headers: { kind: 'core' },
+  });
+};
+
+const cancel = (kind, id) => {
+  logger.silly(`Cancel ${kind} #${id}`);
+  cExchange.publish(`cancel.${kind}.${id}`, '{}', {
+    mandatory: false,
+    contentType: 'application/json',
+    deliveryMode: 1,
+  });
+};
+
 module.exports = {
   connect,
-  emitter,
+  publish,
+  cancel,
 };
