@@ -4,6 +4,8 @@ type Query {
 
   # Check system status
   status: Status
+
+  etcd(prefix: String): [EtcdEntry!]!
 }
 
 type Mutation {
@@ -13,6 +15,11 @@ type Mutation {
   run(name: ID!, config: JSON!): Boolean
 }
 
+type Subscription {
+
+  watchEtcd(prefix: String): [EtcdEntry!]!
+}
+
 # Inputs
 
 # Objects
@@ -20,6 +27,11 @@ type Mutation {
 type Status {
   version: String
   commitHash: String
+}
+
+type EtcdEntry {
+  key: String!
+  value: String
 }
 
 # Scalars
