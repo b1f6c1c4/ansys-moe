@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const { PubSub } = require('graphql-subscriptions');
+const etcd = require('../etcd');
 const logger = require('../logger')('graphql/subscription');
 
 const pubsub = new PubSub();
@@ -14,11 +15,13 @@ const lock = async (k, cb) => {
     obj.num += 1;
     return;
   }
-  logger.debug('Subs cache miss', k);
-  const diss = () => cb; // TODO: call etcd.watch
+  logger.info('Start etcd watch', k);
+  const watcher = await etcd.watch().prefix(k).create();
+  watcher.on('put', (r) => cb('put', r));
+  watcher.on('delete', (r) => cb('delete', r));
   subsLib.set(k, {
     num: 1,
-    diss,
+    diss: () => { watcher.cancel(); },
   });
 };
 
@@ -34,18 +37,20 @@ const unlock = (k) => {
     logger.debug('Subs cache diss', k);
     return;
   }
-  logger.debug('Dismiss', k);
+  logger.info('Stop etcd watch', k);
   obj.diss();
   subsLib.delete(k);
 };
 
 const subscribeEtcd = async (prefix) => {
   const k = prefix;
-  await lock(k, (key, res) => {
-    logger.silly('Status data', res);
-    const bSt = {}; // TODO: parse data
-    logger.trace('PubSub.publish', bSt);
-    pubsub.publish(prefix, { etcd: bSt });
+  await lock(k, (kind, res) => {
+    logger.silly(`Etcd ${kind}`, res);
+    const bSt = { ...res };
+    if (kind === 'delete') {
+      bSt.value = null;
+    }
+    pubsub.publish(prefix, { watchEtcd: bSt });
   });
   return () => unlock(k);
 };
