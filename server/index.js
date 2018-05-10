@@ -1,5 +1,12 @@
+const _ = require('lodash');
 const { createServer } = require('http');
-const websocket = require('ws');
+const express = require('express');
+const cors = require('cors');
+const nocache = require('nocache');
+const bodyParser = require('body-parser');
+const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
+const { schema, makeServer } = require('./graphql');
+const etcd = require('./etcd');
 const amqp = require('./amqp');
 const status = require('./status');
 const logger = require('./logger')('index');
@@ -29,21 +36,65 @@ process.on('SIGTERM', () => {
 
 const port = parseInt(process.env.PORT || '3000', 10);
 
-const app = (req, res) => {
-  if (req.url !== '/') {
-    res.statusCode = 404;
-    res.end();
-    return;
-  }
+const app = express();
+
+app.set('trust proxy', true);
+
+app.use(cors({
+  origin: [
+    process.env.CORS_ORIGIN,
+    /^https?:\/\/localhost(:\d+)?$/,
+  ],
+  methods: ['HEAD', 'GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  maxAge: 300000,
+}));
+
+app.get('/', (req, res) => {
+  logger.trace('GET /');
   if (status) {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(status));
+    res.status(200).json(status);
   } else {
-    res.statusCode = 500;
-    res.end();
+    res.status(500).send();
   }
-};
+});
+
+app.post(
+  '/graphql',
+  nocache(),
+  bodyParser.json(),
+  bodyParser.text({
+    type: 'application/graphql',
+  }),
+  (req, res, next) => {
+    logger.info(`${req.method} /graphql`);
+    if (req.is('application/graphql')) {
+      req.body = { query: req.body };
+    }
+    next();
+  },
+  graphqlExpress({
+    schema,
+    tracing: process.env.NODE_ENV !== 'production',
+    formatError: (err) => {
+      const e = {
+        message: err.message,
+        statusCode: _.get(err, 'originalError.statusCode'),
+        errorCode: _.get(err, 'originalError.errorCode'),
+      };
+      logger.trace('Return err', e);
+      return e;
+    },
+  }),
+);
+
+app.get('/graphql', graphiqlExpress({
+  endpointURL: '/graphql',
+}));
+
+app.use('/', (req, res) => res.status(404).send());
 
 function runApp() {
   logger.debug('http.createServer ...');
@@ -54,43 +105,15 @@ function runApp() {
       return;
     }
 
-    const wss = new websocket.Server({
-      path: '/',
-      server,
-    });
-    wss.on('connection', () => {
-      logger.info('WS conencted');
-    });
-    wss.broadcast = (data) => {
-      const d = JSON.stringify(data);
-      wss.clients.forEach((client) => {
-        if (client.readyState === websocket.OPEN) {
-          client.send(d);
-        }
-      });
-    };
-    amqp.emitter.on('status', (msg) => {
-      logger.debug(`Status from ${msg._routingKey}`, msg);
-      wss.broadcast(msg);
-    });
-    amqp.emitter.on('log', (msg) => {
-      logger.debug(`Log from ${msg._routingKey}`, msg);
-      wss.broadcast(msg);
-    });
+    makeServer(server);
 
     logger.info(`Server started localhost:${port}`);
   });
 }
 
 const inits = [];
-if (!process.env.NO_RABBIT) {
-  inits.push(amqp.connect()
-    .then(() => {
-      logger.info('Rabbitmq connected.');
-    }));
-} else {
-  logger.warn('Rabbitmq omitted.');
-}
+inits.push(amqp.connect());
+inits.push(Promise.resolve(etcd.connect()));
 
 Promise.all(inits)
   .then(runApp)
