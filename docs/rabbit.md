@@ -2,79 +2,83 @@
 
 # Queues
 
-* Majors:
-  * ansys (AnsysCommand) - every single ansys execution.
-  * moe - every single moe execution.
-* Calculators:
-  * mathematica - mathematica as a calculator.
-  * matlab - matlab as a calculator.
-  * javascript - javascript as a calculator.
-* Callback:
-  * action - trigger state change after execution.
-    - kind:ansys (AnsysAction)
-* Exchange:
-  * monitor - system status, don't persist.
-    * `status.<kind>[.<cId>]` (StatusReport)
-    * `log.<kind>[.<cId>]` (LogReport)
-  * cancel - kill execution.
-    * `cancel.<kind>.<cId>` (null)
+- ansys (AnsysCommand) - every single ansys execution
+- rlang (RLangCommand) - rlang as a calculator
+- mathematica (MmaCommand) - mathematica as a calculator
+- action - trigger state change
+
+# Exchanges
+
+- cancel - kill execution
+  - `cancel.<kind>.<cId>` (null)
+
+# Properties
+
+- correlation\_id - cId
+- content\_type - application/json
+- headers
+  - cfg - config hash
+  - kind - required for action
+    - core (CoreAction)
+    - ansys (AnsysAction)
+    - rlang (RLangAction)
+    - mathematica (MmaAction)
 
 # Data Structures
 
-## StatusReport (object)
+## CoreAction (object)
 
-- cpu (object)
-- mem (object)
-
-## LogReport (object)
-
-- level (enum, required)
-  - `trace`
-  - `debug`
-  - `info`
-  - `warn`
-  - `error`
-  - `fatal`
-- source (string, required)
-- data (any)
+- type (enum, required)
+  - `run` - run a new project or modify an existing project
+  - `setConcurrent` - modify concurrent of an existing project
+- name (string, required)
+- config (object) - required for run
+- concurrent (number, required)
 
 ## AnsysCommand (object)
 
-- type (enum, required)
-  - `mutate`
-
-    Download `storage/{file}` to `data/{cId}/{file.name}`
-    Save `script` to `data/{cId}/script.vbs`
-    Run `batchsave` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/mutate.log`
-    Upload `data/{cId}/` to `storage/{cId}/`
-    Drop directory `data/{cId}/`
-
-  - `solve`
-
-    Make directory `data/{cId}/output`
-    Download `storage/{file}` to `data/{cId}/{file.name}`
-    Run `batchsolve` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/solve.log`
-    Report system status and log difference
-    Save `script` to `data/{cId}/script.vbs`
-    Replace `$OUT_DIR` in `script` to `data/{cId}/output`
-    Run `batchextract` over `data/{cId}/{file.name}`
-    Log to `data/{cId}/extract.log`
-    Upload `data/{cId}/` to `storage/{cId}/`
-    Drop directory `data/{cId}/`
-
 - file (string, required)
 - script (string)
+
+Make directory `data/{cId}/output`
+Download `storage/{file}` to `data/{cId}/{file.name}`
+Replace `$OUT_DIR` in `script` to `data/{cId}/output`
+Save `script` to `data/{cId}/script.vbs`
+Run `batchsave` over `data/{cId}/{file.name}`
+Log to `data/{cId}/solve.log`
+Report log difference
+Upload `data/{cId}/` to `storage/{cId}/`
+Drop directory `data/{cId}/`
 
 ## AnsysAction (object)
 
 - type (enum, required)
   - `failure`
-
-    If anything obviously wrong happens
-
+  - `cancel`
   - `done`
 
-    If the procedure finished successfully
+## RLangCommand (object)
 
+- script (string, required)
+
+## RLangAction (object)
+
+- type (enum, required)
+  - `failure`
+  - `cancel`
+  - `done`
+
+- result (string)
+
+## MmaCommand (object)
+
+- script (string, required)
+
+## MmaAction (object)
+
+- type (enum, required)
+  - `failure`
+  - `cancel`
+  - `done`
+
+- result (string)
