@@ -11,8 +11,12 @@ if (!shelljs.which('docker')) {
 shelljs.rm('-rf', 'dist');
 const bundler = new Bundler('index.html', {
   sourceMaps: false,
+  publicUrl: '/assets',
 });
 bundler.bundle().then(() => {
+  shelljs.mkdir('dist/assets');
+  shelljs.mv('dist/*.*', 'dist/assets');
+  shelljs.mv('dist/assets/index.html', 'dist');
   shelljs.cp('Dockerfile', 'dist');
   shelljs.cp('.dockerignore', 'dist');
   shelljs.exec('docker build -t ansys-frontend dist');
