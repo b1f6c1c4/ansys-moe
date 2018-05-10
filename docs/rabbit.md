@@ -30,10 +30,8 @@
 
 - type (enum, required)
   - `run` - run a new project or modify an existing project
-  - `setConcurrent` - modify concurrent of an existing project
 - name (string, required)
-- config (object) - required for run
-- concurrent (number, required)
+- config (object, required)
 
 ## AnsysCommand (object)
 
