@@ -1,6 +1,6 @@
-FROM ansys-monitor-vendor
+FROM ansys-facade-vendor
 
-WORKDIR /usr/src/ansys-monitor
+WORKDIR /usr/src/ansys-facade
 COPY . .
 
 CMD ["yarn", "start:prod"]

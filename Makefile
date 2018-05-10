@@ -6,7 +6,7 @@ else
   RM=rm -f
 endif
 
-VENDOR_IMAGE=ansys-monitor-vendor
+VENDOR_IMAGE=ansys-facade-vendor
 
 .PHONY: vendor src
 .DEFAULT_GOAL := src
@@ -23,7 +23,7 @@ src:
 	yarn build
 	$(CP) .dockerignore.src .dockerignore
 	docker build \
-		--tag ansys-monitor \
+		--tag ansys-facade \
 		--file Dockerfile \
 		.
 	$(RM) .dockerignore
