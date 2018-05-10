@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const path = require('path');
-const { GraphQLScalarType } = require('graphql');
 const { makeExecutableSchema } = require('graphql-tools');
 const { execute, subscribe } = require('graphql');
 const { SubscriptionServer } = require('subscriptions-transport-ws');
@@ -39,7 +38,7 @@ module.exports = {
     schema,
     onOperation,
     onOperationComplete,
-    keepAlive: 45000,
+    keepAlive: 5000,
   }, {
     server,
     path: '/subscriptions',

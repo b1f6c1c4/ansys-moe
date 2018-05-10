@@ -1,17 +1,13 @@
 const _ = require('lodash');
 const { PubSub } = require('graphql-subscriptions');
-const errors = require('./error');
-const { Ballot } = require('../../models/ballots');
-const { subscribe: rpcSubscribe } = require('../../rpc');
-const { core } = require('../auth');
-const throttle = require('./throttle');
-const logger = require('../../logger')('graphql/subscription');
+const logger = require('../logger')('graphql/subscription');
 
 const pubsub = new PubSub();
 
 const subsLib = new Map();
 
 const lock = async (k, cb) => {
+  logger.silly('Will lock', k);
   const obj = subsLib.get(k);
   if (obj) {
     logger.debug('Subs cache hit', k);
@@ -19,7 +15,7 @@ const lock = async (k, cb) => {
     return;
   }
   logger.debug('Subs cache miss', k);
-  const diss = await rpcSubscribe(k, cb);
+  const diss = () => cb; // TODO: call etcd.watch
   subsLib.set(k, {
     num: 1,
     diss,
@@ -27,6 +23,7 @@ const lock = async (k, cb) => {
 };
 
 const unlock = (k) => {
+  logger.silly('Will unlock', k);
   const obj = subsLib.get(k);
   if (!obj) {
     logger.warn('Subs not found', k);
@@ -42,83 +39,18 @@ const unlock = (k) => {
   subsLib.delete(k);
 };
 
-const makeBallotSt = (key, data) => {
-  const [status, owner, bId] = key.split('.');
-  if (status !== 'status') {
-    logger.error('Invalid routing key', key);
-    throw new Error('Invalid routing key');
-  }
-  return {
-    bId,
-    owner,
-    status: data,
-  };
-};
-
-const makeVoterRg = (key, data) => {
-  const [vreg, bId, iCode] = key.split('.');
-  if (vreg !== 'vreg') {
-    logger.error('Invalid routing key', key);
-    throw new Error('Invalid routing key');
-  }
-  const { comment, publicKey } = JSON.parse(data);
-  return {
-    bId,
-    iCode,
-    comment,
-    publicKey,
-  };
-};
-
-const subscribeBallotStatus = async (bId) => {
-  const k = `status.*.${bId}`;
+const subscribeEtcd = async (prefix) => {
+  const k = prefix;
   await lock(k, (key, res) => {
-    logger.trace('Status data', res);
-    const bSt = makeBallotSt(key, res);
-    logger.debug('PubSub.publish', bSt);
-    const pk = `ballotStatus.${bId}`;
-    logger.debug('To', pk);
-    pubsub.publish(pk, { ballotStatus: bSt });
-  });
-  return () => unlock(k);
-};
-
-const subscribeBallotsStatus = async (owner) => {
-  const k = `status.${owner}.*`;
-  await lock(k, (key, res) => {
-    logger.trace('Status data', res);
-    const bSt = makeBallotSt(key, res);
-    logger.debug('PubSub.publish', bSt);
-    const pk = `ballotsStatus.${owner}`;
-    logger.debug('To', pk);
-    pubsub.publish(pk, { ballotsStatus: bSt });
-  });
-  return () => unlock(k);
-};
-
-const subscribeVoterRegistered = async (bId) => {
-  const k = `vreg.${bId}.*`;
-  await lock(k, (key, res) => {
-    logger.trace('Status data', res);
-    const bSt = makeVoterRg(key, res);
-    logger.debug('PubSub.publish', bSt);
-    const pk = `voterRegistered.${bId}`;
-    logger.debug('To', pk);
-    pubsub.publish(pk, { voterRegistered: bSt });
+    logger.silly('Status data', res);
+    const bSt = {}; // TODO: parse data
+    logger.trace('PubSub.publish', bSt);
+    pubsub.publish(prefix, { etcd: bSt });
   });
   return () => unlock(k);
 };
 
 module.exports = {
-  subsLib,
-  pubsub,
-  lock,
-  unlock,
-  makeBallotSt,
-  makeVoterRg,
-  subscribeBallotStatus,
-  subscribeBallotsStatus,
-  subscribeVoterRegistered,
 
   onOperation(message, params, ws) {
     const opId = message.id;
@@ -126,11 +58,6 @@ module.exports = {
     if (!ws.registry) {
       logger.debug('Assign registry to websocket');
       _.set(ws, 'registry', new Map());
-    }
-    const cred = _.get(params, 'variables.authorization');
-    if (cred) {
-      _.unset(params, 'variables.authorization');
-      _.set(params, 'context.auth', core(cred));
     }
     _.set(params, 'context.registry', ws.registry);
     _.set(params, 'context.opId', opId);
@@ -153,96 +80,19 @@ module.exports = {
 
   resolvers: {
     Subscription: {
-      ballotStatus: {
+      watchEtcd: {
         subscribe: async (parent, args, context) => {
-          logger.debug('Subscription.ballotStatus.subscribe', args);
-          logger.trace('parent', parent);
-          logger.trace('context', context);
+          logger.debug('Subscription.watchEtcd.subscribe', args);
 
-          const { bId } = args.input;
+          const { prefix } = args;
 
           try {
-            await throttle('ballotStatus', 2, 1000)(context);
-
-            const doc = await Ballot.findById(bId, { _id: 1 });
-            if (!doc) {
-              return new errors.NotFoundError();
-            }
-
-            const cb = await subscribeBallotStatus(bId);
+            const cb = await subscribeEtcd(prefix || '');
             context.registry.set(context.opId, cb);
 
-            return pubsub.asyncIterator(`ballotStatus.${bId}`);
+            return pubsub.asyncIterator(prefix || '');
           } catch (e) {
-            if (e instanceof errors.TooManyRequestsError) return e;
-            logger.error('Subscribe ballotStatus', e);
-            return e;
-          }
-        },
-      },
-      ballotsStatus: {
-        subscribe: async (parent, args, context) => {
-          logger.debug('Subscription.ballotsStatus.subscribe', args);
-          logger.trace('parent', parent);
-          logger.trace('context', context);
-
-          if (!_.get(context, 'auth.username')) {
-            return new errors.UnauthorizedError();
-          }
-
-          const { username } = context.auth;
-
-          try {
-            await throttle('ballotsStatus', 1, 2000)(context);
-
-            const cb = await subscribeBallotsStatus(username);
-            context.registry.set(context.opId, cb);
-
-            return pubsub.asyncIterator(`ballotsStatus.${username}`);
-          } catch (e) {
-            /* istanbul ignore else */
-            if (e instanceof errors.TooManyRequestsError) return e;
-            /* istanbul ignore next */
-            logger.error('Subscribe ballotsStatus', e);
-            /* istanbul ignore next */
-            return e;
-          }
-        },
-      },
-      voterRegistered: {
-        subscribe: async (parent, args, context) => {
-          logger.debug('Subscription.voterRegistered.subscribe', args);
-          logger.trace('parent', parent);
-          logger.trace('context', context);
-
-          if (!_.get(context, 'auth.username')) {
-            return new errors.UnauthorizedError();
-          }
-
-          const { username } = context.auth;
-          const { bId } = args.input;
-
-          try {
-            await throttle('voterRegistered', 2, 1000)(context);
-
-            const doc = await Ballot.findById(bId, { _id: 1, status: 1, owner: 1 });
-            if (!doc) {
-              return new errors.NotFoundError();
-            }
-            if (doc.owner !== username) {
-              return new errors.UnauthorizedError();
-            }
-            if (doc.status !== 'inviting') {
-              return new errors.StatusNotAllowedError();
-            }
-
-            const cb = await subscribeVoterRegistered(bId);
-            context.registry.set(context.opId, cb);
-
-            return pubsub.asyncIterator(`voterRegistered.${bId}`);
-          } catch (e) {
-            if (e instanceof errors.TooManyRequestsError) return e;
-            logger.error('Subscribe voterRegistered', e);
+            logger.error('Subscribe watchEtcd', e);
             return e;
           }
         },

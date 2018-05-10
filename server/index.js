@@ -92,6 +92,7 @@ app.post(
 
 app.get('/graphql', graphiqlExpress({
   endpointURL: '/graphql',
+  subscriptionsEndpoint: `ws://localhost:${port}/subscriptions`,
 }));
 
 app.use('/', (req, res) => res.status(404).send());
