@@ -17,7 +17,7 @@ type Mutation {
 
 type Subscription {
 
-  watchEtcd(prefix: String): [EtcdEntry!]
+  watchEtcd(prefix: String): EtcdEntry
 }
 
 # Inputs
