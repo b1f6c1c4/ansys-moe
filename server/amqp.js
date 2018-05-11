@@ -79,13 +79,14 @@ const connect = () => new Promise((resolve, reject) => {
   });
 });
 
-const publish = (queue, body, id) => {
+const publish = (queue, body, id, headers) => {
   logger.trace(`Publish #${id} to ${queue}`, body);
   connection.publish(queue, JSON.stringify(body), {
     mandatory: true,
     contentType: 'application/json',
     deliveryMode: 2,
     correlationId: id,
+    headers,
   });
 };
 

@@ -18,10 +18,13 @@ module.exports.run = (kind, code, variables, info) => {
         name,
         base: `/${proj}/state`,
         root,
+        cfg: info.cfgHash,
       }));
       break;
     case 'rlang':
-      amqp.publish(kind, rlang.run(code, variables), id);
+      amqp.publish(kind, rlang.run(code, variables), id, {
+        cfg: info.cfgHash,
+      });
       break;
     default:
       theQueue.push({

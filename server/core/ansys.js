@@ -57,7 +57,9 @@ module.exports.solve = ({ filename, inputs, outputs }, variables, info) => {
     type: 'solve',
     file: filename,
     script: script.replace(/\n\s*\n/g, '\n'),
-  }, id);
+  }, id, {
+    cfg: info.cfgHash,
+  });
 };
 
 const parseCsv = (file) => new Promise((resolve, reject) => {
