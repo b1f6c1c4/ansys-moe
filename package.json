@@ -33,6 +33,7 @@
     "etcd3": "^0.2.9",
     "expr-eval": "^1.2.1",
     "json-stable-stringify": "^1.0.1",
+    "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.5",
     "papaparse": "^4.4.0",
     "winston": "^3.0.0-rc3"
