@@ -7,9 +7,10 @@ import (
 )
 
 type ansysCommand struct {
-	Raw    *common.RawCommand
-	File   null.String `json:"file"`
-	Script null.String `json:"script"`
+	Raw         *common.RawCommand
+	Source      null.String `json:"source"`
+	Destination null.String `json:"destination"`
+	Script      null.String `json:"script"`
 }
 
 type ansysAction struct {

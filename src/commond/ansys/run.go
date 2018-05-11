@@ -14,13 +14,18 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	id := cmd.Raw.CommandID
 	common.RL.Info(cmd.Raw, "ansys/run", "Command started")
 
-	if !cmd.File.Valid {
-		err := errors.New("file")
+	if !cmd.Source.Valid {
+		err := errors.New("source")
 		common.RL.Error(cmd.Raw, "ansys/run", "Parse input: "+err.Error())
 		return err
 	}
-	file := cmd.File.String
-	fileName := filepath.Base(file)
+	source := cmd.Source.String
+	if !cmd.Destination.Valid {
+		err := errors.New("destination")
+		common.RL.Error(cmd.Raw, "ansys/run", "Parse input: "+err.Error())
+		return err
+	}
+	destination := cmd.Destination.String
 	if !cmd.Script.Valid {
 		err := errors.New("script")
 		common.RL.Error(cmd.Raw, "ansys/run", "Parse input: "+err.Error())
@@ -34,8 +39,8 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
-	// Download `storage/{file}` to `data/{cId}/{file.name}`
-	err = common.Download(cmd.Raw, file, filepath.Join(id, fileName))
+	// Download `storage/{source}` to `data/{cId}/{destination}`
+	err = common.Download(cmd.Raw, source, filepath.Join(id, destination))
 	if err != nil {
 		return err
 	}
@@ -59,8 +64,8 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	logFile := filepath.Join(common.DataPath, id, "solve.log")
 	go common.WatchLog(cmd.Raw, logFile, logCancel)
 
-	// Run `batchsave` over `data/{cId}/{file.name}`
-	jobFile := filepath.Join(common.DataPath, id, fileName)
+	// Run `batchsave` over `data/{cId}/{destination}`
+	jobFile := filepath.Join(common.DataPath, id, destination)
 	err = m.execAnsys(cmd.Raw, []string{
 		"-ng",
 		"-logfile",
