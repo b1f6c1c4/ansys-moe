@@ -94,8 +94,8 @@ If kind `continuous`:
 
 ## AnsysRule (object)
 
-- filename (string, required) - any string is acceptable
-- ext (string, required)
+- source (string, required)
+- destination (string, required)
 - condition (string) - kind expression
 - inputs (array[AnsysInput], required)
 - outputs (array[AnsysOutput], required)
