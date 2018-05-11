@@ -22,6 +22,7 @@
     "graphql": "^0.13.2",
     "graphql-subscriptions": "^0.5.8",
     "graphql-tools": "^2.24.0",
+    "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.5",
     "nocache": "^2.0.0",
     "subscriptions-transport-ws": "^0.9.9",
