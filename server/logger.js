@@ -2,6 +2,7 @@ const os = require('os');
 const dgram = require('dgram');
 const winston = require('winston');
 const chalk = require('chalk');
+const stringify = require('json-stringify-safe');
 
 // eslint-disable-next-line no-extend-native
 RegExp.prototype.toJSON = RegExp.prototype.toString;
@@ -43,7 +44,7 @@ const logger = winston.createLogger({
       if (info.data instanceof Error) {
         return `${msg} ${info.data.stack}`;
       }
-      const data = JSON.stringify(info.data, null, 2);
+      const data = stringify(info.data, null, 2);
       if (data.includes('\n')) {
         return `${msg}\n${data}`;
       }
@@ -73,7 +74,7 @@ if (process.env.LOG_HOST) {
   const host = process.env.LOG_HOST;
   const udp = dgram.createSocket('udp4');
   sendUdp = (msg) => {
-    const buf = Buffer.from(JSON.stringify({
+    const buf = Buffer.from(stringify({
       ...msg,
       meta,
     }));
@@ -105,12 +106,13 @@ module.exports = (lbl) => {
     customApi[k] = regularize(k, emit);
   });
   customApi.fatalDie = regularize('fatal', (j) => {
-    logger.log(j);
-    logger.log({
+    emit(j);
+    const dying = {
       level: 'fatal',
       label: 'KERNEL',
       message: 'logger.fatalDie called, scheduing process.exit()',
-    });
+    };
+    emit(dying);
     setTimeout(() => process.exit(1), 1000);
   });
   return customApi;
