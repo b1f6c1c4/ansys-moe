@@ -8,6 +8,7 @@ const logicGlobal = require('./global');
 const logicCategory = require('./category');
 const logicEval = require('./eval');
 const logicIter = require('./iter');
+const { hash } = require('../util');
 const logger = require('../logger')('core');
 
 const channel = new Channel();
@@ -55,6 +56,13 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
             root: p,
           };
         };
+      case 'cfgHash':
+        if (target.option.cfg) {
+          const cfgx = target.option.cfg(obj.cfg);
+          logger.silly('Excerpted cfg', cfgx);
+          return hash(cfgx, true);
+        }
+        return undefined;
       default:
         if (prop in obj) {
           return obj[prop];
@@ -66,6 +74,26 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
 
 module.exports.channel = channel;
 
+const dispatch = async (payload, context, cust) => {
+  const obj = petri.retrive(payload.name);
+  if (!obj) {
+    logger.error('Name not found', payload.name);
+    return false;
+  }
+  const { option } = obj;
+  if (option.cfg) {
+    const cfgx = option.cfg(cust.cfg);
+    logger.silly('Excerpted cfg', cfgx);
+    const cfgHash = hash(cfgx, true);
+    if (payload.cfgHash !== cfgHash) {
+      logger.warn('cfgHash not match, drop payload');
+      return false;
+    }
+  }
+  await petri.dispatch(payload, context, cust);
+  return true;
+};
+
 module.exports.run = async () => {
   for (;;) {
     const obj = await channel.shift();
@@ -76,11 +104,12 @@ module.exports.run = async () => {
       const cust = customizer({ proj, cfg });
       logger.debug('Dispatching payload', payload);
       logger.silly('With config', cfg);
-      await petri.dispatch(payload, context, cust);
-      while (virtualQueue.length !== 0) {
-        const evpld = virtualQueue.shift();
-        logger.debug('Dispatching eval payload', evpld);
-        await petri.dispatch(evpld, context, cust);
+      if (await dispatch(payload, context, cust)) {
+        while (virtualQueue.length !== 0) {
+          const evpld = virtualQueue.shift();
+          logger.debug('Dispatching eval payload', evpld);
+          await dispatch(evpld, context, cust);
+        }
       }
     } catch (e) {
       logger.error('Processing channel', e);

@@ -2,9 +2,12 @@ const _ = require('lodash');
 const crypto = require('crypto');
 const stringify = require('json-stable-stringify');
 
-module.exports.hash = (obj) => {
+module.exports.hash = (obj, long = false) => {
   const str = stringify(obj);
   const hash = crypto.createHash('md5').update(str).digest('hex');
+  if (long) {
+    return hash;
+  }
   return hash.slice(8, 16);
 };
 

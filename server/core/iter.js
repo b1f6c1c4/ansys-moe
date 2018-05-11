@@ -36,13 +36,13 @@ module.exports = (petri) => {
       }
       // Check if enough evals have done
       if (await r.ensure('/eval/@') < r.cfg.minEvals) {
-        logger.warn('Evals not enough');
+        logger.debug('Evals not enough');
         return;
       }
       const concurrent = await r.retrive('/:proj/concurrent').number();
       // Check if concurrent evals are enough
       if (await r.ensure('/eval/#') >= concurrent) {
-        logger.warn('Enough concurrent evals');
+        logger.debug('Enough concurrent evals');
         return;
       }
       // Cancel ongoing iter calculation

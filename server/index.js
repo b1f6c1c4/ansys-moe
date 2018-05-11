@@ -46,6 +46,7 @@ amqp.emitter.on('action', async (msg) => {
       base: `/${proj}/state`,
       root,
       kind: msg.headers.kind,
+      cfgHash: msg.headers.cfg,
       action: msg.body,
     };
     await core.channel.push({ payload, proj, fin });

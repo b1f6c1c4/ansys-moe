@@ -45,6 +45,23 @@ describe('PetriNet', () => {
     db = {};
   });
 
+  it('should retrieve', () => {
+    const petri = new PetriNet(dbMock);
+    petri.register({
+      name: 'init',
+      external: true,
+      key: 'v1',
+    });
+    petri.register({
+      name: 'init',
+      external: false,
+      key: 'v2',
+    });
+    expect(petri.retrieve('w')).toBeUndefined();
+    expect(petri.retrieve('init').option.key).toEqual('v1');
+    expect(petri.retrieve('init', false).option.key).toEqual('v2');
+  });
+
   it('should handle name not found', async (done) => {
     const petri = new PetriNet(dbMock);
     await petri.dispatch({

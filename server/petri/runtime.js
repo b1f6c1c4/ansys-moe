@@ -6,6 +6,7 @@ class PetriRuntime {
   constructor(db, base) {
     this.db = db;
     this.base = base;
+    this.option = null;
     this.root = '';
     this.param = {};
     this.cache = {};
@@ -15,9 +16,11 @@ class PetriRuntime {
     this.ensure = this.ensure.bind(this);
   }
 
-  setRoot(param = {}) {
+  prepareExecution(option, param = {}) {
+    this.option = option;
     this.root = param.path || '';
     this.param = param;
+    this.dyns = [];
   }
 
   makeDbPath(k) {

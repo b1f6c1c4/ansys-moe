@@ -69,7 +69,7 @@ class PetriNet {
     const registry = external ? this.externals : this.internals;
     /* istanbul ignore if */
     if (name in registry) {
-      logger.warn('Name duplicated', name);
+      logger.error('Name duplicated', name);
     }
     registry[name] = { option, func };
     if (external) {
@@ -79,11 +79,18 @@ class PetriNet {
     }
   }
 
+  retrieve(name, external = true) {
+    if (external) {
+      return this.externals[name];
+    }
+    return this.internals[name];
+  }
+
   async dispatch(payload, context, customizer, ...args) {
     const { name, base } = payload;
     const reg = this.externals[name];
     if (!reg) {
-      logger.warn('Name not found', name);
+      logger.error('Name not found', name);
       return undefined;
     }
     const r = new PetriRuntime(this.db, base);
@@ -108,8 +115,7 @@ class PetriNet {
   // eslint-disable-next-line class-methods-use-this
   async execute(r, proxy, { option, func }, payload, args) {
     const go = (rt) => {
-      r.setRoot(rt);
-      _.set(r, 'dyns', []);
+      r.prepareExecution(option, rt);
       logger.silly('Will use root', r.root);
       return func(proxy, payload, ...args);
     };
