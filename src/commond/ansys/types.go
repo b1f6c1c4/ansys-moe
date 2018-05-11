@@ -8,7 +8,6 @@ import (
 
 type ansysCommand struct {
 	Raw    *common.RawCommand
-	Type   string      `json:"type"`
 	File   null.String `json:"file"`
 	Script null.String `json:"script"`
 }

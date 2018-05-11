@@ -109,10 +109,14 @@ func subscribeCommand(kind string, pref int, cmd chan<- *common.RawCommand) erro
 				ack := func() {
 					d.Ack(false)
 				}
+				var cfg string
+				if d.Headers["cfg"] != nil {
+					cfg = d.Headers["cfg"].(string)
+				}
 				cmd <- &common.RawCommand{
 					d.CorrelationId,
 					kind,
-					d.Headers["cfg"].(string),
+					cfg,
 					d.Body,
 					ack,
 				}

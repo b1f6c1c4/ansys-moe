@@ -64,24 +64,13 @@ func (m Module) Run(raw *common.RawCommand) {
 		return
 	}
 
-	var exe func(*ansysCommand, <-chan struct{}) error
-	switch cmd.Type {
-	case "mutate":
-		exe = m.runMutate
-	case "solve":
-		exe = m.runSolve
-	default:
-		common.RL.Error(raw, "ansys", "Unsupported type: "+cmd.Type)
-		return
-	}
-
 	cancel := make(chan struct{})
 	m.subscribeCancel(raw, cancel)
 	defer func() {
 		m.unsubscribeCancel(raw)
 	}()
 
-	err = exe(&cmd, cancel)
+	err = m.run(&cmd, cancel)
 	if err == nil {
 		result.Type = "done"
 	}

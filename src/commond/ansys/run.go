@@ -6,29 +6,30 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
+func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	id := cmd.Raw.CommandID
-	common.RL.Info(cmd.Raw, "ansys/runMutate", "Command started")
+	common.RL.Info(cmd.Raw, "ansys/run", "Command started")
 
 	if !cmd.File.Valid {
 		err := errors.New("file")
-		common.RL.Error(cmd.Raw, "ansys/runMutate", "Parse input: "+err.Error())
+		common.RL.Error(cmd.Raw, "ansys/run", "Parse input: "+err.Error())
 		return err
 	}
 	file := cmd.File.String
 	fileName := filepath.Base(file)
 	if !cmd.Script.Valid {
 		err := errors.New("script")
-		common.RL.Error(cmd.Raw, "ansys/runMutate", "Parse input: "+err.Error())
+		common.RL.Error(cmd.Raw, "ansys/run", "Parse input: "+err.Error())
 		return err
 	}
 	script := cmd.Script.String
 
-	// Create `data/{cId}`
-	err := common.EmptyPath(cmd.Raw, id, "")
+	// Create `data/{cId}/output`
+	err := common.EmptyPath(cmd.Raw, id, "output")
 	if err != nil {
 		return err
 	}
@@ -39,18 +40,23 @@ func (m Module) runMutate(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
+	// Replace `$OUT_DIR` in `script` to `data/{cId}/output`
+	// In VBScript, only '"' needs to be escaped.
+	outputPath := filepath.Join(common.DataPath, id, "output")
+	scriptX := strings.Replace(script, "$OUT_DIR", strings.Replace(outputPath, "\"", "\"\"", -1), -1)
+
 	// Save `script` to `data/{cId}/script.vbs`
 	scriptFile := filepath.Join(common.DataPath, id, "script.vbs")
-	err = ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
+	err = ioutil.WriteFile(scriptFile, []byte(scriptX), os.ModePerm)
 	if err != nil {
-		common.RL.Error(cmd.Raw, "ansys/runMutate", "Save script: "+err.Error())
+		common.RL.Error(cmd.Raw, "ansys/run", "Save script: "+err.Error())
 		return err
 	}
 
 	logCancel := make(chan struct{})
 
-	// Log to `data/{cId}/mutate.log`
-	logFile := filepath.Join(common.DataPath, id, "ansys.log")
+	// Log to `data/{cId}/solve.log`
+	logFile := filepath.Join(common.DataPath, id, "solve.log")
 	go common.WatchLog(cmd.Raw, logFile, logCancel)
 
 	// Run `batchsave` over `data/{cId}/{file.name}`
