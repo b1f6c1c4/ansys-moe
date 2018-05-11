@@ -22,6 +22,9 @@ func (m Module) GetCommandID() string { return "" }
 // GetKind make Module an ExeContext
 func (m Module) GetKind() string { return "rlang" }
 
+// GetCfg make Module an ExeContext
+func (m Module) GetCfg() string { return "" }
+
 // NewModule setup rlang
 func NewModule(
 	rpt chan<- common.ExeContext,
@@ -40,6 +43,7 @@ func (m Module) Run(raw *common.RawCommand) {
 	result := &rlangAction{
 		CommandID: raw.GetCommandID(),
 		Kind:      raw.GetKind(),
+		Cfg:       raw.GetCfg(),
 		Type:      "failure",
 	}
 	defer func() {

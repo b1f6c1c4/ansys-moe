@@ -25,7 +25,7 @@ var M MetaInfo
 
 // Entry setup commond
 func Entry(theLogger func(string)) {
-	Core = &RawCommand{"", "core", nil, nil}
+	Core = &RawCommand{"", "core", "", nil, nil}
 	SL = theLogger
 
 	M.Component = "ansys-commond"

@@ -20,9 +20,9 @@ func setupAmqp(stop <-chan struct{}) error {
 		cony.URL(common.C.RabbitUrl),
 		cony.Config(amqp.Config{
 			Properties: amqp.Table{
-				"product": "commond",
+				"product":  "commond",
 				"platform": "golang",
-				"version": VERSION,
+				"version":  VERSION,
 			},
 			Heartbeat: hb,
 		}),
@@ -109,7 +109,13 @@ func subscribeCommand(kind string, pref int, cmd chan<- *common.RawCommand) erro
 				ack := func() {
 					d.Ack(false)
 				}
-				cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body, ack}
+				cmd <- &common.RawCommand{
+					d.CorrelationId,
+					kind,
+					d.Headers["cfg"].(string),
+					d.Body,
+					ack,
+				}
 			case d := <-cCancel.Deliveries():
 				match := reg.FindStringSubmatch(d.RoutingKey)
 				if len(match) >= 2 {
@@ -145,6 +151,7 @@ func publishAction(act <-chan common.ExeContext) {
 				amqp.Publishing{
 					Headers: map[string]interface{}{
 						"kind": action.GetKind(),
+						"cfg":  action.GetCfg(),
 					},
 					CorrelationId: action.GetCommandID(),
 					ContentType:   "application/json",
