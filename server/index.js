@@ -39,7 +39,7 @@ app.use(cors({
     process.env.CORS_ORIGIN,
     /^https?:\/\/localhost(:\d+)?$/,
   ],
-  methods: ['HEAD', 'GET', 'POST'],
+  methods: ['HEAD', 'GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   preflightContinue: false,
   optionsSuccessStatus: 204,
