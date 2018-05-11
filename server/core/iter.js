@@ -39,17 +39,16 @@ module.exports = (petri) => {
         logger.debug('Evals not enough');
         return;
       }
-      const concurrent = await r.retrieve('/:proj/concurrent').number();
       // Check if concurrent evals are enough
-      if (await r.ensure('/eval/#') >= concurrent) {
+      if (await r.ensure('/eval/#') >= r.cfg.concurrent) {
         logger.debug('Enough concurrent evals');
         return;
       }
       // Cancel ongoing iter calculation
       if (await r.decr({ '/iter/calc': 1 })) {
         logger.warn('Detected old eval');
-        const oldId = await r.retrieve('/:proj/results/cat/:cHash/iterate').string();
-        cancel('rlang', oldId);
+        const iId = await r.retrieve('/:proj/results/cat/:cHash/iterate').string();
+        cancel('rlang', r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId }));
       }
 
       // Run iter calculation
@@ -115,7 +114,11 @@ module.exports = (petri) => {
   }, async (r, payload) => {
     if (await r.ensure('../../calc')) {
       if (r.param.iId !== await r.retrieve('/:proj/results/cat/:cHash/iterate').string()) {
-        logger.warn('iId not match, drop result');
+        if (r.payload.action === 'cancel') {
+          logger.debug('Iter properly cancelled');
+        } else {
+          logger.warn('iId not match, drop result');
+        }
         return;
       }
       await r.decr({ '../../calc': 1 });

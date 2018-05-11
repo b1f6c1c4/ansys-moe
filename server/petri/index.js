@@ -25,6 +25,7 @@ const makeProxy = (r, context) => new Proxy(r, {
           });
           return target[prop](obj);
         };
+      case 'option':
       case 'root':
       case 'param':
         return target[prop];

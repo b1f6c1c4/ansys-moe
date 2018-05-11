@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const amqp = require('amqp');
 const EventEmitter = require('events');
 const status = require('./status');
@@ -90,7 +91,7 @@ const publish = (queue, body, id, headers) => {
     contentType: 'application/json',
     deliveryMode: 2,
     correlationId: id,
-    headers,
+    headers: _.omitBy(headers, _.isNil),
   });
 };
 

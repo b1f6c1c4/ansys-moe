@@ -6,10 +6,10 @@ const amqp = require('../amqp');
 const { hash, cIdGen, dedent } = require('../util');
 const logger = require('../logger')('core/ansys');
 
-module.exports.solve = ({ filename, inputs, outputs }, variables, info) => {
+module.exports.solve = ({ source, destination, inputs, outputs }, variables, info) => {
   logger.info('Run ansys solve', info);
   const id = cIdGen(info);
-  const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
+  const fn = destination.match(/([^/]*)\.[^.]*$/)[1];
   const grps = _.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column'])));
   const script = _.template(dedent`
     Dim oAnsoftApp
@@ -55,7 +55,8 @@ module.exports.solve = ({ filename, inputs, outputs }, variables, info) => {
   `)({ fn, inputs, variables, grps });
   amqp.publish('ansys', {
     type: 'solve',
-    file: filename,
+    source,
+    destination,
     script: script.replace(/\n\s*\n/g, '\n'),
   }, id, {
     cfg: info.cfgHash,
@@ -77,7 +78,7 @@ const parseCsv = (file) => new Promise((resolve, reject) => {
         resolve(data);
       },
     });
-  });
+  }).catch(reject);
 });
 
 module.exports.parse = async (payload, { outputs }) => {
