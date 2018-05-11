@@ -7,6 +7,7 @@ const path = require('path');
 const shell = require('shelljs');
 const async = require('async');
 const contentstream = require('./contentstream');
+const hashDiskStorage = require('./disk');
 const logger = require('./logger')('file');
 
 const router = express.Router();
@@ -46,28 +47,6 @@ const getRealFilePath = (fn) => {
   }
   return null;
 };
-
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, dataPath);
-  },
-  filename(req, file, cb) {
-    const fn = path.normalize(file.fieldname);
-    const fullPath = getRealFilePath(fn);
-    if (fullPath) {
-      logger.trace('Will store file', fn);
-      shell.mkdir('-p', path.dirname(fullPath));
-      cb(null, fn);
-    } else {
-      logger.warn('Declined file', file.fieldname);
-      cb(Error('Field name not allowed'));
-    }
-  },
-});
-
-const upload = multer({
-  storage,
-});
 
 router.get(/\/$/, (req, res) => {
   const fn = path.normalize(req.path.substr(1, req.path.length - 2));
@@ -134,8 +113,23 @@ router.put(/^\/.*[^/]$/, (req, res) => {
   }
 });
 
+const storage = hashDiskStorage({
+  destination: path.join(dataPath, 'upload'),
+});
+
+const upload = multer({
+  storage,
+});
+
 router.post('/', upload.any(), (req, res) => {
-  res.status(204).send();
+  if (req.files) {
+    res.status(201).send(req.files.map(({ originalname, filename }) => ({
+      old: originalname,
+      new: `upload/${filename}`,
+    })));
+  } else {
+    res.status(400).send();
+  }
 });
 
 router.delete('/', (req, res) => {
