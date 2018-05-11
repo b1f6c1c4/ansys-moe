@@ -3,6 +3,9 @@ const dgram = require('dgram');
 const winston = require('winston');
 const chalk = require('chalk');
 
+// eslint-disable-next-line no-extend-native
+RegExp.prototype.toJSON = RegExp.prototype.toString;
+
 const lvls = {
   levels: {
     fatal: 0,
@@ -11,6 +14,7 @@ const lvls = {
     info: 3,
     debug: 4,
     trace: 5,
+    silly: 6,
   },
   colors: {
     fatal: 'underline dim red',
@@ -19,13 +23,14 @@ const lvls = {
     info: 'dim green',
     debug: 'dim cyan',
     trace: 'dim cyan',
+    silly: 'gray',
   },
 };
 
 winston.addColors(lvls);
 
 const logger = winston.createLogger({
-  level: process.env.BACKEND_LOG || 'info',
+  level: process.env.BACKEND_LOG || (process.env.NODE_ENV === 'test' ? 'fatal' : 'info'),
   levels: lvls.levels,
   format: winston.format.combine(
     winston.format.timestamp(),
@@ -91,7 +96,7 @@ module.exports = (lbl) => {
   };
   const customApi = {};
   const emit = (j) => {
-    if (sendUdp) {
+    if (j.level !== 'silly' && sendUdp) {
       sendUdp(j);
     }
     logger.log(j);

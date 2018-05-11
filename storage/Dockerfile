@@ -1,4 +1,4 @@
-FROM ansys-storage-vendor
+FROM b1f6c1c4/ansys-moe:storage
 
 WORKDIR /usr/src/ansys-storage
 COPY . .
