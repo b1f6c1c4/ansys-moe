@@ -1,7 +1,7 @@
 const _ = require('lodash');
-const { hash, newId, dedent } = require('../util');
+const { hash, newId, cIdGen, dedent } = require('../util');
 const amqp = require('../amqp');
-const { getId, cancel, parse } = require('../integration');
+const { cancel, parse } = require('../integration');
 const logger = require('../logger')('core/iter');
 
 module.exports = (petri) => {
@@ -100,7 +100,7 @@ module.exports = (petri) => {
       amqp.publish(
         'rlang',
         { script },
-        getId(r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId })),
+        cIdGen(r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId })),
       );
       await r.store('/:proj/results/cat/:cHash/iterate', iId);
       await r.incr({ '/iter/calc': 1 });

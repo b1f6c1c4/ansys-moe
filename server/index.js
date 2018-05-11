@@ -1,6 +1,7 @@
 const etcd = require('./etcd');
 const amqp = require('./amqp');
 const core = require('./core');
+const { cIdParse } = require('./util');
 const logger = require('./logger')('index');
 
 logger.info('Versions', process.versions);
@@ -34,7 +35,7 @@ amqp.emitter.on('action', async (msg) => {
       logger.warn('correlation_id not found');
       return;
     }
-    const [proj, name, ...rest] = id.split('.');
+    const { proj, name, root } = cIdParse(id);
     if (!proj || !name) {
       logger.warn('correlation_id malformed');
       return;
@@ -43,7 +44,7 @@ amqp.emitter.on('action', async (msg) => {
       id,
       name,
       base: `/${proj}/state`,
-      root: rest.length === 0 ? undefined : `/${rest.join('/')}`,
+      root,
       kind: msg.headers.kind,
       action: msg.body,
     };

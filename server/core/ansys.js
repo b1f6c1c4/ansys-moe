@@ -3,14 +3,12 @@ const fp = require('lodash/fp');
 const axios = require('axios');
 const Papa = require('papaparse');
 const amqp = require('../amqp');
-const { hash, dedent } = require('../util');
+const { hash, cIdGen, dedent } = require('../util');
 const logger = require('../logger')('core/ansys');
 
-module.exports.solve = ({ filename, inputs, outputs }, variables, { proj, name, root }) => {
-  logger.info('Run ansys solve', { proj, name, root });
-  const id = root
-    ? `${proj}.${name}${root.replace(/\//g, '.')}`
-    : `${proj}.${name}`;
+module.exports.solve = ({ filename, inputs, outputs }, variables, info) => {
+  logger.info('Run ansys solve', info);
+  const id = cIdGen(info);
   const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
   const grps = _.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column'])));
   const script = _.template(dedent`

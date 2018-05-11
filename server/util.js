@@ -11,6 +11,19 @@ module.exports.hash = (obj) => {
 module.exports.newId = (l = 8) =>
   Math.round((36 ** (l + 1)) - (Math.random() * (36 ** l))).toString(36).slice(1);
 
+module.exports.cIdGen = ({ proj, name, root }) => root
+  ? `${proj}.${name}${root.replace(/\//g, '.')}`
+  : `${proj}.${name}`;
+
+module.exports.cIdParse = (id) => {
+  const [proj, name, ...rest] = id.split('.');
+  return {
+    proj,
+    name,
+    root: rest.length === 0 ? undefined : `/${rest.join('/')}`,
+  };
+};
+
 // https://gist.github.com/zenparsing/5dffde82d9acef19e43c
 module.exports.dedent = (callSite, ...args) => {
   function format(str) {

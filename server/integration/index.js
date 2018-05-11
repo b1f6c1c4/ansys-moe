@@ -1,22 +1,17 @@
 const amqp = require('../amqp');
 const expression = require('./expression');
 const rlang = require('./rlang');
+const { cIdGen } = require('../util');
 const logger = require('../logger')('integration');
 
 const theQueue = [];
 
-const getId = ({ proj, name, root }) => root
-  ? `${proj}.${name}${root.replace(/\//g, '.')}`
-  : `${proj}.${name}`;
-
 module.exports.virtualQueue = theQueue;
-
-module.exports.getId = getId;
 
 module.exports.run = (kind, code, variables, info) => {
   logger.debug(`Run integration ${kind}`, info);
   const { proj, name, root } = info;
-  const id = getId(info);
+  const id = cIdGen(info);
   switch (kind) {
     case 'expression':
       theQueue.push(expression.wrapped(code, variables, {
@@ -41,7 +36,7 @@ module.exports.run = (kind, code, variables, info) => {
 };
 
 module.exports.cancel = (kind, info) => {
-  amqp.cancel(kind, getId(info));
+  amqp.cancel(kind, cIdGen(info));
 };
 
 module.exports.parse = ({ kind, action }, ...args) => {
