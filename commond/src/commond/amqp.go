@@ -20,9 +20,9 @@ func setupAmqp(stop <-chan struct{}) error {
 		cony.URL(common.C.RabbitUrl),
 		cony.Config(amqp.Config{
 			Properties: amqp.Table{
-				"product": "commond",
+				"product":  "commond",
 				"platform": "golang",
-				"version": VERSION,
+				"version":  VERSION,
 			},
 			Heartbeat: hb,
 		}),
@@ -60,7 +60,7 @@ func setupAmqp(stop <-chan struct{}) error {
 				if err.Error() == prev {
 					break
 				}
-				common.SL("Amqp client: " + err.Error())
+				common.RL.Error(common.Core, "amqp", "Amqp client: "+err.Error())
 				prev = err.Error()
 			case <-stop:
 				cli.Close()
@@ -109,7 +109,17 @@ func subscribeCommand(kind string, pref int, cmd chan<- *common.RawCommand) erro
 				ack := func() {
 					d.Ack(false)
 				}
-				cmd <- &common.RawCommand{d.CorrelationId, kind, d.Body, ack}
+				var cfg string
+				if d.Headers["cfg"] != nil {
+					cfg = d.Headers["cfg"].(string)
+				}
+				cmd <- &common.RawCommand{
+					d.CorrelationId,
+					kind,
+					cfg,
+					d.Body,
+					ack,
+				}
 			case d := <-cCancel.Deliveries():
 				match := reg.FindStringSubmatch(d.RoutingKey)
 				if len(match) >= 2 {
@@ -120,9 +130,9 @@ func subscribeCommand(kind string, pref int, cmd chan<- *common.RawCommand) erro
 					}
 				}
 			case err := <-cCommand.Errors():
-				common.SL("Command consumer of kind " + kind + ": " + err.Error())
+				common.RL.Error(common.Core, "amqp", "Command consumer of kind "+kind+": "+err.Error())
 			case err := <-cCancel.Errors():
-				common.SL("Cancel consumer of kind " + kind + ": " + err.Error())
+				common.RL.Error(common.Core, "amqp", "Cancel consumer of kind "+kind+": "+err.Error())
 			}
 		}
 	}()
@@ -145,6 +155,7 @@ func publishAction(act <-chan common.ExeContext) {
 				amqp.Publishing{
 					Headers: map[string]interface{}{
 						"kind": action.GetKind(),
+						"cfg":  action.GetCfg(),
 					},
 					CorrelationId: action.GetCommandID(),
 					ContentType:   "application/json",
@@ -152,7 +163,7 @@ func publishAction(act <-chan common.ExeContext) {
 				},
 			)
 			if err != nil {
-				common.SL("Publish action to main: " + err.Error())
+				common.RL.Error(common.Core, "amqp", "Publish action to main: "+err.Error())
 				break
 			}
 		}
@@ -161,7 +172,7 @@ func publishAction(act <-chan common.ExeContext) {
 
 func subscribeCancel(e common.ExeContext, cll chan struct{}) {
 	cancels[e.GetCommandID()] = func() {
-		common.SL("Received cancel of kind " + e.GetKind())
+		common.RL.Error(common.Core, "amqp", "Received cancel of kind "+e.GetKind())
 		close(cll)
 	}
 }
