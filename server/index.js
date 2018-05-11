@@ -46,13 +46,12 @@ app.use(cors({
   maxAge: 300000,
 }));
 
-app.get('/', (req, res) => {
-  logger.trace('GET /');
+app.use((req, res, next) => {
   if (status) {
-    res.status(200).json(status);
-  } else {
-    res.status(500).send();
+    res.set('X-Version', status.version);
+    res.set('X-CommitHash', status.commitHash);
   }
+  next();
 });
 
 app.use('/', file);
