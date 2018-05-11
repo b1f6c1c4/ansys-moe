@@ -113,15 +113,37 @@ router.put(/^\/.*[^/]$/, (req, res) => {
   }
 });
 
-const storage = hashDiskStorage({
-  destination: path.join(dataPath, 'upload'),
+const uploadRaw = multer({
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, dataPath);
+    },
+    filename(req, file, cb) {
+      const fn = path.normalize(file.fieldname);
+      const fullPath = getRealFilePath(fn);
+      if (fullPath) {
+        logger.trace('Will store file', fn);
+        shell.mkdir('-p', path.dirname(fullPath));
+        cb(null, fn);
+      } else {
+        logger.warn('Declined file', file.fieldname);
+        cb(Error('Field name not allowed'));
+      }
+    },
+  }),
 });
 
-const upload = multer({
-  storage,
+router.post('/', uploadRaw.any(), (req, res) => {
+  res.status(204).send();
 });
 
-router.post('/', upload.any(), (req, res) => {
+const uploadHash = multer({
+  storage: hashDiskStorage({
+    destination: path.join(dataPath, 'upload'),
+  }),
+});
+
+router.post('/upload/', uploadHash.any(), (req, res) => {
   if (req.files) {
     res.status(201).send(req.files.map(({ originalname, filename }) => ({
       old: originalname,
