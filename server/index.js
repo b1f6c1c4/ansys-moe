@@ -36,7 +36,6 @@ amqp.emitter.on('action', async (msg) => {
           kind: 'core',
           action: msg.body,
         },
-        proj: msg.body.name,
         fin,
       });
       fin = undefined;

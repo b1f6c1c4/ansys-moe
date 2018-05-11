@@ -24,7 +24,7 @@ logicIter(petri);
 const customizer = (obj) => (proxy) => new Proxy(proxy, {
   get(target, prop, receiver) {
     switch (prop) {
-      case 'retrive':
+      case 'retrieve':
         return (key, ...pars) => {
           const compiled = new CompiledPath(key);
           const p = compiled.build(target.context, target.param, ...pars);
@@ -76,7 +76,7 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
 module.exports.channel = channel;
 
 const dispatch = async (payload, context, cust) => {
-  const obj = petri.retrive(payload.name);
+  const obj = petri.retrieve(payload.name);
   if (!obj) {
     logger.error('Name not found', payload.name);
     return false;

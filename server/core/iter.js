@@ -39,7 +39,7 @@ module.exports = (petri) => {
         logger.debug('Evals not enough');
         return;
       }
-      const concurrent = await r.retrive('/:proj/concurrent').number();
+      const concurrent = await r.retrieve('/:proj/concurrent').number();
       // Check if concurrent evals are enough
       if (await r.ensure('/eval/#') >= concurrent) {
         logger.debug('Enough concurrent evals');
@@ -48,12 +48,12 @@ module.exports = (petri) => {
       // Cancel ongoing iter calculation
       if (await r.decr({ '/iter/calc': 1 })) {
         logger.warn('Detected old eval');
-        const oldId = await r.retrive('/:proj/results/cat/:cHash/iterate').string();
+        const oldId = await r.retrieve('/:proj/results/cat/:cHash/iterate').string();
         cancel('rlang', oldId);
       }
 
       // Run iter calculation
-      const dVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
+      const dVars = await r.retrieve('/:proj/results/cat/:cHash/D').json();
       const rngs = dVars.map((d) => {
         if (d.kind === 'discrete') {
           return d.steps;
@@ -62,8 +62,8 @@ module.exports = (petri) => {
       });
       const tDpar = (dpar) => dVars.map(({ name, lowerBound, upperBound }) =>
         (dpar[name] - lowerBound) / (upperBound - lowerBound));
-      const history = await r.retrive('/:proj/results/cat/:cHash/history').json();
-      const ongoing = await r.retrive('/:proj/results/cat/:cHash/ongoing').json();
+      const history = await r.retrieve('/:proj/results/cat/:cHash/history').json();
+      const ongoing = await r.retrieve('/:proj/results/cat/:cHash/ongoing').json();
       const sampled = _.chain(history)
         .map('D')
         .map(tDpar)
@@ -114,13 +114,13 @@ module.exports = (petri) => {
     root: '/cat/:cHash/iter/t/:iId',
   }, async (r, payload) => {
     if (await r.ensure('../../calc')) {
-      if (r.param.iId !== await r.retrive('/:proj/results/cat/:cHash/iterate').string()) {
+      if (r.param.iId !== await r.retrieve('/:proj/results/cat/:cHash/iterate').string()) {
         logger.warn('iId not match, drop result');
         return;
       }
       await r.decr({ '../../calc': 1 });
       const rst = parse(payload, false);
-      const ongoing = await r.retrive('/:proj/results/cat/:cHash/ongoing').json();
+      const ongoing = await r.retrieve('/:proj/results/cat/:cHash/ongoing').json();
       if (!rst) {
         if (_.keys(ongoing).length) {
           logger.warn('Iter calc failed', payload);
@@ -130,9 +130,9 @@ module.exports = (petri) => {
         return;
       }
       logger.debug('Iter succeed', rst);
-      const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
-      const dVars = await r.retrive('/:proj/results/cat/:cHash/D').json();
-      const history = await r.retrive('/:proj/results/cat/:cHash/history').json();
+      const cVars = await r.retrieve('/:proj/hashs/cHash/:cHash').json();
+      const dVars = await r.retrieve('/:proj/results/cat/:cHash/D').json();
+      const history = await r.retrieve('/:proj/results/cat/:cHash/history').json();
       const hasDone = (dpar) => _.every(dVars, (d, i) => {
         if (d.kind === 'discrete') {
           const id = ((dpar[d.name] - d.lowerBound) / (d.upperBound - d.lowerBound)) * (d.steps - 1);

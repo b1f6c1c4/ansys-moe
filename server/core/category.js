@@ -10,7 +10,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash',
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
-      const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
+      const cVars = await r.retrieve('/:proj/hashs/cHash/:cHash').json();
       const dVars = _.chain(r.cfg.D)
         .reject({ kind: 'categorical' })
         .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
@@ -49,7 +49,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash',
   }, async (r, payload) => {
     if (await r.decr({ '/initing': 1 })) {
-      const cVars = await r.retrive('/:proj/hashs/cHash/:cHash').json();
+      const cVars = await r.retrieve('/:proj/hashs/cHash/:cHash').json();
       const rst = parse(payload);
       if (!rst) {
         logger.error('Init failed', payload);
