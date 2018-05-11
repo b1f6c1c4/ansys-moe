@@ -8,6 +8,7 @@ const logicGlobal = require('./global');
 const logicCategory = require('./category');
 const logicEval = require('./eval');
 const logicIter = require('./iter');
+const processCore = require('./core');
 const { hash } = require('../util');
 const logger = require('../logger')('core');
 
@@ -98,18 +99,30 @@ module.exports.run = async () => {
   for (;;) {
     const obj = await channel.shift();
     try {
-      const { payload, proj } = obj;
-      const cfg = await etcd.get(`/${proj}/config`).json();
-      const context = { proj };
-      const cust = customizer({ proj, cfg });
-      logger.debug('Dispatching payload', payload);
-      logger.silly('With config', cfg);
-      if (await dispatch(payload, context, cust)) {
-        while (virtualQueue.length !== 0) {
-          const evpld = virtualQueue.shift();
-          logger.debug('Dispatching eval payload', evpld);
-          await dispatch(evpld, context, cust);
+      let context;
+      let cust;
+      if (obj.payload.kind === 'core') {
+        const res = await processCore(obj);
+        if (!res) {
+          continue; // eslint-disable-line no-continue
         }
+        const { proj } = res;
+        const cfg = await etcd.get(`/${proj}/config`).json();
+        context = { proj };
+        cust = customizer({ proj, cfg });
+      } else {
+        const { payload, proj } = obj;
+        const cfg = await etcd.get(`/${proj}/config`).json();
+        context = { proj };
+        cust = customizer({ proj, cfg });
+        logger.debug('Dispatching payload', payload);
+        logger.silly('With config', cfg);
+        await dispatch(payload, context, cust);
+      }
+      while (virtualQueue.length !== 0) {
+        const evpld = virtualQueue.shift();
+        logger.debug('Dispatching eval payload', evpld);
+        await dispatch(evpld, context, cust);
       }
     } catch (e) {
       logger.error('Processing channel', e);

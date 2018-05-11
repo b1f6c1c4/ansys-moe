@@ -19,7 +19,11 @@ const makeQueueAction = () => new Promise((resolve) => {
     q.bind('#');
     logger.debug('Action q.subscribe...');
     q.subscribe({ ack: true }, (body, headers, { correlationId }, obj) => {
-      logger.trace(`Received message #${correlationId} of kind ${headers.kind}`, body);
+      if (correlationId) {
+        logger.trace(`Received message #${correlationId} of kind ${headers.kind}`, body);
+      } else {
+        logger.trace(`Received message kind ${headers.kind}`, body);
+      }
       try {
         emitter.emit('action', {
           correlationId,

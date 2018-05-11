@@ -30,27 +30,39 @@ process.on('SIGTERM', () => {
 amqp.emitter.on('action', async (msg) => {
   let fin = () => msg.obj.acknowledge(false);
   try {
-    const id = msg.correlationId;
-    if (!id) {
-      logger.warn('correlation_id not found');
-      return;
+    if (msg.headers.kind === 'core') {
+      await core.channel.push({
+        payload: {
+          kind: 'core',
+          action: msg.body,
+        },
+        proj: msg.body.name,
+        fin,
+      });
+      fin = undefined;
+    } else {
+      const id = msg.correlationId;
+      if (!id) {
+        logger.warn('correlation_id not found');
+        return;
+      }
+      const { proj, name, root } = cIdParse(id);
+      if (!proj || !name) {
+        logger.warn('correlation_id malformed');
+        return;
+      }
+      const payload = {
+        id,
+        name,
+        base: `/${proj}/state`,
+        root,
+        kind: msg.headers.kind,
+        cfgHash: msg.headers.cfg,
+        action: msg.body,
+      };
+      await core.channel.push({ payload, proj, fin });
+      fin = undefined;
     }
-    const { proj, name, root } = cIdParse(id);
-    if (!proj || !name) {
-      logger.warn('correlation_id malformed');
-      return;
-    }
-    const payload = {
-      id,
-      name,
-      base: `/${proj}/state`,
-      root,
-      kind: msg.headers.kind,
-      cfgHash: msg.headers.cfg,
-      action: msg.body,
-    };
-    await core.channel.push({ payload, proj, fin });
-    fin = undefined;
   } catch (e) {
     logger.error('Processing action', e);
   } finally {
@@ -67,6 +79,9 @@ inits.push(amqp.connect());
 inits.push(Promise.resolve(etcd.connect()));
 
 Promise.all(inits)
+  .then(() => {
+    logger.info('Init succeed');
+  })
   .catch((e) => {
     logger.fatalDie('Init failed', e);
   });
