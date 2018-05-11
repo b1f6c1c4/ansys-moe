@@ -45,12 +45,12 @@ func loadConfig(exeDir string) GlobalConfigT {
 	cfg.PathRLang = os.Getenv("RLANG_PATH")
 	txt, err := ioutil.ReadFile(filepath.Join(exeDir, "config.yaml"))
 	if err != nil {
-		SL("Cannot open config.yaml")
+		RL.Error(Core, "config", "Cannot open config.yaml")
 		return cfg
 	}
 	err = yaml.Unmarshal(txt, &cfg)
 	if err != nil {
-		SL("Cannot parse config.yaml: " + err.Error())
+		RL.Error(Core, "config", "Cannot parse config.yaml: "+err.Error())
 		return cfg
 	}
 	return cfg

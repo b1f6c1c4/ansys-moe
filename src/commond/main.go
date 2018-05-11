@@ -14,6 +14,8 @@ var VERSION string
 // COMMITHASH is defined during compilation
 var COMMITHASH string
 
+var log chan *common.LogReport
+
 func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 	c := make(chan struct{})
 	go func() {
@@ -32,13 +34,14 @@ func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 func Entry(theLogger func(string)) {
 	common.M.Version.Version = VERSION
 	common.M.Version.CommitHash = COMMITHASH
-	common.Entry(theLogger)
-	common.SL("VERSION: " + VERSION)
-	common.SL("COMMITHASH: " + COMMITHASH)
+	log = make(chan *common.LogReport, 1000)
+	common.Entry(theLogger, log)
+	common.RL.Notice(common.Core, "main", "VERSION: "+VERSION)
+	common.RL.Notice(common.Core, "main", "COMMITHASH: "+COMMITHASH)
 }
 
 func addModule(m common.Module, pref int, stop <-chan struct{}) {
-	common.SL("Adding module " + m.GetKind())
+	common.RL.Notice(common.Core, "main", "Adding module "+m.GetKind())
 	ch := make(chan *common.RawCommand)
 	err := subscribeCommand(m.GetKind(), pref, ch)
 	if err != nil {
@@ -49,7 +52,7 @@ func addModule(m common.Module, pref int, stop <-chan struct{}) {
 		for {
 			select {
 			case raw := <-ch:
-				common.SL("Received command of kind " + m.GetKind())
+				common.RL.Notice(common.Core, "main", "Received command of kind "+m.GetKind())
 				go m.Run(raw)
 			case <-stop:
 				return
@@ -70,11 +73,9 @@ func Loop(stop <-chan struct{}) {
 	if err != nil {
 		panic(err)
 	}
-	common.SL("Amqp Connected")
+	common.RL.Notice(common.Core, "main", "Amqp Connected")
 
-	log := make(chan *common.LogReport)
 	go publishLog(log)
-	common.SetupRL(log)
 
 	act := make(chan common.ExeContext)
 	go publishAction(act)
@@ -94,12 +95,10 @@ func Loop(stop <-chan struct{}) {
 		addModule(rlang.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchRLang, stop)
 	}
 
-	common.SL("Started event loop")
-	common.RL.Info(common.Core, "main", "Started event loop")
+	common.RL.Notice(common.Core, "main", "Started event loop")
 
 	select {
 	case <-stop:
-		common.SL("Received signal to stop")
 		common.RL.Fatal(common.Core, "main", "Received signal to stop")
 	}
 	wait()

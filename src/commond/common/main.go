@@ -24,9 +24,10 @@ var C GlobalConfigT
 var M MetaInfo
 
 // Entry setup commond
-func Entry(theLogger func(string)) {
+func Entry(theLogger func(string), log chan<- *LogReport) {
 	Core = &RawCommand{"", "core", "", nil, nil}
 	SL = theLogger
+	RL = RemoteLoggerT{log}
 
 	M.Component = "ansys-commond"
 	M.Hostname, _ = os.Hostname()
@@ -39,9 +40,4 @@ func Entry(theLogger func(string)) {
 	DataPath = filepath.Join(exeDir, "data")
 	_ = os.MkdirAll(DataPath, os.ModePerm)
 	C = loadConfig(exeDir)
-}
-
-// SetupRL setup remote logger
-func SetupRL(ch chan<- *LogReport) {
-	RL = RemoteLoggerT{ch}
 }
