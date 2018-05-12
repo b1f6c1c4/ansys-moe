@@ -6,8 +6,9 @@ const { SubscriptionServer } = require('subscriptions-transport-ws');
 const fs = require('fs');
 const status = require('../status');
 
-const query = require('./query').resolvers;
-const mutation = require('./mutation').resolvers;
+const core = require('./core').resolvers;
+const etcd = require('./etcd').resolvers;
+const controller = require('./controller').resolvers;
 const {
   onOperation,
   onOperationComplete,
@@ -25,8 +26,9 @@ const schema = makeExecutableSchema({
   typeDefs,
   resolvers: _.merge(
     resolvers,
-    query,
-    mutation,
+    core,
+    etcd,
+    controller,
     subscription,
   ),
 });

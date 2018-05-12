@@ -85,7 +85,7 @@ If kind `continuous`:
 
 ## P0Parameter (object)
 
-- name (string, required)
+- default (number) - default 0
 - code (string, required) - kind expression
 
 ## AnsysConfig (object)
@@ -94,11 +94,15 @@ If kind `continuous`:
 
 ## AnsysRule (object)
 
-- filename (string, required) - any string is acceptable
-- ext (string, required)
+- source (string, required)
+- destination (string, required)
 - condition (string) - kind expression
 - inputs (array[AnsysInput], required)
 - outputs (array[AnsysOutput], required)
+- onError (enum)
+  - `halt` (default)
+  - `ignore`
+  - `default`
 
 ## AnsysInput (object)
 
