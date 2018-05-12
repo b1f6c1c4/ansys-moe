@@ -6,6 +6,9 @@ type Query {
   status: Status
 
   etcd(prefix: String): [EtcdEntry!]!
+
+  # Check controller docker container status
+  controller: Boolean
 }
 
 type Mutation {
@@ -13,6 +16,9 @@ type Mutation {
   # Run a new project or modify an existing project
   # name MUST match /^[a-z][-_a-zz0-9]*$/
   run(name: ID!, config: JSON!): Boolean
+
+  # Start controller docker container
+  startController: Boolean
 }
 
 type Subscription {
