@@ -114,7 +114,7 @@ module.exports = (petri) => {
   }, async (r, payload) => {
     if (await r.ensure('../../calc')) {
       if (r.param.iId !== await r.retrieve('/:proj/results/cat/:cHash/iterate').string()) {
-        if (r.payload.action === 'cancel') {
+        if (payload.action.type === 'cancel') {
           logger.debug('Iter properly cancelled');
         } else {
           logger.warn('iId not match, drop result');

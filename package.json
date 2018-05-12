@@ -25,7 +25,6 @@
     "testRegex": "tests/.*\\.test\\.js$"
   },
   "dependencies": {
-    "@nodeguy/channel": "^0.6.3",
     "amqp": "^0.2.6",
     "axios": "^0.18.0",
     "chalk": "^2.3.2",

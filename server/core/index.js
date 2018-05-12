@@ -1,5 +1,4 @@
 const _ = require('lodash');
-const Channel = require('@nodeguy/channel');
 const etcd = require('../etcd');
 const { PetriNet, CompiledPath } = require('../petri');
 const EtcdAdapter = require('../adapter');
@@ -9,10 +8,8 @@ const logicCategory = require('./category');
 const logicEval = require('./eval');
 const logicIter = require('./iter');
 const processCore = require('./core');
-const { hash } = require('../util');
+const { hash, cIdParse } = require('../util');
 const logger = require('../logger')('core');
-
-const channel = new Channel();
 
 const petri = new PetriNet(new EtcdAdapter(etcd));
 
@@ -73,8 +70,6 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
   },
 });
 
-module.exports.channel = channel;
-
 const dispatch = async (payload, context, cust) => {
   const obj = petri.retrieve(payload.name);
   if (!obj) {
@@ -95,41 +90,52 @@ const dispatch = async (payload, context, cust) => {
   return true;
 };
 
-module.exports.run = async () => {
-  for (;;) {
-    const obj = await channel.shift();
-    try {
-      let context;
-      let cust;
-      if (obj.payload.kind === 'core') {
-        const res = await processCore(obj);
-        if (!res) {
-          continue; // eslint-disable-line no-continue
-        }
-        const { proj } = res;
-        const cfg = await etcd.get(`/${proj}/config`).json();
-        context = { proj };
-        cust = customizer({ proj, cfg });
-      } else {
-        const { payload, proj } = obj;
-        const cfg = await etcd.get(`/${proj}/config`).json();
-        context = { proj };
-        cust = customizer({ proj, cfg });
-        logger.debug('Dispatching payload', payload);
-        logger.silly('With config', cfg);
-        await dispatch(payload, context, cust);
-      }
-      while (virtualQueue.length !== 0) {
-        const evpld = virtualQueue.shift();
-        logger.debug('Dispatching eval payload', evpld);
-        await dispatch(evpld, context, cust);
-      }
-    } catch (e) {
-      logger.error('Processing channel', e);
-    } finally {
-      if (_.isFunction(obj.fin)) {
-        obj.fin();
-      }
-    }
+const purgeVirtualQueue = async (context, cust) => {
+  while (virtualQueue.length !== 0) {
+    const evpld = virtualQueue.shift();
+    logger.debug('Dispatching eval payload', evpld);
+    await dispatch(evpld, context, cust);
   }
+};
+
+module.exports.run = async (msg) => {
+  if (msg.headers.kind === 'core') {
+    const res = await processCore(msg.body);
+    if (!res) {
+      return;
+    }
+    const { proj } = res;
+    const cfg = await etcd.get(`/${proj}/config`).json();
+    const context = { proj };
+    const cust = customizer({ proj, cfg });
+    await purgeVirtualQueue(context, cust);
+    return;
+  }
+  const id = msg.correlationId;
+  if (!id) {
+    logger.warn('correlation_id not found');
+    return;
+  }
+  const { proj, name, root } = cIdParse(id);
+  if (!proj || !name) {
+    logger.warn('correlation_id malformed');
+    return;
+  }
+  const payload = {
+    id,
+    name,
+    proj,
+    base: `/${proj}/state`,
+    root,
+    kind: msg.headers.kind,
+    cfgHash: msg.headers.cfg,
+    action: msg.body,
+  };
+  const cfg = await etcd.get(`/${proj}/config`).json();
+  const context = { proj };
+  const cust = customizer({ proj, cfg });
+  logger.debug('Dispatching payload', payload);
+  logger.silly('With config', cfg);
+  await dispatch(payload, context, cust);
+  await purgeVirtualQueue(context, cust);
 };

@@ -2,7 +2,7 @@ const { virtualQueue } = require('../integration');
 const etcd = require('../etcd');
 const logger = require('../logger')('core/core');
 
-module.exports = async ({ payload: { action } }) => {
+module.exports = async (action) => {
   const { type, name: proj, config } = action;
   if (type !== 'run') {
     logger.error('Type not supported', type);
