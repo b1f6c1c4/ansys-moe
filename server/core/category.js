@@ -47,6 +47,7 @@ module.exports = (petri) => {
     name: 'c-inited',
     external: true,
     root: '/cat/:cHash',
+    cfg: (cfg) => _.pick(cfg, ['initEvals', 'D']),
   }, async (r, payload) => {
     if (await r.decr({ '/initing': 1 })) {
       const cVars = await r.retrieve('/:proj/hashs/cHash/:cHash').json();

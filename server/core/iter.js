@@ -100,7 +100,7 @@ module.exports = (petri) => {
         'rlang',
         { script },
         cIdGen(r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId })),
-        { cfg: r.cfgHash },
+        { cfg: r.cfgHash('i-done') },
       );
       await r.store('/:proj/results/cat/:cHash/iterate', iId);
       await r.incr({ '/iter/calc': 1 });

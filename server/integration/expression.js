@@ -27,8 +27,10 @@ module.exports.wrapped = (code, variables, info) => {
       result: e.stack,
     };
   }
+  const { cfg: cfgHash, ...restInfo } = info;
   const result = {
-    ...info,
+    ...restInfo,
+    cfgHash,
     kind: 'expression',
     action,
   };

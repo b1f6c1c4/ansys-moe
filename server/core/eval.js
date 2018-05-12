@@ -59,6 +59,7 @@ module.exports = (petri) => {
     name: 'e-m-done',
     external: true,
     root: '/cat/:cHash/eval/:dHash',
+    cfg: (cfg) => _.pick(cfg, ['D', 'G', 'ansys']),
   }, async (r, payload) => {
     if (await r.done('/M/solve')) {
       const xVars = await r.retrieve('/:proj/results/d/:dHash/var').json();
@@ -156,16 +157,12 @@ module.exports = (petri) => {
           vars[n] = await r.retrieve('/:proj/results/d/:dHash/:gep/:n', { n }).number();
         }
       }
-      run(kind, code, vars, r.action('e-gep-done'));
+      run(kind, code, vars, r.action(`e-${r.param.gep.toLowerCase()}-done`));
       await r.incr({ '/prep': 1 });
     }
   });
 
-  petri.register({
-    name: 'e-gep-done',
-    external: true,
-    root: '/cat/:cHash/eval/:dHash/:gep=G|E|P/:name',
-  }, async (r, payload) => {
+  const eGepDone = async (r, payload) => {
     if (await r.decr({ '/init': 1, '/prep': 1 })) {
       const rst = parse(payload);
       if (!rst) {
@@ -184,5 +181,26 @@ module.exports = (petri) => {
       }
       await r.incr({ '../@': 1 });
     }
-  });
+  };
+
+  petri.register({
+    name: 'e-g-done',
+    external: true,
+    root: '/cat/:cHash/eval/:dHash/:gep=G/:name',
+    cfg: (cfg) => _.pick(cfg, ['D', 'G']),
+  }, eGepDone);
+
+  petri.register({
+    name: 'e-e-done',
+    external: true,
+    root: '/cat/:cHash/eval/:dHash/:gep=E/:name',
+    cfg: (cfg) => _.pick(cfg, ['D', 'G', 'ansys', 'E']),
+  }, eGepDone);
+
+  petri.register({
+    name: 'e-p-done',
+    external: true,
+    root: '/cat/:cHash/eval/:dHash/:gep=P/:name',
+    cfg: (cfg) => _.pick(cfg, ['D', 'G', 'ansys', 'E', 'P']),
+  }, eGepDone);
 };

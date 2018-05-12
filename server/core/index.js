@@ -41,10 +41,19 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
       case 'action':
         return (name, root, ...pars) => {
           if (root === undefined) {
-            return { proj: obj.proj, name, root: target.root };
+            return {
+              proj: obj.proj,
+              name,
+              root: target.root,
+              cfgHash: receiver.cfgHash(name),
+            };
           }
           if (root === null) {
-            return { proj: obj.proj, name };
+            return {
+              proj: obj.proj,
+              name,
+              cfgHash: receiver.cfgHash(name),
+            };
           }
           const compiled = new CompiledPath(root);
           const p = compiled.build(target.context, target.param, ...pars);
@@ -52,15 +61,23 @@ const customizer = (obj) => (proxy) => new Proxy(proxy, {
             proj: obj.proj,
             name,
             root: p,
+            cfgHash: receiver.cfgHash(name),
           };
         };
       case 'cfgHash':
-        if (target.option.cfg) {
-          const cfgx = target.option.cfg(obj.cfg);
-          logger.silly('Excerpted cfg', cfgx);
-          return hash(cfgx, true);
-        }
-        return undefined;
+        return (name) => {
+          const reg = target.petri.retrieve(name);
+          if (!reg) {
+            logger.warn('Name for cfg not found', name);
+            return undefined;
+          }
+          if (reg.option.cfg) {
+            const cfgx = reg.option.cfg(obj.cfg);
+            logger.silly('Excerpted cfg', cfgx);
+            return hash(cfgx, true);
+          }
+          return undefined;
+        };
       default:
         if (prop in obj) {
           return obj[prop];
@@ -78,11 +95,11 @@ const dispatch = async (payload, context, cust) => {
   }
   const { option } = obj;
   if (option.cfg) {
-    const cfgx = option.cfg(cust.cfg);
+    const cfgx = option.cfg(context.cfg);
     logger.silly('Excerpted cfg', cfgx);
     const cfgHash = hash(cfgx, true);
     if (payload.cfgHash !== cfgHash) {
-      logger.warn('cfgHash not match, drop payload');
+      logger.warn('cfgHash not match, drop payload', payload);
       return false;
     }
   }
@@ -93,7 +110,7 @@ const dispatch = async (payload, context, cust) => {
 const purgeVirtualQueue = async (context, cust) => {
   while (virtualQueue.length !== 0) {
     const evpld = virtualQueue.shift();
-    logger.debug('Dispatching eval payload', evpld);
+    logger.debug('Dispatching virtual payload', evpld);
     await dispatch(evpld, context, cust);
   }
 };
@@ -106,8 +123,8 @@ module.exports.run = async (msg) => {
     }
     const { proj } = res;
     const cfg = await etcd.get(`/${proj}/config`).json();
-    const context = { proj };
-    const cust = customizer({ proj, cfg });
+    const context = { proj, cfg };
+    const cust = customizer(context);
     await purgeVirtualQueue(context, cust);
     return;
   }
@@ -132,8 +149,8 @@ module.exports.run = async (msg) => {
     action: msg.body,
   };
   const cfg = await etcd.get(`/${proj}/config`).json();
-  const context = { proj };
-  const cust = customizer({ proj, cfg });
+  const context = { proj, cfg };
+  const cust = customizer(context);
   logger.debug('Dispatching payload', payload);
   logger.silly('With config', cfg);
   await dispatch(payload, context, cust);

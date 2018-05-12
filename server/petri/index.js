@@ -30,6 +30,7 @@ const makeProxy = (r, context) => new Proxy(r, {
       case 'option':
       case 'root':
       case 'param':
+      case 'petri':
         return target[prop];
       default:
         return undefined;
@@ -96,7 +97,7 @@ class PetriNet {
       logger.error('Name not found', name);
       return undefined;
     }
-    const r = new PetriRuntime(this.db, base);
+    const r = new PetriRuntime(this.db, base, this);
     const proxy = customizer(makeProxy(r, context));
     const rv = await this.execute(r, proxy, reg, payload, args);
     let maxDepth = 10;

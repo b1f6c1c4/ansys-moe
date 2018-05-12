@@ -3,7 +3,7 @@ const path = require('path');
 const logger = require('../logger')('petri/runtime');
 
 class PetriRuntime {
-  constructor(db, base) {
+  constructor(db, base, petri) {
     this.db = db;
     this.base = base;
     this.option = null;
@@ -12,6 +12,7 @@ class PetriRuntime {
     this.cache = {};
     this.dirty = false;
     this.dyns = [];
+    this.petri = petri;
 
     this.ensure = this.ensure.bind(this);
   }

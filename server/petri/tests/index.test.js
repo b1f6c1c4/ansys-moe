@@ -81,6 +81,7 @@ describe('PetriNet', () => {
     }, async (r, payload) => {
       expect(payload.k).toEqual('v');
       expect(r.option.name).toEqual('init');
+      expect(r.petri).toBe(petri);
       await r.incr({ '/init': 1 });
       return r.context.rv;
     });
