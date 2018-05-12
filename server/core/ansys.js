@@ -82,12 +82,17 @@ const parseCsv = (file) => new Promise((resolve, reject) => {
 });
 
 module.exports.parse = async (payload, { outputs }) => {
-  const grps = _.toPairs(_.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column']))));
-  const res = await Promise.all(grps.map(([k]) => parseCsv(`/${payload.id}/output/${k}.csv`)));
-  const mVars = _.fromPairs(_.flatten(_.zipWith(
-    grps,
-    res,
-    ([, os], tbl) => os.map(({ name, column }) => [name, tbl[1][column]]),
-  )));
-  return mVars;
+  try {
+    const grps = _.toPairs(_.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column']))));
+    const res = await Promise.all(grps.map(([k]) => parseCsv(`/${payload.id}/output/${k}.csv`)));
+    const mVars = _.fromPairs(_.flatten(_.zipWith(
+      grps,
+      res,
+      ([, os], tbl) => os.map(({ name, column }) => [name, tbl[1][column]]),
+    )));
+    return mVars;
+  } catch (e) {
+    logger.error('Parsing ansys result', e);
+    return null;
+  }
 };

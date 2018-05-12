@@ -122,7 +122,7 @@ module.exports.run = async (msg) => {
       return;
     }
     const { proj } = res;
-    const cfg = await etcd.get(`/${proj}/config`).json();
+    const cfg = await etcd.get(`/p/${proj}/config`).json();
     const context = { proj, cfg };
     const cust = customizer(context);
     await purgeVirtualQueue(context, cust);
@@ -142,13 +142,13 @@ module.exports.run = async (msg) => {
     id,
     name,
     proj,
-    base: `/${proj}/state`,
+    base: `/p/${proj}/state`,
     root,
     kind: msg.headers.kind,
     cfgHash: msg.headers.cfg,
     action: msg.body,
   };
-  const cfg = await etcd.get(`/${proj}/config`).json();
+  const cfg = await etcd.get(`/p/${proj}/config`).json();
   const context = { proj, cfg };
   const cust = customizer(context);
   logger.debug('Dispatching payload', payload);

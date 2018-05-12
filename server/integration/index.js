@@ -16,7 +16,7 @@ module.exports.run = (kind, code, variables, info) => {
     case 'expression':
       theQueue.push(expression.wrapped(code, variables, {
         name,
-        base: `/${proj}/state`,
+        base: `/p/${proj}/state`,
         root,
         cfg: info.cfgHash,
       }));
@@ -29,7 +29,7 @@ module.exports.run = (kind, code, variables, info) => {
     default:
       theQueue.push({
         name,
-        base: `/${proj}/state`,
+        base: `/p/${proj}/state`,
         root,
         kind,
         action: { type: 'failure', result: 'Kind not supported' },

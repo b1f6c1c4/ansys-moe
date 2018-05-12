@@ -47,12 +47,12 @@ module.exports = (petri) => {
       // Cancel ongoing iter calculation
       if (await r.decr({ '/iter/calc': 1 })) {
         logger.warn('Detected old eval');
-        const iId = await r.retrieve('/:proj/results/cat/:cHash/iterate').string();
+        const iId = await r.retrieve('/p/:proj/results/cat/:cHash/iterate').string();
         cancel('rlang', r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId }));
       }
 
       // Run iter calculation
-      const dVars = await r.retrieve('/:proj/results/cat/:cHash/D').json();
+      const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
       const rngs = dVars.map((d) => {
         if (d.kind === 'discrete') {
           return d.steps;
@@ -61,8 +61,8 @@ module.exports = (petri) => {
       });
       const tDpar = (dpar) => dVars.map(({ name, lowerBound, upperBound }) =>
         (dpar[name] - lowerBound) / (upperBound - lowerBound));
-      const history = await r.retrieve('/:proj/results/cat/:cHash/history').json();
-      const ongoing = await r.retrieve('/:proj/results/cat/:cHash/ongoing').json();
+      const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
+      const ongoing = await r.retrieve('/p/:proj/results/cat/:cHash/ongoing').json();
       const sampled = _.chain(history)
         .map('D')
         .map(tDpar)
@@ -102,7 +102,7 @@ module.exports = (petri) => {
         cIdGen(r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId })),
         { cfg: r.cfgHash('i-done') },
       );
-      await r.store('/:proj/results/cat/:cHash/iterate', iId);
+      await r.store('/p/:proj/results/cat/:cHash/iterate', iId);
       await r.incr({ '/iter/calc': 1 });
     }
   });
@@ -113,7 +113,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash/iter/t/:iId',
   }, async (r, payload) => {
     if (await r.ensure('../../calc')) {
-      if (r.param.iId !== await r.retrieve('/:proj/results/cat/:cHash/iterate').string()) {
+      if (r.param.iId !== await r.retrieve('/p/:proj/results/cat/:cHash/iterate').string()) {
         if (payload.action.type === 'cancel') {
           logger.debug('Iter properly cancelled');
         } else {
@@ -123,7 +123,7 @@ module.exports = (petri) => {
       }
       await r.decr({ '../../calc': 1 });
       const rst = parse(payload, false);
-      const ongoing = await r.retrieve('/:proj/results/cat/:cHash/ongoing').json();
+      const ongoing = await r.retrieve('/p/:proj/results/cat/:cHash/ongoing').json();
       if (!rst) {
         if (_.keys(ongoing).length) {
           logger.warn('Iter calc failed', payload);
@@ -133,9 +133,9 @@ module.exports = (petri) => {
         return;
       }
       logger.debug('Iter succeed', rst);
-      const cVars = await r.retrieve('/:proj/hashs/cHash/:cHash').json();
-      const dVars = await r.retrieve('/:proj/results/cat/:cHash/D').json();
-      const history = await r.retrieve('/:proj/results/cat/:cHash/history').json();
+      const cVars = await r.retrieve('/p/:proj/hashs/cHash/:cHash').json();
+      const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
+      const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
       const hasDone = (dpar) => _.every(dVars, (d, i) => {
         if (d.kind === 'discrete') {
           const id = ((dpar[d.name] - d.lowerBound) / (d.upperBound - d.lowerBound)) * (d.steps - 1);
@@ -173,7 +173,7 @@ module.exports = (petri) => {
       const dHash = hash(dpars);
       ongoing[dHash] = dpars;
       logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
-      await r.store('/:proj/hashs/dHash/:dHash', { dHash }, dpars);
+      await r.store('/p/:proj/hashs/dHash/:dHash', { dHash }, dpars);
       await r.incr({ '../../../eval/:dHash/init': 1 }, { dHash });
       await r.incr({ '/iter/hint': 1 });
     }
