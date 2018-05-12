@@ -15,7 +15,6 @@ module.exports = async (action) => {
   await virtualQueue.push({
     name: 'init',
     base: `/p/${proj}/state`,
-    root: '',
   });
   return { proj };
 };

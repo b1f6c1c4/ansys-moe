@@ -42,13 +42,19 @@ module.exports = (petri) => {
   petri.register({
     name: 'init',
     external: true,
+    pre: {
+      lte: { '/error': 0 },
+    },
   }, async (r) => {
     await r.incr({ '/init': 1 });
   });
 
   petri.register({
     name: 'categories',
-    pre: '/init',
+    pre: {
+      lte: { '/error': 0 },
+      decr: { '/init': 1 },
+    },
   }, async (r) => {
     const cVars = _.filter(r.cfg.D, { kind: 'categorical' });
     const dict = _.fromPairs(_.map(cVars, ({ name }, i) => [name, i]));
@@ -68,7 +74,10 @@ module.exports = (petri) => {
 
   petri.register({
     name: 'categories-done',
-    pre: { done: '/cat' },
+    pre: {
+      lte: { '/error': 0 },
+      done: '/cat',
+    },
   }, async (r) => {
     logger.info('All categories done!');
     // TODO: find optimal

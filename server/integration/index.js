@@ -32,6 +32,7 @@ module.exports.run = (kind, code, variables, info) => {
         base: `/p/${proj}/state`,
         root,
         kind,
+        cfgHash: info.cfgHash,
         action: { type: 'failure', result: 'Kind not supported' },
       });
       break;

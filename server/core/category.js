@@ -8,7 +8,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'c-init',
     root: '/cat/:cHash',
-    pre: '/init',
+    pre: {
+      lte: { '/error': 0, '../../error': 0 },
+      decr: { '/init': 1 },
+    },
   }, async (r) => {
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const dVars = _.chain(r.cfg.D)
@@ -47,13 +50,16 @@ module.exports = (petri) => {
     external: true,
     root: '/cat/:cHash',
     cfg: (cfg) => _.pick(cfg, ['initEvals', 'D']),
-    pre: '/initing',
+    pre: {
+      lte: { '/error': 0, '../../error': 0 },
+      decr: { '/initing': 1 },
+    },
   }, async (r, payload) => {
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const rst = parse(payload);
     if (!rst) {
       logger.error('Init failed', payload);
-      await r.incr({ '/failure': 1, '../@': 1 });
+      await r.incr({ '/error': 1 });
       return;
     }
     logger.debug('Init succeed', rst);

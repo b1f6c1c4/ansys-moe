@@ -9,7 +9,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'e-init',
     root: '/cat/:cHash/eval/:dHash',
-    pre: '/init',
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      decr: { '/init': 1 },
+    },
   }, async (r) => {
     const dVars = await r.retrieve('/hashs/dHash/:dHash').json();
     await r.store('/p/:proj/results/d/:dHash/var', dVars);
@@ -23,7 +26,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'e-g-done',
     root: '/cat/:cHash/eval/:dHash',
-    pre: { done: '/G' },
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      done: '/G',
+    },
   }, async (r) => {
     const xVars = await r.retrieve('/p/:proj/results/d/:dHash/var').json();
     for (const gpar of r.cfg.G) {
@@ -40,6 +46,11 @@ module.exports = (petri) => {
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
     const ruleId = _.findIndex(r.cfg.ansys.rules, ({ condition }) =>
       !condition || expression.run(condition, xVars) > 0);
+    if (ruleId === -1) {
+      logger.warn('No ansys rule matched, proceed directly');
+      await r.incr({ '/M/done': 1 });
+      return;
+    }
     const rule = r.cfg.ansys.rules[ruleId];
     await r.store('/p/:proj/results/d/:dHash/Mid', ruleId);
     const vars = _.pick(xVars, _.map(rule.inputs, 'variable'));
@@ -58,19 +69,33 @@ module.exports = (petri) => {
     external: true,
     root: '/cat/:cHash/eval/:dHash',
     cfg: (cfg) => _.pick(cfg, ['D', 'G', 'ansys']),
-    pre: { done: '/M/solve' },
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      decr: { '/M/solve': 1 },
+    },
   }, async (r, payload) => {
     const xVars = await r.retrieve('/p/:proj/results/d/:dHash/var').json();
     const ruleId = await r.retrieve('/p/:proj/results/d/:dHash/Mid').number();
     const rule = r.cfg.ansys.rules[ruleId];
     const mVars = await ansys.parse(payload, rule);
     if (!mVars) {
-      logger.warn('M failed', r.param);
-      await r.incr({ '../@': 1 });
+      logger.error('M failed', r.param);
+      await r.incr({ '/error': 1 });
       return;
     }
     _.assign(xVars, mVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
+    await r.incr({ '/M/done': 1 });
+  });
+
+  petri.register({
+    name: 'e-e-start',
+    root: '/cat/:cHash/eval/:dHash',
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      decr: { '/M/done': 1 },
+    },
+  }, async (r) => {
     await r.dyn('/E');
     for (const epar of r.cfg.E) {
       const { name } = epar;
@@ -81,7 +106,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'e-e-done',
     root: '/cat/:cHash/eval/:dHash',
-    pre: { done: '/E' },
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      done: '/E',
+    },
   }, async (r) => {
     const xVars = await r.retrieve('/p/:proj/results/d/:dHash/var').json();
     for (const epar of r.cfg.E) {
@@ -106,7 +134,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'e-p-done',
     root: '/cat/:cHash/eval/:dHash',
-    pre: { done: '/P' },
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      done: '/P',
+    },
   }, async (r) => {
     const xVars = await r.retrieve('/p/:proj/results/d/:dHash/var').json();
     for (const ppar of r.cfg.P) {
@@ -140,7 +171,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash/eval/:dHash/:gep=G|E|P/:name',
     pre: {
       gte: { '/init': 1 },
-      lte: { '/prep': 0 },
+      lte: { '/prep': 0, '../../error': 0, '../../../../error': 0, '../../../../../../error': 0 },
     },
     log: false,
   }, async (r) => {
@@ -163,8 +194,8 @@ module.exports = (petri) => {
   const eGepDone = async (r, payload) => {
     const rst = parse(payload);
     if (!rst) {
-      logger.fatal(`${r.param.gep} ${r.param.name} failed`, payload);
-      await r.incr({ '../@': 1, '../!': 1 }); // TODO: handle G|E|P bug
+      logger.error(`${r.param.gep} ${r.param.name} failed`, payload);
+      await r.incr({ '../../error': 1 });
       return;
     }
     logger.debug(`${r.param.gep} ${r.param.name} succeed`, rst);
@@ -184,7 +215,10 @@ module.exports = (petri) => {
     external: true,
     root: '/cat/:cHash/eval/:dHash/:gep=G/:name',
     cfg: (cfg) => _.pick(cfg, ['D', 'G']),
-    pre: ['/init', '/prep'],
+    pre: {
+      lte: { '../../error': 0, '../../../../error': 0, '../../../../../../error': 0 },
+      decr: { '/init': 1, '/prep': 1 },
+    },
   }, eGepDone);
 
   petri.register({
@@ -192,7 +226,10 @@ module.exports = (petri) => {
     external: true,
     root: '/cat/:cHash/eval/:dHash/:gep=E/:name',
     cfg: (cfg) => _.pick(cfg, ['D', 'G', 'ansys', 'E']),
-    pre: ['/init', '/prep'],
+    pre: {
+      lte: { '../../error': 0, '../../../../error': 0, '../../../../../../error': 0 },
+      decr: { '/init': 1, '/prep': 1 },
+    },
   }, eGepDone);
 
   petri.register({
@@ -200,6 +237,9 @@ module.exports = (petri) => {
     external: true,
     root: '/cat/:cHash/eval/:dHash/:gep=P/:name',
     cfg: (cfg) => _.pick(cfg, ['D', 'G', 'ansys', 'E', 'P']),
-    pre: ['/init', '/prep'],
+    pre: {
+      lte: { '../../error': 0, '../../../../error': 0, '../../../../../../error': 0 },
+      decr: { '/init': 1, '/prep': 1 },
+    },
   }, eGepDone);
 };

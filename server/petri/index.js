@@ -160,6 +160,9 @@ class PetriNet {
         }
         return func(proxy, payload, ...args);
       }
+      if (payload) {
+        logger.warn(`Precondition not match for external ${option.name}`, r.root);
+      }
       return undefined;
     };
     const root = _.get(payload, 'root');

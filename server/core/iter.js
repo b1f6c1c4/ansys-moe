@@ -9,6 +9,9 @@ module.exports = (petri) => {
     name: 'i-new-hint',
     external: true,
     root: '/cat/:cHash',
+    pre: {
+      lte: { '/error': 0, '../../error': 0 },
+    },
   }, async (r) => {
     await r.incr({ '/iter/hint': 1 });
   });
@@ -16,7 +19,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'i-hint',
     root: '/cat/:cHash',
-    pre: '/iter/hint',
+    pre: {
+      lte: { '/error': 0, '../../error': 0 },
+      decr: { '/iter/hint': 1 },
+    },
   }, async (r) => {
     if (await r.ensure('/iter/req') === 0 && await r.ensure('/iter/calc') === 0) {
       await r.incr({ '/iter/req': 1 });
@@ -26,7 +32,10 @@ module.exports = (petri) => {
   petri.register({
     name: 'i-req',
     root: '/cat/:cHash',
-    pre: '/iter/req',
+    pre: {
+      lte: { '/error': 0, '../../error': 0 },
+      decr: { '/iter/req': 1 },
+    },
   }, async (r) => {
     // Check if category still running
     if (!await r.ensure('/eval')) {
@@ -109,7 +118,10 @@ module.exports = (petri) => {
     name: 'i-done',
     external: true,
     root: '/cat/:cHash/iter/t/:iId',
-    pre: { gte: { '../../calc': 1 } },
+    pre: {
+      lte: { '/error': 0, '../../error': 0 },
+      gte: { '../../calc': 1 },
+    },
   }, async (r, payload) => {
     if (r.param.iId !== await r.retrieve('/p/:proj/results/cat/:cHash/iterate').string()) {
       if (payload.action.type === 'cancel') {
@@ -125,9 +137,10 @@ module.exports = (petri) => {
     if (!rst) {
       if (_.keys(ongoing).length) {
         logger.warn('Iter calc failed', payload);
+      } else {
+        logger.error('Iter calc failed', payload);
+        await r.incr({ '../../../error': 1 });
       }
-      logger.error('Iter calc failed', payload);
-      await r.incr({ '../../../failure': 1, '../../../../@': 1 });
       return;
     }
     logger.debug('Iter succeed', rst);
