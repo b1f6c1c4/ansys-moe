@@ -133,7 +133,7 @@ module.exports = (petri) => {
         return;
       }
       logger.debug('Iter succeed', rst);
-      const cVars = await r.retrieve('/p/:proj/hashs/cHash/:cHash').json();
+      const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
       const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
       const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
       const hasDone = (dpar) => _.every(dVars, (d, i) => {
@@ -173,7 +173,7 @@ module.exports = (petri) => {
       const dHash = hash(dpars);
       ongoing[dHash] = dpars;
       logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
-      await r.store('/p/:proj/hashs/dHash/:dHash', { dHash }, dpars);
+      await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
       await r.incr({ '../../../eval/:dHash/init': 1 }, { dHash });
       await r.incr({ '/iter/hint': 1 });
     }

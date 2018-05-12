@@ -10,7 +10,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash',
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
-      const cVars = await r.retrieve('/p/:proj/hashs/cHash/:cHash').json();
+      const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
       const dVars = _.chain(r.cfg.D)
         .reject({ kind: 'categorical' })
         .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
@@ -50,7 +50,7 @@ module.exports = (petri) => {
     cfg: (cfg) => _.pick(cfg, ['initEvals', 'D']),
   }, async (r, payload) => {
     if (await r.decr({ '/initing': 1 })) {
-      const cVars = await r.retrieve('/p/:proj/hashs/cHash/:cHash').json();
+      const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
       const rst = parse(payload);
       if (!rst) {
         logger.error('Init failed', payload);
@@ -68,14 +68,14 @@ module.exports = (petri) => {
           const dHash = hash(dpars);
           ongoing[dHash] = dpars;
           logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
-          await r.store('/p/:proj/hashs/dHash/:dHash', { dHash }, dpars);
+          await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
           await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
         }
       } else {
         const dHash = hash(cVars);
         ongoing[dHash] = cVars;
         logger.info(`Will create eval ${dHash}`, _.assign({}, vard));
-        await r.store('/p/:proj/hashs/dHash/:dHash', { dHash }, cVars);
+        await r.store('/hashs/dHash/:dHash', { dHash }, cVars);
         await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
       }
       await r.store('/p/:proj/results/cat/:cHash/history', []);

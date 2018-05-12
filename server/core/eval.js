@@ -11,7 +11,7 @@ module.exports = (petri) => {
     root: '/cat/:cHash/eval/:dHash',
   }, async (r) => {
     if (await r.decr({ '/init': 1 })) {
-      const dVars = await r.retrieve('/p/:proj/hashs/dHash/:dHash').json();
+      const dVars = await r.retrieve('/hashs/dHash/:dHash').json();
       await r.store('/p/:proj/results/d/:dHash/var', dVars);
       await r.dyn('/G');
       for (const gpar of r.cfg.G) {
@@ -45,11 +45,11 @@ module.exports = (petri) => {
       await r.store('/p/:proj/results/d/:dHash/Mid', ruleId);
       const vars = _.pick(xVars, _.map(rule.inputs, 'variable'));
       const mHashContent = {
-        filename: rule.filename,
+        file: rule.source,
         vars,
       };
       const mHash = hash(mHashContent);
-      await r.store('/p/:proj/hashs/m/:mHash', { mHash }, mHashContent);
+      await r.store('/hashs/mHash/:mHash', { mHash }, mHashContent);
       ansys.solve(rule, vars, r.action('e-m-done'));
       await r.incr({ '/M/solve': 1 });
     }
@@ -126,7 +126,7 @@ module.exports = (petri) => {
       logger.debug('P pars done', xVars);
       await r.store('/p/:proj/results/d/:dHash/var', xVars);
       const p0 = expression.run(r.cfg.P0.code, xVars);
-      const dpars = await r.retrieve('/p/:proj/hashs/dHash/:dHash').json();
+      const dpars = await r.retrieve('/hashs/dHash/:dHash').json();
       const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
       logger.info(`Eval done (P0=${p0})`, dpars);
       const item = { D: dpars, P0: p0 };
