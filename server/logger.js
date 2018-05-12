@@ -74,11 +74,20 @@ if (process.env.LOG_HOST) {
   const host = process.env.LOG_HOST;
   const udp = dgram.createSocket('udp4');
   sendUdp = (msg) => {
-    const buf = Buffer.from(stringify({
-      ...msg,
-      meta,
-    }));
-    udp.send(buf, port, host);
+    const { data, ...rest } = msg;
+    if (data instanceof Error) {
+      udp.send(Buffer.from(stringify({
+        ...rest,
+        data: data.stack,
+        meta,
+      })), port, host);
+    } else {
+      udp.send(Buffer.from(stringify({
+        ...rest,
+        data,
+        meta,
+      })), port, host);
+    }
   };
 }
 
