@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const amqp = require('amqp');
 const EventEmitter = require('events');
 const status = require('./status');
@@ -19,7 +20,11 @@ const makeQueueAction = () => new Promise((resolve) => {
     q.bind('#');
     logger.debug('Action q.subscribe...');
     q.subscribe({ ack: true }, (body, headers, { correlationId }, obj) => {
-      logger.trace(`Received message #${correlationId}`, body);
+      if (correlationId) {
+        logger.trace(`Received message #${correlationId} of kind ${headers.kind}`, body);
+      } else {
+        logger.trace(`Received message kind ${headers.kind}`, body);
+      }
       try {
         emitter.emit('action', {
           correlationId,
@@ -79,13 +84,14 @@ const connect = () => new Promise((resolve, reject) => {
   });
 });
 
-const publish = (queue, body, id) => {
+const publish = (queue, body, id, headers) => {
   logger.trace(`Publish #${id} to ${queue}`, body);
   connection.publish(queue, JSON.stringify(body), {
     mandatory: true,
     contentType: 'application/json',
     deliveryMode: 2,
     correlationId: id,
+    headers: _.omitBy(headers, _.isNil),
   });
 };
 

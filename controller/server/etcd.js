@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const { Etcd3, PutBuilder } = require('etcd3');
 const logger = require('./logger')('etcd');
 
@@ -28,6 +29,11 @@ const mocking = {
   put: (key) => ({
     value: (value) => ({
       exec: async () => { db[key] = JSON.stringify(value); },
+    }),
+  }),
+  delete: () => ({
+    prefix: (value) => ({
+      exec: async () => { _.unset(db, _.keys(db).filter((s) => s.startsWith(value))); },
     }),
   }),
   mock: () => db,

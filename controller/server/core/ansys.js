@@ -3,15 +3,13 @@ const fp = require('lodash/fp');
 const axios = require('axios');
 const Papa = require('papaparse');
 const amqp = require('../amqp');
-const { hash, dedent } = require('../util');
+const { hash, cIdGen, dedent } = require('../util');
 const logger = require('../logger')('core/ansys');
 
-module.exports.solve = ({ filename, inputs, outputs }, variables, { proj, name, root }) => {
-  logger.info('Run ansys solve', { proj, name, root });
-  const id = root
-    ? `${proj}.${name}${root.replace(/\//g, '.')}`
-    : `${proj}.${name}`;
-  const fn = filename.match(/([^/]*)\.[^.]*$/)[1];
+module.exports.solve = ({ source, destination, inputs, outputs }, variables, info) => {
+  logger.info('Run ansys solve', info);
+  const id = cIdGen(info);
+  const fn = destination.match(/([^/]*)\.[^.]*$/)[1];
   const grps = _.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column'])));
   const script = _.template(dedent`
     Dim oAnsoftApp
@@ -57,9 +55,12 @@ module.exports.solve = ({ filename, inputs, outputs }, variables, { proj, name, 
   `)({ fn, inputs, variables, grps });
   amqp.publish('ansys', {
     type: 'solve',
-    file: filename,
+    source,
+    destination,
     script: script.replace(/\n\s*\n/g, '\n'),
-  }, id);
+  }, id, {
+    cfg: info.cfgHash,
+  });
 };
 
 const parseCsv = (file) => new Promise((resolve, reject) => {
@@ -77,16 +78,21 @@ const parseCsv = (file) => new Promise((resolve, reject) => {
         resolve(data);
       },
     });
-  });
+  }).catch(reject);
 });
 
 module.exports.parse = async (payload, { outputs }) => {
-  const grps = _.toPairs(_.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column']))));
-  const res = await Promise.all(grps.map(([k]) => parseCsv(`/${payload.id}/output/${k}.csv`)));
-  const mVars = _.fromPairs(_.flatten(_.zipWith(
-    grps,
-    res,
-    ([, os], tbl) => os.map(({ name, column }) => [name, tbl[1][column]]),
-  )));
-  return mVars;
+  try {
+    const grps = _.toPairs(_.groupBy(outputs, fp.compose(hash, fp.omit(['name', 'column']))));
+    const res = await Promise.all(grps.map(([k]) => parseCsv(`/${payload.id}/output/${k}.csv`)));
+    const mVars = _.fromPairs(_.flatten(_.zipWith(
+      grps,
+      res,
+      ([, os], tbl) => os.map(({ name, column }) => [name, tbl[1][column]]),
+    )));
+    return mVars;
+  } catch (e) {
+    logger.error('Parsing ansys result', e);
+    return null;
+  }
 };

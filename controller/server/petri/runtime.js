@@ -3,21 +3,27 @@ const path = require('path');
 const logger = require('../logger')('petri/runtime');
 
 class PetriRuntime {
-  constructor(db, base) {
+  constructor(db, base, petri) {
     this.db = db;
     this.base = base;
+    this.option = null;
     this.root = '';
     this.param = {};
     this.cache = {};
     this.dirty = false;
     this.dyns = [];
+    this.petri = petri;
+    this.log = undefined;
 
     this.ensure = this.ensure.bind(this);
   }
 
-  setRoot(param = {}) {
+  prepareExecution(option, log, param = {}) {
+    this.option = option;
     this.root = param.path || '';
     this.param = param;
+    this.dyns = [];
+    this.log = log;
   }
 
   makeDbPath(k) {
@@ -56,6 +62,10 @@ class PetriRuntime {
 
   async incr(obj) {
     /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    /* istanbul ignore if */
     if (!_.every(obj, (value) => value > 0)) {
       throw new Error('value must be positive');
     }
@@ -81,11 +91,14 @@ class PetriRuntime {
 
   async decr(obj) {
     /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    /* istanbul ignore if */
     if (!_.every(obj, (value) => value > 0)) {
       throw new Error('value must be positive');
     }
-    await Promise.all(_.keys(obj).map(this.ensure));
-    if (!_.every(obj, (value, key) => this.get(key) >= value)) {
+    if (!await this.gte(obj)) {
       return false;
     }
     logger.silly(`DECR ${this.root}`, obj);
@@ -94,6 +107,24 @@ class PetriRuntime {
       this.dirty = true;
     });
     return true;
+  }
+
+  async lte(obj) {
+    /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    await Promise.all(_.keys(obj).map(this.ensure));
+    return _.every(obj, (value, key) => this.get(key) <= value);
+  }
+
+  async gte(obj) {
+    /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    await Promise.all(_.keys(obj).map(this.ensure));
+    return _.every(obj, (value, key) => this.get(key) >= value);
   }
 
   async dyn(p) {

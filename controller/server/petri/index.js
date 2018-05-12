@@ -18,6 +18,8 @@ const makeProxy = (r, context) => new Proxy(r, {
         };
       case 'incr':
       case 'decr':
+      case 'lte':
+      case 'gte':
         return (raw, ...pars) => {
           const obj = _.mapKeys(raw, (v, p) => {
             const compiled = new CompiledPath(p);
@@ -25,8 +27,11 @@ const makeProxy = (r, context) => new Proxy(r, {
           });
           return target[prop](obj);
         };
+      case 'option':
       case 'root':
       case 'param':
+      case 'petri':
+      /* istanbul ignore next */ case 'log':
         return target[prop];
       default:
         return undefined;
@@ -49,6 +54,30 @@ const makeProxy = (r, context) => new Proxy(r, {
   },
 });
 
+const checkPrecondition = async ({ pre }, r) => {
+  if (!pre) return true;
+  if (pre.lte) {
+    if (!await r.lte(pre.lte)) return false;
+  }
+  if (pre.gte) {
+    if (!await r.gte(pre.gte)) return false;
+  }
+  if (pre.decr) {
+    if (!await r.gte(pre.decr)) return false;
+  }
+  if (pre.done) {
+    if (!await r.done(pre.done)) {
+      return false;
+    }
+  }
+  if (pre.decr) {
+    if (!await r.decr(pre.decr)) {
+      throw new Error('Mixed done and decr precondition');
+    }
+  }
+  return true;
+};
+
 class PetriNet {
   constructor(db) {
     this.db = db;
@@ -64,12 +93,22 @@ class PetriNet {
 
     const { name, external } = option;
 
+    _.update(option, 'log', (l) => l === undefined ? true : !!l);
     _.update(option, 'root', (r) => r && new CompiledPath(r));
+    _.update(option, 'pre', (p) => {
+      if (_.isString(p)) {
+        return { decr: { [p]: 1 } };
+      }
+      if (_.isArray(p)) {
+        return { decr: _.fromPairs(_.map(p, (v) => [v, 1])) };
+      }
+      return p;
+    });
 
     const registry = external ? this.externals : this.internals;
     /* istanbul ignore if */
     if (name in registry) {
-      logger.warn('Name duplicated', name);
+      logger.error('Name duplicated', name);
     }
     registry[name] = { option, func };
     if (external) {
@@ -79,14 +118,21 @@ class PetriNet {
     }
   }
 
-  async dispatch(payload, context, customizer, ...args) {
+  retrieve(name, external = true) {
+    if (external) {
+      return this.externals[name];
+    }
+    return this.internals[name];
+  }
+
+  async dispatch(payload, context, customizer = _.identity, ...args) {
     const { name, base } = payload;
     const reg = this.externals[name];
     if (!reg) {
-      logger.warn('Name not found', name);
+      logger.error('Name not found', name);
       return undefined;
     }
-    const r = new PetriRuntime(this.db, base);
+    const r = new PetriRuntime(this.db, base, this);
     const proxy = customizer(makeProxy(r, context));
     const rv = await this.execute(r, proxy, reg, payload, args);
     let maxDepth = 10;
@@ -107,15 +153,22 @@ class PetriNet {
 
   // eslint-disable-next-line class-methods-use-this
   async execute(r, proxy, { option, func }, payload, args) {
-    const go = (rt) => {
-      r.setRoot(rt);
-      _.set(r, 'dyns', []);
-      logger.silly('Will use root', r.root);
-      return func(proxy, payload, ...args);
+    const go = async (rt) => {
+      const log = () => logger.trace(`Precodition match, execute ${option.name}`, r.root);
+      r.prepareExecution(option, log, rt);
+      if (await checkPrecondition(option, r)) {
+        if (option.log) {
+          log();
+        }
+        return func(proxy, payload, ...args);
+      }
+      if (payload) {
+        logger.warn(`Precondition not match for external ${option.name}`, r.root);
+      }
+      return undefined;
     };
     const root = _.get(payload, 'root');
-    const { name, root: rootRegex } = option;
-    logger.silly('Will execute', name);
+    const { root: rootRegex } = option;
     if (!rootRegex) {
       return go();
     }
