@@ -224,7 +224,7 @@ module.exports = (petri) => {
       return;
     }
     logger.debug(`${r.param.gep} ${r.param.name} succeed`, rst);
-    await r.store('/p/:proj/results/d/:dHash/:gep/:name', rst[0]);
+    await r.store('/p/:proj/results/d/:dHash/:gep/:name', rst);
     const affected = _.chain(r.cfg[r.param.gep])
       .filter((par) => par.dependsOn && par.dependsOn.includes(r.param.name))
       .map('name')

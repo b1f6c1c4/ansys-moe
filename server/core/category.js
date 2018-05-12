@@ -56,7 +56,7 @@ module.exports = (petri) => {
     },
   }, async (r, payload) => {
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
-    const rst = parse(payload);
+    const rst = parse(payload, false);
     if (!rst) {
       logger.error('Init failed', payload);
       await r.incr({ '/error': 1 });
