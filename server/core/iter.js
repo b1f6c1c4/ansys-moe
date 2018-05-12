@@ -60,6 +60,7 @@ module.exports = (petri) => {
     }
 
     // Run iter calculation
+    const defaultValue = r.cfg.P0.default === undefined ? 0 : r.cfg.P0.default;
     const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
     const rngs = dVars.map((d) => {
       if (d.kind === 'discrete') {
@@ -98,7 +99,7 @@ module.exports = (petri) => {
       print(toJSON(rst));
     `)({
       rngs,
-      values: _.map(history, 'P0'),
+      values: _.map(history, 'P0').map((v) => v === null ? defaultValue : v),
       sampled,
       beingSampled,
     });

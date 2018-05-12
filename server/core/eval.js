@@ -37,7 +37,7 @@ module.exports = (petri) => {
       const val = await r.retrieve('/p/:proj/results/d/:dHash/G/:name', { name }).number();
       if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
         logger.warn(`G ${name} out of bound`, r.param);
-        await r.incr({ '../@': 1 });
+        await r.incr({ '/P0': 1 });
         return;
       }
       xVars[name] = val;
@@ -79,9 +79,21 @@ module.exports = (petri) => {
     const rule = r.cfg.ansys.rules[ruleId];
     const mVars = await ansys.parse(payload, rule);
     if (!mVars) {
-      logger.error('M failed', r.param);
-      await r.incr({ '/error': 1 });
-      return;
+      switch (rule.onError) {
+        case 'ignore':
+          logger.warn('M failed, ignore and proceed', r.param);
+          await r.incr({ '/M/done': 1 });
+          return;
+        case 'default':
+          logger.warn('M failed, use default value', r.param);
+          await r.incr({ '/P0': 1 });
+          return;
+        case 'halt':
+        default:
+          logger.error('M failed', r.param);
+          await r.incr({ '/error': 1 });
+          return;
+      }
     }
     _.assign(xVars, mVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
@@ -117,7 +129,7 @@ module.exports = (petri) => {
       const val = await r.retrieve('/p/:proj/results/d/:dHash/E/:name', { name }).number();
       if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
         logger.warn(`E ${name} out of bound`, r.param);
-        await r.incr({ '../@': 1 });
+        await r.incr({ '/P0': 1 });
         return;
       }
       xVars[name] = val;
@@ -145,7 +157,7 @@ module.exports = (petri) => {
       const val = await r.retrieve('/p/:proj/results/d/:dHash/P/:name', { name }).number();
       if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
         logger.warn(`P ${name} out of bound`, r.param);
-        await r.incr({ '../@': 1 });
+        await r.incr({ '/P0': 1 });
         return;
       }
       xVars[name] = val;
@@ -153,6 +165,19 @@ module.exports = (petri) => {
     logger.debug('P pars done', xVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
     const p0 = expression.run(r.cfg.P0.code, xVars);
+    await r.store('/p/:proj/results/d/:dHash/P0', p0);
+    await r.incr({ '/P0': 1 });
+  });
+
+  petri.register({
+    name: 'e-p0',
+    root: '/cat/:cHash/eval/:dHash',
+    pre: {
+      lte: { '/error': 0, '../../error': 0, '../../../../error': 0 },
+      decr: { '/P0': 1 },
+    },
+  }, async (r) => {
+    const p0 = await r.retrieve('/p/:proj/results/d/:dHash/P0').number();
     const dpars = await r.retrieve('/hashs/dHash/:dHash').json();
     const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
     logger.info(`Eval done (P0=${p0})`, dpars);
