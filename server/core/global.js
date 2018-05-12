@@ -48,32 +48,30 @@ module.exports = (petri) => {
 
   petri.register({
     name: 'categories',
+    pre: '/init',
   }, async (r) => {
-    if (await r.decr({ '/init': 1 })) {
-      const cVars = _.filter(r.cfg.D, { kind: 'categorical' });
-      const dict = _.fromPairs(_.map(cVars, ({ name }, i) => [name, i]));
-      const results = [];
-      enumerateCategories(Array(cVars.length), results, cVars, dict);
-      await r.dyn('/cat');
-      for (const values of results) {
-        const vars = _.mapKeys(values, (v, i) => cVars[i].name);
-        const cHash = hash(vars);
-        const vard = _.mapValues(vars, (v, k) =>
-          _.get(cVars, [dict[k], 'descriptions', v - 1], v));
-        logger.info(`Will create category ${cHash}`, vard);
-        await r.store('/hashs/cHash/:cHash', { cHash }, vars);
-        await r.incr({ '/cat/:cHash/init': 1 }, { cHash });
-      }
+    const cVars = _.filter(r.cfg.D, { kind: 'categorical' });
+    const dict = _.fromPairs(_.map(cVars, ({ name }, i) => [name, i]));
+    const results = [];
+    enumerateCategories(Array(cVars.length), results, cVars, dict);
+    await r.dyn('/cat');
+    for (const values of results) {
+      const vars = _.mapKeys(values, (v, i) => cVars[i].name);
+      const cHash = hash(vars);
+      const vard = _.mapValues(vars, (v, k) =>
+        _.get(cVars, [dict[k], 'descriptions', v - 1], v));
+      logger.info(`Will create category ${cHash}`, vard);
+      await r.store('/hashs/cHash/:cHash', { cHash }, vars);
+      await r.incr({ '/cat/:cHash/init': 1 }, { cHash });
     }
   });
 
   petri.register({
     name: 'categories-done',
+    pre: { done: '/cat' },
   }, async (r) => {
-    if (await r.done('/cat')) {
-      logger.info('All categories done!');
-      // TODO: find optimal
-      await r.incr({ '/done': 1 });
-    }
+    logger.info('All categories done!');
+    // TODO: find optimal
+    await r.incr({ '/done': 1 });
   });
 };
