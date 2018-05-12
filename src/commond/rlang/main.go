@@ -55,7 +55,7 @@ func (m Module) Run(raw *common.RawCommand) {
 		} else if result.Type != "done" {
 			common.RL.Error(raw, "rlang", "Command execution failure")
 		} else {
-			common.RL.Info(raw, "rlang", "Command execution done")
+			common.RL.Notice(raw, "rlang", "Command execution done")
 		}
 		m.rpt <- result
 	}()

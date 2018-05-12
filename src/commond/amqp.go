@@ -172,7 +172,7 @@ func publishAction(act <-chan common.ExeContext) {
 
 func subscribeCancel(e common.ExeContext, cll chan struct{}) {
 	cancels[e.GetCommandID()] = func() {
-		common.RL.Error(common.Core, "amqp", "Received cancel of kind "+e.GetKind())
+		common.RL.Notice(common.Core, "amqp", "Received cancel of kind "+e.GetKind())
 		close(cll)
 	}
 }

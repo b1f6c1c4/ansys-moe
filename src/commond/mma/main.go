@@ -53,7 +53,7 @@ func (m Module) Run(raw *common.RawCommand) {
 		if result.Type != "done" {
 			common.RL.Error(raw, "mma", "Command execution failure")
 		} else {
-			common.RL.Info(raw, "mma", "Command execution done")
+			common.RL.Notice(raw, "mma", "Command execution done")
 		}
 		m.rpt <- result
 	}()
