@@ -53,6 +53,28 @@ const makeProxy = (r, context) => new Proxy(r, {
   },
 });
 
+const checkPrecondition = async ({ pre }, r) => {
+  if (!pre) return true;
+  if (pre.lte) {
+    if (!await r.lte(pre.lte)) return false;
+  }
+  if (pre.gte) {
+    if (!await r.gte(pre.gte)) return false;
+  }
+  if (pre.decr) {
+    if (!await r.decr(pre.decr)) return false;
+  }
+  if (pre.done) {
+    if (!await r.done(pre.done)) {
+      if (pre.decr) {
+        await r.incr(pre.decr);
+      }
+      return false;
+    }
+  }
+  return true;
+};
+
 class PetriNet {
   constructor(db) {
     this.db = db;
@@ -69,6 +91,15 @@ class PetriNet {
     const { name, external } = option;
 
     _.update(option, 'root', (r) => r && new CompiledPath(r));
+    _.update(option, 'pre', (p) => {
+      if (_.isString(p)) {
+        return { decr: { [p]: 1 } };
+      }
+      if (_.isArray(p)) {
+        return { decr: _.fromPairs(_.map(p, (v) => [v, 1])) };
+      }
+      return p;
+    });
 
     const registry = external ? this.externals : this.internals;
     /* istanbul ignore if */
@@ -118,14 +149,16 @@ class PetriNet {
 
   // eslint-disable-next-line class-methods-use-this
   async execute(r, proxy, { option, func }, payload, args) {
-    const go = (rt) => {
+    const go = async (rt) => {
       r.prepareExecution(option, rt);
-      logger.silly('Will use root', r.root);
-      return func(proxy, payload, ...args);
+      if (await checkPrecondition(option, r)) {
+        logger.trace(`Precodition match, execute ${option.name}`, r.root);
+        return func(proxy, payload, ...args);
+      }
+      return undefined;
     };
     const root = _.get(payload, 'root');
-    const { name, root: rootRegex } = option;
-    logger.silly('Will execute', name);
+    const { root: rootRegex } = option;
     if (!rootRegex) {
       return go();
     }
