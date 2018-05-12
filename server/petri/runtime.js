@@ -59,6 +59,10 @@ class PetriRuntime {
 
   async incr(obj) {
     /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    /* istanbul ignore if */
     if (!_.every(obj, (value) => value > 0)) {
       throw new Error('value must be positive');
     }
@@ -84,11 +88,14 @@ class PetriRuntime {
 
   async decr(obj) {
     /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    /* istanbul ignore if */
     if (!_.every(obj, (value) => value > 0)) {
       throw new Error('value must be positive');
     }
-    await Promise.all(_.keys(obj).map(this.ensure));
-    if (!_.every(obj, (value, key) => this.get(key) >= value)) {
+    if (!await this.gte(obj)) {
       return false;
     }
     logger.silly(`DECR ${this.root}`, obj);
@@ -97,6 +104,24 @@ class PetriRuntime {
       this.dirty = true;
     });
     return true;
+  }
+
+  async lte(obj) {
+    /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    await Promise.all(_.keys(obj).map(this.ensure));
+    return _.every(obj, (value, key) => this.get(key) <= value);
+  }
+
+  async gte(obj) {
+    /* istanbul ignore if */
+    if (!_.isPlainObject(obj)) {
+      throw new Error('obj must be plain object');
+    }
+    await Promise.all(_.keys(obj).map(this.ensure));
+    return _.every(obj, (value, key) => this.get(key) >= value);
   }
 
   async dyn(p) {

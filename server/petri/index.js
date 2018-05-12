@@ -18,6 +18,8 @@ const makeProxy = (r, context) => new Proxy(r, {
         };
       case 'incr':
       case 'decr':
+      case 'lte':
+      case 'gte':
         return (raw, ...pars) => {
           const obj = _.mapKeys(raw, (v, p) => {
             const compiled = new CompiledPath(p);
@@ -87,7 +89,7 @@ class PetriNet {
     return this.internals[name];
   }
 
-  async dispatch(payload, context, customizer, ...args) {
+  async dispatch(payload, context, customizer = _.identity, ...args) {
     const { name, base } = payload;
     const reg = this.externals[name];
     if (!reg) {

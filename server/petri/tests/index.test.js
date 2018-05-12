@@ -80,8 +80,9 @@ describe('PetriNet', () => {
       external: true,
     }, async (r, payload) => {
       expect(payload.k).toEqual('v');
+      expect(r.option.name).toEqual('init');
       await r.incr({ '/init': 1 });
-      return 'rv';
+      return r.context.rv;
     });
 
     petri.register('static fork', async (r) => {
@@ -101,13 +102,52 @@ describe('PetriNet', () => {
       base: '/xx/state',
       root: '/f/a',
       k: 'v',
-    });
+    }, { rv: 'rv' });
     expect(rv).toEqual('rv');
     expect(db).toEqual({
       '/xx/state/init': 0,
       '/xx/state/a': 1,
       '/xx/state/b': 0,
       '/xx/state/c': 2,
+    });
+    done();
+  });
+
+  it('should handle assert', async (done) => {
+    const petri = new PetriNet(dbMock);
+
+    petri.register({
+      name: 'init',
+      external: true,
+    }, async (r, payload) => {
+      expect(payload.k).toEqual('v');
+      await r.incr({ '/init': 1, '/evil': 1 });
+    });
+
+    petri.register('pos', async (r) => {
+      if (await r.gte({ '/evil': 1 })
+        && await r.decr({ '/init': 1 })) {
+        await r.incr({ '/b': 1 });
+      }
+    });
+
+    petri.register('neg', async (r) => {
+      if (await r.lte({ '/evil': 0 })
+        && await r.decr({ '/init': 1 })) {
+        await r.incr({ '/a': 1 });
+      }
+    });
+
+    await petri.dispatch({
+      name: 'init',
+      base: '/xx/state',
+      root: '/f/a',
+      k: 'v',
+    });
+    expect(db).toEqual({
+      '/xx/state/init': 0,
+      '/xx/state/evil': 1,
+      '/xx/state/b': 1,
     });
     done();
   });
@@ -150,6 +190,7 @@ describe('PetriNet', () => {
       name: 'f/init',
       root: '/f/:fv',
     }, async (r) => {
+      expect(['/f/a', '/f/b']).toContain(r.root);
       expect(['a', 'b']).toContain(r.param.fv);
       if (await r.decr({ '/init': 1 })) {
         await r.incr({ '/st': 1 });
