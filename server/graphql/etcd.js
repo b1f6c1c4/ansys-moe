@@ -1,5 +1,5 @@
 const etcd = require('../etcd');
-const logger = require('../logger')('graphql/query');
+const logger = require('../logger')('graphql/etcd');
 
 module.exports = {
   resolvers: {

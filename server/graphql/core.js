@@ -1,5 +1,5 @@
 const amqp = require('../amqp');
-const logger = require('../logger')('graphql/mutation');
+const logger = require('../logger')('graphql/core');
 
 module.exports = {
   resolvers: {
