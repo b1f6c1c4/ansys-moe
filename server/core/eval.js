@@ -142,6 +142,7 @@ module.exports = (petri) => {
       gte: { '/init': 1 },
       lte: { '/prep': 0 },
     },
+    log: false,
   }, async (r) => {
     const xVars = await r.retrieve('/p/:proj/results/d/:dHash/var').json();
     const { kind, code, dependsOn } = _.find(r.cfg[r.param.gep], { name: r.param.name });
@@ -154,6 +155,7 @@ module.exports = (petri) => {
         vars[n] = await r.retrieve('/p/:proj/results/d/:dHash/:gep/:n', { n }).number();
       }
     }
+    r.log();
     run(kind, code, vars, r.action(`e-${r.param.gep.toLowerCase()}-done`));
     await r.incr({ '/prep': 1 });
   });

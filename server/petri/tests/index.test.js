@@ -56,10 +56,13 @@ describe('PetriNet', () => {
       name: 'init',
       external: false,
       key: 'v2',
+      log: false,
     });
     expect(petri.retrieve('w')).toBeUndefined();
     expect(petri.retrieve('init').option.key).toEqual('v1');
+    expect(petri.retrieve('init').option.log).toBeTruthy();
     expect(petri.retrieve('init', false).option.key).toEqual('v2');
+    expect(petri.retrieve('init', false).option.log).toBeFalsy();
   });
 
   it('should handle name not found', async (done) => {
@@ -95,6 +98,7 @@ describe('PetriNet', () => {
     petri.register({
       name: 'x',
       pre: ['/a', '/xx'],
+      log: false,
     }, async (r) => {
       await r.incr({ '/w': 2 });
     });

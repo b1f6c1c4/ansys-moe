@@ -13,15 +13,17 @@ class PetriRuntime {
     this.dirty = false;
     this.dyns = [];
     this.petri = petri;
+    this.log = undefined;
 
     this.ensure = this.ensure.bind(this);
   }
 
-  prepareExecution(option, param = {}) {
+  prepareExecution(option, log, param = {}) {
     this.option = option;
     this.root = param.path || '';
     this.param = param;
     this.dyns = [];
+    this.log = log;
   }
 
   makeDbPath(k) {

@@ -31,6 +31,7 @@ const makeProxy = (r, context) => new Proxy(r, {
       case 'root':
       case 'param':
       case 'petri':
+      /* istanbul ignore next */ case 'log':
         return target[prop];
       default:
         return undefined;
@@ -90,6 +91,7 @@ class PetriNet {
 
     const { name, external } = option;
 
+    _.update(option, 'log', (l) => l === undefined ? true : !!l);
     _.update(option, 'root', (r) => r && new CompiledPath(r));
     _.update(option, 'pre', (p) => {
       if (_.isString(p)) {
@@ -150,9 +152,12 @@ class PetriNet {
   // eslint-disable-next-line class-methods-use-this
   async execute(r, proxy, { option, func }, payload, args) {
     const go = async (rt) => {
-      r.prepareExecution(option, rt);
+      const log = () => logger.trace(`Precodition match, execute ${option.name}`, r.root);
+      r.prepareExecution(option, log, rt);
       if (await checkPrecondition(option, r)) {
-        logger.trace(`Precodition match, execute ${option.name}`, r.root);
+        if (option.log) {
+          log();
+        }
         return func(proxy, payload, ...args);
       }
       return undefined;
