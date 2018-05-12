@@ -851,6 +851,10 @@ json-stable-stringify-without-jsonify@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz#9db7b59496ad3f3cfef30a75142d2d930ad72651"
 
+json-stringify-safe@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz#1296a2d58fd45f19a0f6ce01d65701e2c735b6eb"
+
 kuler@0.0.x:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/kuler/-/kuler-0.0.0.tgz#b66bb46b934e550f59d818848e0abba4f7f5553c"
@@ -1498,7 +1502,7 @@ winston-transport@^3.1.0:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/winston-transport/-/winston-transport-3.2.1.tgz#5b79b294096b1a18bfe502e769491553a2cb1042"
 
-winston@^3.0.0-rc3:
+winston@^3.0.0-rc5:
   version "3.0.0-rc5"
   resolved "https://registry.yarnpkg.com/winston/-/winston-3.0.0-rc5.tgz#bc383d32b0e774d387a66e77290fe78766468f34"
   dependencies:
