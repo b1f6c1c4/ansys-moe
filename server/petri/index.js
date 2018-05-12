@@ -63,14 +63,16 @@ const checkPrecondition = async ({ pre }, r) => {
     if (!await r.gte(pre.gte)) return false;
   }
   if (pre.decr) {
-    if (!await r.decr(pre.decr)) return false;
+    if (!await r.gte(pre.decr)) return false;
   }
   if (pre.done) {
     if (!await r.done(pre.done)) {
-      if (pre.decr) {
-        await r.incr(pre.decr);
-      }
       return false;
+    }
+  }
+  if (pre.decr) {
+    if (!await r.decr(pre.decr)) {
+      throw new Error('Mixed done and decr precondition');
     }
   }
   return true;

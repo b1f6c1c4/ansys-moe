@@ -34,14 +34,10 @@ module.exports = (petri) => {
     root: '/cat/:cHash',
     pre: {
       lte: { '/error': 0, '../../error': 0 },
+      gte: { '/eval': 1 },
       decr: { '/iter/req': 1 },
     },
   }, async (r) => {
-    // Check if category still running
-    if (!await r.ensure('/eval')) {
-      logger.warn('Category quited');
-      return;
-    }
     // Check if enough evals have done
     if (await r.ensure('/eval/@') < r.cfg.minEvals) {
       logger.debug('Evals not enough');
@@ -168,8 +164,7 @@ module.exports = (petri) => {
         logger.warn('Same eval ongoing or has done');
       } else {
         logger.debug('Iteration successfully converged!');
-        // TODO: find optimal
-        await r.incr({ '../../../../@': 1 });
+        await r.incr({ '../../../conv': 1 });
       }
       return;
     }

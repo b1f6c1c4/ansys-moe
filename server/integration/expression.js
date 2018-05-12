@@ -18,7 +18,7 @@ module.exports.wrapped = (code, variables, info) => {
     const expr = parser.parse(code);
     action = {
       type: 'done',
-      result: [expr.evaluate(variables)],
+      result: expr.evaluate(variables),
     };
   } catch (e) {
     logger.warn('Expr fail', code);

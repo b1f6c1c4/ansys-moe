@@ -79,8 +79,16 @@ module.exports = (petri) => {
       done: '/cat',
     },
   }, async (r) => {
-    logger.info('All categories done!');
-    // TODO: find optimal
+    const finals = await r.retrieve('/p/:proj/results/finals').json();
+    const min = _.min(_.map(finals, 'P0'));
+    if (min === undefined) {
+      logger.warn('Project done but no valid solution found');
+      await r.incr({ '../@': 1 });
+      return;
+    }
+    const final = _.find(finals, { P0: min });
+    logger.info('Project done with optimal solution', final);
+    await r.store('/p/:proj/results/final', final);
     await r.incr({ '/done': 1 });
   });
 };

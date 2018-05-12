@@ -86,4 +86,28 @@ module.exports = (petri) => {
     await r.store('/p/:proj/results/cat/:cHash/history', []);
     await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
   });
+
+  petri.register({
+    name: 'c-converge',
+    root: '/cat/:cHash',
+    cfg: (cfg) => _.pick(cfg, ['initEvals', 'D']),
+    pre: {
+      lte: { '/eval/#': 0, '/error': 0, '../../error': 0 },
+      decr: { '/eval': 1, '/conv': 1 },
+    },
+  }, async (r) => {
+    const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
+    const min = _.min(_.map(history, 'P0'));
+    const final = min !== undefined && _.find(history, { P0: min });
+    if (!final) {
+      logger.warn('No valid solution found in category');
+      await r.incr({ '../@': 1 });
+      return;
+    }
+    logger.info('Found optimal solution in category', final);
+    const finals = (await r.retrieve('/p/:proj/results/finals').json()) || [];
+    finals.push(final);
+    await r.store('/p/:proj/results/finals', finals);
+    await r.incr({ '../@': 1 });
+  });
 };
