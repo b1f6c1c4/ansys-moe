@@ -1,12 +1,9 @@
-import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
-  Collapse,
   Divider,
   Drawer,
   List,
@@ -15,18 +12,10 @@ import {
   ListItemText,
 } from 'material-ui';
 import {
-  ExpandLess,
-  ExpandMore,
-  HelpOutline,
   Home,
-  Language,
-  Lock,
 } from 'material-ui-icons';
 import { Link } from 'react-router-dom';
 import StatusBadge from 'components/StatusBadge';
-
-import * as rawResources from 'translations';
-import messages from './messages';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -95,17 +84,6 @@ class GlobalDrawer extends React.PureComponent {
       });
     }
 
-    const langs = _.toPairs(rawResources).map(([k, v]) => (
-      <ListItem
-        key={k}
-        button
-        className={classes.nested}
-        onClick={this.handleLanguage(k)}
-      >
-        <ListItemText primary={v.lang} />
-      </ListItem>
-    ));
-
     return (
       <Drawer
         open={this.props.isDrawerOpen}
@@ -115,75 +93,21 @@ class GlobalDrawer extends React.PureComponent {
           component="nav"
           className={classes.drawer}
         >
-          {!username && (
-            <ListItem button onClick={this.handleLogin}>
-              <ListItemIcon>
-                <Link to="/app/login">
-                  <Lock />
-                </Link>
-              </ListItemIcon>
-              <ListItemText
-                className={classes.item}
-                primary={(
-                  <Link to="/app/login">
-                    <FormattedMessage {...messages.login} />
-                  </Link>
-                )}
-              />
-            </ListItem>
-          )}
-          {username && (
-            <ListItem button onClick={this.handleProfile}>
-              <ListItemIcon>
+          <ListItem button onClick={this.handleProfile}>
+            <ListItemIcon>
+              <Link to="/app/">
+                <Home />
+              </Link>
+            </ListItemIcon>
+            <ListItemText
+              className={classes.item}
+              primary={(
                 <Link to="/app/">
-                  <Home />
+                  控制面板
                 </Link>
-              </ListItemIcon>
-              <ListItemText
-                className={classes.item}
-                primary={(
-                  <Link to="/app/">
-                    <FormattedMessage {...messages.profile} />
-                  </Link>
-                )}
-              />
-            </ListItem>
-          )}
-          <ListItem button onClick={this.handleHelp}>
-            <ListItemIcon>
-              <a href="/#faq">
-                <HelpOutline />
-              </a>
-            </ListItemIcon>
-            <ListItemText
-              className={classes.item}
-              primary={(
-                <a href="/#faq">
-                  <FormattedMessage {...messages.help} />
-                </a>
               )}
             />
           </ListItem>
-          <Divider />
-          <ListItem button onClick={this.handleLanguageList}>
-            <ListItemIcon>
-              <Language />
-            </ListItemIcon>
-            <ListItemText
-              className={classes.item}
-              primary={(
-                <span>
-                  Language/语言
-                </span>
-              )}
-            />
-            {this.state.isLangOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItem>
-          <Collapse in={this.state.isLangOpen} timeout="auto" unmountOnExit>
-            <List component="div">
-              {langs}
-            </List>
-          </Collapse>
           <Divider />
           {ballots}
         </List>

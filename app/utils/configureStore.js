@@ -15,11 +15,9 @@ import createReducer from '../reducers';
 const sagaMiddleware = createSagaMiddleware();
 
 export const slicer = () => (rawState) => {
-  let state = rawState.toJS();
-  _.unset(state, 'language');
+  const state = rawState.toJS();
   _.unset(state, 'route');
-  _.unset(state, 'preVotingContainer');
-  _.unset(state, 'form.preVotingForm');
+  _.unset(state, 'globalContainer.etcd');
 
   const makeFilter = ({ reg, def = null }) => (o) => _.mapValues(o, (v, k) => {
     if (!reg.test(k)) return v;
@@ -27,7 +25,6 @@ export const slicer = () => (rawState) => {
   });
   const filt = _.reduce([
     { reg: /^is.*Loading$/, def: false },
-    { reg: /[Pp]rivateKey/ },
     { reg: /[Ee]rror/ },
   ], (fs, rg) => (o) => makeFilter(rg)(fs(o)), _.identity);
 
@@ -36,14 +33,7 @@ export const slicer = () => (rawState) => {
     return _.mapValues(filt(v), (o) => _.cloneDeepWith(o, rm));
   }
 
-  state = _.cloneDeepWith(state, rm);
-
-  _.forIn(state.form, (form) => {
-    const sens = _.keys(form.registeredFields).filter((k) => k.toLowerCase().includes('password'));
-    sens.forEach((k) => _.unset(form, `values.${k}`));
-  });
-
-  return fromJS(state);
+  return fromJS(_.cloneDeepWith(state, rm));
 };
 
 export default function configureStore(initialState = {}, history) {

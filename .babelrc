@@ -1,14 +1,6 @@
 {
   plugins: [
     'lodash',
-    [
-      'direct-import',
-      {
-        modules: [
-          'material-ui-icons',
-        ],
-      },
-    ],
   ],
   presets: [
     [
@@ -26,7 +18,12 @@
       },
     ],
     '@babel/preset-react',
-    '@babel/preset-stage-0',
+    [
+      '@babel/preset-stage-0',
+      {
+        decoratorsLegacy: true,
+      },
+    ],
   ],
   env: {
     production: {

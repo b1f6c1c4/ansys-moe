@@ -5,12 +5,7 @@
   </head>
   <body>
 
-    <% const { en } = require('./translations'); %>
-    <% const raw = require('html-webpack-plugin/lib/loader.js!./content.ejs')({}) %>
-    <%= raw.replace(
-      /data-i18n="([_a-zA-Z0-9.]*)"></g,
-      (match, k) => `data-i18n="${k}">${en[k]}<`,
-    ) %>
+    <% require('html-webpack-plugin/lib/loader.js!./content.ejs')({}) %>
 
     <% if (htmlWebpackPlugin.options.inject) { %>
       <script src="/dll/main.dll.js"></script>

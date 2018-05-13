@@ -2,22 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
   AppBar,
   IconButton,
-  Menu,
-  MenuItem,
   Toolbar,
   Typography,
 } from 'material-ui';
 import { AccountCircle, Menu as MenuIcon } from 'material-ui-icons';
 import { Link } from 'react-router-dom';
-import Button from 'components/Button';
-
-import messages from './messages';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -54,27 +48,8 @@ class GlobalBar extends React.PureComponent {
     ? this.props.onCloseDrawerAction()
     : this.props.onOpenDrawerAction();
 
-  handleProfile = () => {
-    this.props.onCloseAccountAction();
-    this.props.onPush('/app/');
-  };
-
-  handlePassword = () => {
-    this.props.onCloseAccountAction();
-    this.props.onPush('/app/password');
-  };
-
-  handleLogout = () => {
-    this.props.onCloseAccountAction();
-    this.props.onLogoutAction();
-  };
-
   render() {
-    const {
-      classes,
-      username,
-      isAccountOpen,
-    } = this.props;
+    const { classes } = this.props;
 
     return (
       <AppBar position="fixed">
@@ -94,48 +69,8 @@ class GlobalBar extends React.PureComponent {
             color="inherit"
             className={classes.header}
           >
-            <FormattedMessage {...messages.header} />
+            Ansys-MOE 自动化设计系统
           </Typography>
-          {
-            username ?
-              <div>
-                <Button
-                  className={classes.accountButton}
-                  ref={(obj) => { this.anchorEl = obj; }}
-                  onClick={this.props.onOpenAccountAction}
-                  color="inherit"
-                >
-                  <span>{username}</span>
-                  <AccountCircle className={classes.rightIcon} />
-                </Button>
-                <Menu
-                  id="menu-appbar"
-                  anchorEl={this.state.anchorEl}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  open={isAccountOpen}
-                  onClose={this.props.onCloseAccountAction}
-                >
-                  <MenuItem onClick={this.handleProfile}>
-                    <Link to="/app/">
-                      <FormattedMessage {...messages.profile} />
-                    </Link>
-                  </MenuItem>
-                  <MenuItem onClick={this.handlePassword}>
-                    <Link to="/app/password">
-                      <FormattedMessage {...messages.password} />
-                    </Link>
-                  </MenuItem>
-                  <MenuItem onClick={this.handleLogout}>
-                    <FormattedMessage {...messages.logout} />
-                  </MenuItem>
-                </Menu>
-              </div>
-              :
-              <Button to="/app/login" color="inherit">
-                <FormattedMessage {...messages.login} />
-              </Button>
-          }
         </Toolbar>
       </AppBar>
     );
@@ -145,14 +80,9 @@ class GlobalBar extends React.PureComponent {
 GlobalBar.propTypes = {
   classes: PropTypes.object.isRequired,
   onPush: PropTypes.func.isRequired,
-  username: PropTypes.string,
   isDrawerOpen: PropTypes.bool.isRequired,
-  isAccountOpen: PropTypes.bool.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,
   onCloseDrawerAction: PropTypes.func.isRequired,
-  onOpenAccountAction: PropTypes.func.isRequired,
-  onCloseAccountAction: PropTypes.func.isRequired,
-  onLogoutAction: PropTypes.func.isRequired,
 };
 
 export default compose(

@@ -27,16 +27,10 @@ class GlobalPage extends React.PureComponent {
     const {
       classes, // eslint-disable-line no-unused-vars
       onPush,
-      onLanguage,
-      username,
       listBallots,
-      isAccountOpen,
       isDrawerOpen,
       onOpenDrawerAction,
       onCloseDrawerAction,
-      onOpenAccountAction,
-      onCloseAccountAction,
-      onLogoutAction,
     } = this.props;
 
     return (
@@ -45,21 +39,14 @@ class GlobalPage extends React.PureComponent {
         <GlobalBar
           {...{
             onPush,
-            username,
-            isAccountOpen,
             isDrawerOpen,
             onOpenDrawerAction,
             onCloseDrawerAction,
-            onOpenAccountAction,
-            onCloseAccountAction,
-            onLogoutAction,
           }}
         />
         <GlobalDrawer
           {...{
             onPush,
-            onLanguage,
-            username,
             listBallots,
             isDrawerOpen,
             onCloseDrawerAction,
@@ -77,16 +64,10 @@ GlobalPage.propTypes = {
   classes: PropTypes.object.isRequired,
   children: PropTypes.any,
   onPush: PropTypes.func.isRequired,
-  onLanguage: PropTypes.func.isRequired,
-  username: PropTypes.string,
   listBallots: PropTypes.array,
   isDrawerOpen: PropTypes.bool.isRequired,
-  isAccountOpen: PropTypes.bool.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,
   onCloseDrawerAction: PropTypes.func.isRequired,
-  onOpenAccountAction: PropTypes.func.isRequired,
-  onCloseAccountAction: PropTypes.func.isRequired,
-  onLogoutAction: PropTypes.func.isRequired,
 };
 
 export default compose(

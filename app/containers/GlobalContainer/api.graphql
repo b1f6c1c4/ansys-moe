@@ -1,7 +1,6 @@
-query Ballots {
-  ballots {
-    bId
-    name
-    status
+query Etcd {
+  etcd {
+    key
+    value
   }
 }

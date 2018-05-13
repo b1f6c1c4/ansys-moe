@@ -48,7 +48,6 @@ module.exports = require('./webpack.base')({
     ],
     index: [
       'index/style.js',
-      'index/index.js',
     ],
     app: [
       'root.js',

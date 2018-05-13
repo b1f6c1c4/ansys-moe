@@ -1,14 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
+  Typography,
 } from 'material-ui';
 import classnames from 'classnames';
-
-import messages from './messages';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -65,17 +63,25 @@ class StatusBadge extends React.PureComponent {
 
     const cls = minor ? classes.minor : classes.major;
 
+    const messages = {
+      init: '初始化',
+      running: '运行中',
+      iter: '迭代中',
+      done: '成功',
+      error: '错误',
+    };
+
     if (!messages[status]) {
       return (
         <div className={classnames(cls, classes.unknown)}>
-          <FormattedMessage {...messages.unknown} />
+          <Typography>{messages.unknown}</Typography>
         </div>
       );
     }
 
     return (
       <div className={classnames(cls, classes[status])}>
-        <FormattedMessage {...messages[status]} />
+        <Typography>{messages[status]}</Typography>
       </div>
     );
   }

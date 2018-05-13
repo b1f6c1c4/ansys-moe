@@ -37,7 +37,6 @@ module.exports = require('./webpack.base')({
     index: [
       'webpack-hot-middleware/client?reload=true',
       'index/style.js',
-      'index/index.js',
     ],
     app: [
       'webpack-hot-middleware/client?reload=true',

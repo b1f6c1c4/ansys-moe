@@ -13,48 +13,23 @@ export function closeDrawer() {
   };
 }
 
-export function openAccount() {
-  return {
-    type: GLOBAL_CONTAINER.OPEN_ACCOUNT_ACTION,
-  };
-}
-
-export function closeAccount() {
-  return {
-    type: GLOBAL_CONTAINER.CLOSE_ACCOUNT_ACTION,
-  };
-}
-
-export function login(credential) {
-  return {
-    type: GLOBAL_CONTAINER.LOGIN_ACTION,
-    credential,
-  };
-}
-
-export function logout() {
-  return {
-    type: GLOBAL_CONTAINER.LOGOUT_ACTION,
-  };
-}
-
 // Sagas
-export function ballotsRequest() {
+export function etcdRequest() {
   return {
-    type: GLOBAL_CONTAINER.BALLOTS_REQUEST,
+    type: GLOBAL_CONTAINER.ETCD_REQUEST,
   };
 }
 
-export function ballotsSuccess(result) {
+export function etcdSuccess(result) {
   return {
-    type: GLOBAL_CONTAINER.BALLOTS_SUCCESS,
+    type: GLOBAL_CONTAINER.ETCD_SUCCESS,
     result,
   };
 }
 
-export function ballotsFailure(error) {
+export function etcdFailure(error) {
   return {
-    type: GLOBAL_CONTAINER.BALLOTS_FAILURE,
+    type: GLOBAL_CONTAINER.ETCD_FAILURE,
     error,
   };
 }

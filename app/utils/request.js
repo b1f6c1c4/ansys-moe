@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const apiUrl = (raw) => raw || '/api';
+const apiUrl = (raw) => raw || '';
 
 export const makeApi = (url, isWs, g = window) => {
   const api = apiUrl(process.env.API_URL);
@@ -75,18 +75,11 @@ export const getClient = /* istanbul ignore next */ (c) => {
   return client;
 };
 
-export const makeContext = (cred) => !cred ? undefined : {
-  headers: {
-    authorization: `Bearer ${cred}`,
-  },
-};
-
-export const query = async (gql, vars, cred) => {
+export const query = async (gql, vars) => {
   try {
     const response = await client.query({
       query: gql,
       variables: vars,
-      context: makeContext(cred),
       fetchPolicy: 'network-only',
     });
     return postProcess(response);
@@ -95,12 +88,11 @@ export const query = async (gql, vars, cred) => {
   }
 };
 
-export const mutate = async (gql, vars, cred) => {
+export const mutate = async (gql, vars) => {
   try {
     const response = await client.mutate({
       mutation: gql,
       variables: vars,
-      context: makeContext(cred),
       fetchPolicy: 'no-cache',
     });
     return postProcess(response);
@@ -109,14 +101,11 @@ export const mutate = async (gql, vars, cred) => {
   }
 };
 
-export const subscribe = async (gql, vars, cred) => {
+export const subscribe = async (gql, vars) => {
   try {
     const response = await client.subscribe({
       query: gql,
-      variables: {
-        ...vars,
-        authorization: !cred ? undefined : `Bearer ${cred}`,
-      },
+      variables: vars,
       fetchPolicy: 'network-only',
     });
     return response;
