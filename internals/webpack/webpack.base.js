@@ -160,12 +160,9 @@ module.exports = ({
       ],
       alias: {
         history: 'history/es',
-        i18next: 'i18next/dist/es',
-        'i18next-browser-languagedetector': 'i18next-browser-languagedetector/dist/es',
-        'jquery-i18next': 'jquery-i18next/dist/es',
         lodash: 'lodash-es',
         'material-ui': 'material-ui/es',
-        'material-ui-icons': 'material-ui-icons/es',
+        'material-ui-icons': '@material-ui/icons/es',
         'react-beautiful-dnd': 'react-beautiful-dnd/esm',
         'react-redux': 'react-redux/es',
         'react-router': 'react-router/es',
