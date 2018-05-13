@@ -77,7 +77,7 @@ module.exports = (petri) => {
     } else {
       const dHash = hash(cVars);
       ongoing[dHash] = cVars;
-      logger.info(`Will create eval ${dHash}`, _.assign({}, vard));
+      logger.info(`Will create eval ${dHash}`, _.assign({}, cVars));
       await r.store('/hashs/dHash/:dHash', { dHash }, cVars);
       await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
     }

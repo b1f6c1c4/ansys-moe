@@ -179,7 +179,11 @@ module.exports = (petri) => {
     ongoing[dHash] = dpars;
     logger.info(`Will create eval ${dHash}`, dpars);
     await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
-    await r.incr({ '../../../eval/:dHash/init': 1 }, { dHash });
-    await r.incr({ '/iter/hint': 1 });
+    await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
+    await r.incr({
+      '../../../iter/hint': 1,
+      '../../../eval/#': 1,
+      '../../../eval/:dHash/init': 1,
+    }, { dHash });
   });
 };
