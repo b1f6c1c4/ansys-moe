@@ -31,7 +31,6 @@ module.exports = require('./webpack.base')({
   // Add hot reloading in development
   entry: {
     mock: [
-      'file-loader?name=[name].[ext]!resource/favicon.ico',
       'file-loader?name=assets/[name].[ext]!outdatedbrowser/outdatedbrowser/outdatedbrowser.min.css',
       'file-loader?name=assets/[name].[ext]!outdatedbrowser/outdatedbrowser/outdatedbrowser.min.js',
     ],

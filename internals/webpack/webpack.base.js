@@ -1,15 +1,12 @@
 const _ = require('lodash');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const secretResources = require('../../app/secret/translations');
-const i18n = require('./i18n');
 
 module.exports = ({
   mode,
   entry,
   output,
   babelOptions,
-  workerName,
   cssLoaderVender,
   cssLoaderApp,
   inject,
@@ -43,24 +40,6 @@ module.exports = ({
         'app',
       ],
     }),
-
-    // Copy the secret/index.html
-    new HtmlWebpackPlugin({
-      filename: 'secret/index.html',
-      template: 'app/secret/index.ejs',
-      inject: true,
-      chunks: [],
-      i18n: i18n(secretResources),
-    }),
-
-    // I18n the secret/index.ejs
-    ..._.chain(i18n(secretResources)).toPairs().map(([k, v]) => new HtmlWebpackPlugin({
-      filename: `secret/${k}.html`,
-      template: 'app/secret/locale.ejs',
-      inject: true,
-      chunks: [],
-      i18n: v,
-    })).value(),
   ];
 
   return {
@@ -75,18 +54,6 @@ module.exports = ({
           test: /\.js$/,
           exclude: /node_modules/,
           use: [{
-            loader: 'babel-loader',
-            options: babelOptions,
-          }],
-        },
-        {
-          test: /\.worker\.js$/,
-          use: [{
-            loader: 'worker-loader',
-            options: {
-              name: workerName,
-            },
-          }, {
             loader: 'babel-loader',
             options: babelOptions,
           }],
