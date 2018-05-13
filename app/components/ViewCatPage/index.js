@@ -21,7 +21,7 @@ import EmptyIndicator from 'components/EmptyIndicator';
 import Button from 'components/Button';
 import RefreshButton from 'components/RefreshButton';
 
-import { ProjCanStop, ProjCanDrop } from 'utils/permission';
+import { CatCanStop } from 'utils/permission';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -50,10 +50,9 @@ const styles = (theme) => ({
   },
 });
 
-class ViewProjPage extends React.PureComponent {
+class ViewCatPage extends React.PureComponent {
   state = {
     isOpenStop: false,
-    isOpenDrop: false,
   };
 
   componentWillReceiveProps(nextProps) {
@@ -73,13 +72,14 @@ class ViewProjPage extends React.PureComponent {
     this.setState(_.mapValues(this.state, (v, k) => /^isOpen/.test(k) ? false : v));
   };
 
-  handleClick = (cHash) => () => this.props.onPush(`/app/p/${this.props.proj}/cat/${cHash}`);
+  handleClick = (dHash) => () => this.props.onPush(`/app/p/${this.props.proj}/cat/${this.props.cHash}/d/${dHash}`);
 
   render() {
     const {
       // eslint-disable-next-line no-unused-vars
       classes,
       proj,
+      cHash,
       isLoading,
       listHash,
       listProj,
@@ -88,18 +88,19 @@ class ViewProjPage extends React.PureComponent {
     if (!listProj || !(proj in listProj)) return null;
 
     const p = listProj[proj];
+    const cat = p.cat[cHash];
 
     return (
       <div className={classes.container}>
-        <DocumentTitle title={proj} />
+        <DocumentTitle title={`${proj}/${cHash}`} />
         <Typography
           component="h1"
           variant="display2"
           gutterBottom
         >
-          <span>项目监控 - {proj}</span>
+          <span>分类监控 - {proj}/{cHash}</span>
           <Typography className={classes.badge} variant="subheading" component="span">
-            <StatusBadge status={p.status} />
+            <StatusBadge status={cat.status} />
           </Typography>
         </Typography>
         <div className={classes.actions}>
@@ -108,7 +109,7 @@ class ViewProjPage extends React.PureComponent {
               onClick={this.props.onRefresh}
             />
           )}
-          {!isLoading && ProjCanStop(p) && (
+          {!isLoading && CatCanStop(cat) && (
             <Button
               color="secondary"
               onClick={this.handleConfirm('isOpenStop')}
@@ -116,84 +117,66 @@ class ViewProjPage extends React.PureComponent {
               终止执行
             </Button>
           )}
-          {!isLoading && ProjCanDrop(p) && (
-            <Button
-              color="secondary"
-              variant="raised"
-              onClick={this.handleConfirm('isOpenDrop')}
-            >
-              彻底删除
-            </Button>
-          )}
         </div>
         <ConfirmDialog
           title="确认终止执行"
-          description="点击确认后，该项目将会被标记为“错误”状态。"
+          description="点击确认后，该分类将会被标记为“错误”状态。"
           isOpen={this.state.isOpenStop}
           onCancel={this.handleConfirm()}
           onAction={this.handleConfirm(this.props.onStop)}
         />
-        <ConfirmDialog
-          title="确认彻底删除"
-          description="点击确认后，该项目的全部状态信息将会被删除。若需恢复，需要手工在etcd集群上恢复。"
-          isOpen={this.state.isOpenDrop}
-          onCancel={this.handleConfirm()}
-          onAction={this.handleConfirm(this.props.onDrop)}
-        />
         <ResultIndicator error={this.props.error} />
         <Paper className={classes.root}>
           <Typography variant="title" className={classes.title}>
-            分类
+            迭代
           </Typography>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell padding="none">分类编号</TableCell>
-                <TableCell padding="none">分类参数</TableCell>
-                <TableCell padding="none">正在迭代</TableCell>
-                <TableCell padding="none">完成迭代</TableCell>
-                <TableCell padding="none">分类状态</TableCell>
+                <TableCell padding="none">迭代编号</TableCell>
+                <TableCell padding="none">迭代参数</TableCell>
+                <TableCell padding="none">目标函数</TableCell>
+                <TableCell padding="none">迭代状态</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {_.toPairs(p.cat).map(([cHash, cat]) => (
+              {_.toPairs(cat.eval).map(([dHash, e]) => (
                 <TableRow
-                  key={cHash}
+                  key={dHash}
                   hover
-                  onClick={this.handleClick(cHash)}
+                  onClick={this.handleClick(dHash)}
                   className={classes.clickable}
                 >
-                  <TableCell padding="none">{cHash}</TableCell>
+                  <TableCell padding="none">{dHash}</TableCell>
                   <TableCell padding="none">
-                    {JSON.stringify(listHash.cHash[cHash])}
+                    {JSON.stringify(listHash.dHash[dHash])}
                   </TableCell>
-                  <TableCell padding="none">{_.keys(cat.ongoing).length}</TableCell>
-                  <TableCell padding="none">{cat.history.length}</TableCell>
-                  <TableCell padding="none"><StatusBadge status={cat.status} /></TableCell>
+                  <TableCell padding="none">{_.get(p, ['results', 'd', dHash, 'P0'])}</TableCell>
+                  <TableCell padding="none"><StatusBadge status={e.status} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          <EmptyIndicator list={p.cat} />
+          <EmptyIndicator list={cat.eval} />
         </Paper>
       </div>
     );
   }
 }
 
-ViewProjPage.propTypes = {
+ViewCatPage.propTypes = {
   onPush: PropTypes.func.isRequired,
   onRefresh: PropTypes.func.isRequired,
   classes: PropTypes.object.isRequired,
   proj: PropTypes.string.isRequired,
+  cHash: PropTypes.string.isRequired,
   isLoading: PropTypes.bool.isRequired,
   listHash: PropTypes.object,
   listProj: PropTypes.object,
   error: PropTypes.object,
   onStop: PropTypes.func.isRequired,
-  onDrop: PropTypes.func.isRequired,
 };
 
 export default compose(
   withStyles(styles),
-)(ViewProjPage);
+)(ViewCatPage);

@@ -1,4 +1,4 @@
-export const CanStop = ({ status }) => {
+export const ProjCanStop = ({ status }) => {
   switch (status) {
     case 'running':
       return true;
@@ -7,10 +7,23 @@ export const CanStop = ({ status }) => {
   }
 };
 
-export const CanDrop = ({ status }) => {
+export const ProjCanDrop = ({ status }) => {
   switch (status) {
     case 'error':
     case 'done':
+      return true;
+    default:
+      return false;
+  }
+};
+
+export const CatCanStop = ({ status }) => {
+  switch (status) {
+    case 'init':
+      return true;
+    case 'iter':
+      return true;
+    case 'running':
       return true;
     default:
       return false;

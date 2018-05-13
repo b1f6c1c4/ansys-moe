@@ -6,9 +6,14 @@ import {
   withStyles,
   Typography,
 } from 'material-ui';
+import DocumentTitle from 'components/DocumentTitle';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
+  container: {
+    width: '100%',
+    padding: theme.spacing.unit,
+  },
 });
 
 class NotFoundPage extends React.PureComponent {
@@ -17,7 +22,8 @@ class NotFoundPage extends React.PureComponent {
     const { classes } = this.props;
 
     return (
-      <div>
+      <div className={classes.container}>
+        <DocumentTitle title="404" />
         <Typography variant="display4">
           404
         </Typography>

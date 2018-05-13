@@ -58,8 +58,8 @@ class ConfirmDialog extends React.PureComponent {
 
 ConfirmDialog.propTypes = {
   classes: PropTypes.object.isRequired,
-  title: PropTypes.object.isRequired,
-  description: PropTypes.object.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
   isOpen: PropTypes.bool,
   onCancel: PropTypes.func,
   onAction: PropTypes.func,
