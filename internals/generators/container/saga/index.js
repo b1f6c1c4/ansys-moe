@@ -76,18 +76,6 @@ module.exports = {
       abortOnFail: true,
     });
 
-    // reducer.test.js
-    actions.push({
-      type: 'complexModify',
-      method: 'sectionEnd',
-      indent: 2,
-      section: /^ {2}\/\/ Sagas/g,
-      pattern: /^ {2}\/\/ [A-Z][a-zA-Z]*$/g,
-      path: '../../app/containers/{{ properCase name }}/tests/reducer.test.js',
-      templateFile: './container/saga/reducer.test.js.hbs',
-      abortOnFail: true,
-    });
-
     // sagas.js
     actions.push({
       type: 'complexModify',
@@ -105,26 +93,6 @@ module.exports = {
       pattern: /^ {2}yield take.*REQUEST.*Request\);$/g,
       path: '../../app/containers/{{ properCase name }}/sagas.js',
       template: '  yield takeEvery({{ constantCase name }}.{{ constantCase sagaName }}_REQUEST, handle{{ properCase sagaName }}Request);',
-      abortOnFail: true,
-    });
-
-    // sagas.test.js
-    actions.push({
-      type: 'complexModify',
-      method: 'lastOccurance',
-      pattern: /^ {2}handle[a-zA-Z]+Request,$/g,
-      path: '../../app/containers/{{ properCase name }}/tests/sagas.test.js',
-      template: '  handle{{ properCase sagaName }}Request,',
-      abortOnFail: true,
-    });
-    actions.push({
-      type: 'complexModify',
-      method: 'sectionEnd',
-      indent: 0,
-      section: /^\/\/ Sagas/g,
-      pattern: /^\/\/ [A-Z][a-zA-Z]*$/g,
-      path: '../../app/containers/{{ properCase name }}/tests/sagas.test.js',
-      templateFile: './container/saga/sagas.test.js.hbs',
       abortOnFail: true,
     });
 

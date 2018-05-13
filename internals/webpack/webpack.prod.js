@@ -1,6 +1,5 @@
 const path = require('path');
 const GitRevisionPlugin = require('git-revision-webpack-plugin');
-const transformImports = require('babel-plugin-transform-imports');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
@@ -57,16 +56,6 @@ module.exports = require('./webpack.base')({
   babelOptions: {
     plugins: [
       'lodash',
-      [
-        transformImports,
-        {
-          'material-ui-icons': {
-            // eslint-disable-next-line no-template-curly-in-string
-            transform: 'material-ui-icons/${member}',
-            preventFullImport: true,
-          },
-        },
-      ],
     ],
   },
 

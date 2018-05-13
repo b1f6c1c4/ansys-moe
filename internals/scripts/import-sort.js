@@ -127,7 +127,7 @@ const style = (file) => (styleApi) => {
     },
     { match: moduleNameIs(/^material-ui\/colors/) },
     {
-      match: moduleNameIs('material-ui-icons'),
+      match: moduleNameIs('@material-ui/icons'),
       sortNamedMembers: name(proper),
     },
     { match: moduleNameIs('classnames') },

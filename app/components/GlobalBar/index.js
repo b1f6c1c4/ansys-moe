@@ -10,8 +10,7 @@ import {
   Toolbar,
   Typography,
 } from 'material-ui';
-import { AccountCircle, Menu as MenuIcon } from 'material-ui-icons';
-import { Link } from 'react-router-dom';
+import { Menu as MenuIcon } from '@material-ui/icons';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -64,7 +63,7 @@ class GlobalBar extends React.PureComponent {
           </IconButton>
           <Typography
             component="div"
-            onClick={this.handleProfile}
+            onClick={this.handleDrawer}
             variant="headline"
             color="inherit"
             className={classes.header}
@@ -79,7 +78,6 @@ class GlobalBar extends React.PureComponent {
 
 GlobalBar.propTypes = {
   classes: PropTypes.object.isRequired,
-  onPush: PropTypes.func.isRequired,
   isDrawerOpen: PropTypes.bool.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,
   onCloseDrawerAction: PropTypes.func.isRequired,

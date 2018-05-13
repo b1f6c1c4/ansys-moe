@@ -15,7 +15,7 @@ import sagas from './sagas';
 
 export class GlobalContainer extends React.PureComponent {
   componentWillMount() {
-    this.props.onEtcdRequestAction();
+    this.props.onEtcdRequest();
   }
 
   componentWillUnmount() {
@@ -34,10 +34,11 @@ export class GlobalContainer extends React.PureComponent {
 GlobalContainer.propTypes = {
   children: PropTypes.any,
   isDrawerOpen: PropTypes.bool.isRequired,
+  listProj: PropTypes.object,
   onPush: PropTypes.func.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,
   onCloseDrawerAction: PropTypes.func.isRequired,
-  onEtcdRequestAction: PropTypes.func.isRequired,
+  onEtcdRequest: PropTypes.func.isRequired,
   onEtcdStopAction: PropTypes.func.isRequired,
 };
 
@@ -46,13 +47,14 @@ function mapDispatchToProps(dispatch) {
     onPush: (url) => dispatch(push(url)),
     onOpenDrawerAction: () => dispatch(globalContainerActions.openDrawer()),
     onCloseDrawerAction: () => dispatch(globalContainerActions.closeDrawer()),
-    onEtcdRequestAction: () => dispatch(subscriptionContainerActions.etcdRequest()),
+    onEtcdRequest: () => dispatch(globalContainerActions.etcdRequest()),
     onEtcdStopAction: () => dispatch(subscriptionContainerActions.etcdStop()),
   };
 }
 
 const mapStateToProps = createStructuredSelector({
   isDrawerOpen: (state) => state.getIn(['globalContainer', 'isDrawerOpen']),
+  listProj: globalContainerSelectors.ListProj(),
 });
 
 export default compose(

@@ -20,7 +20,7 @@ import {
   Edit,
   Save,
   Visibility,
-} from 'material-ui-icons';
+} from '@material-ui/icons';
 import classnames from 'classnames';
 import BallotMeta from 'components/BallotMeta';
 import Button from 'components/Button';

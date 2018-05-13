@@ -92,12 +92,6 @@ module.exports = {
         templateFile: './container/selectors.js.hbs',
         abortOnFail: true,
       });
-      actions.push({
-        type: 'add',
-        path: '../../app/containers/{{properCase name}}/tests/selectors.test.js',
-        templateFile: './container/selectors.test.js.hbs',
-        abortOnFail: true,
-      });
     }
 
     if (data.wantReducer) {
@@ -116,26 +110,12 @@ module.exports = {
         templateFile: './container/actions.js.hbs',
         abortOnFail: true,
       });
-      if (data.wantActions) {
-        actions.push({
-          type: 'add',
-          path: '../../app/containers/{{properCase name}}/tests/actions.test.js',
-          templateFile: './container/actions.test.js.hbs',
-          abortOnFail: true,
-        });
-      }
 
       // Generate reducer.js
       actions.push({
         type: 'add',
         path: '../../app/containers/{{properCase name}}/reducer.js',
         templateFile: './container/reducer.js.hbs',
-        abortOnFail: true,
-      });
-      actions.push({
-        type: 'add',
-        path: '../../app/containers/{{properCase name}}/tests/reducer.test.js',
-        templateFile: './container/reducer.test.js.hbs',
         abortOnFail: true,
       });
 
@@ -145,12 +125,6 @@ module.exports = {
           type: 'add',
           path: '../../app/containers/{{properCase name}}/sagas.js',
           templateFile: './container/sagas.js.hbs',
-          abortOnFail: true,
-        });
-        actions.push({
-          type: 'add',
-          path: '../../app/containers/{{properCase name}}/tests/sagas.test.js',
-          templateFile: './container/sagas.test.js.hbs',
           abortOnFail: true,
         });
 

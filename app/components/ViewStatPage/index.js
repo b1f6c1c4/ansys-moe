@@ -8,7 +8,7 @@ import {
   MobileStepper,
   Typography,
 } from 'material-ui';
-import { KeyboardArrowLeft, KeyboardArrowRight } from 'material-ui-icons';
+import { KeyboardArrowLeft, KeyboardArrowRight } from '@material-ui/icons';
 import PieChart from 'react-d3-components/lib/PieChart';
 import BallotMeta from 'components/BallotMeta';
 import Button from 'components/Button';

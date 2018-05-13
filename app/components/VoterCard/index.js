@@ -14,7 +14,7 @@ import {
   IconButton,
   Typography,
 } from 'material-ui';
-import { Delete, ExpandMore } from 'material-ui-icons';
+import { Delete, ExpandMore } from '@material-ui/icons';
 import classnames from 'classnames';
 import QRCode from 'qrcode.react';
 import ConfirmDialog from 'components/ConfirmDialog';

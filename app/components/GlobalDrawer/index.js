@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
@@ -13,7 +14,7 @@ import {
 } from 'material-ui';
 import {
   Home,
-} from 'material-ui-icons';
+} from '@material-ui/icons';
 import { Link } from 'react-router-dom';
 import StatusBadge from 'components/StatusBadge';
 
@@ -31,53 +32,28 @@ const styles = (theme) => ({
 });
 
 class GlobalDrawer extends React.PureComponent {
-  state = { isLangOpen: false };
-
-  handleProfile = () => {
+  handleProj = (name) => () => {
     this.props.onCloseDrawerAction();
-    this.props.onPush('/app/');
-  };
-
-  handleHelp = () => {
-    this.props.onCloseDrawerAction();
-    window.location = '/#faq';
-  };
-
-  handleLogin = () => {
-    this.props.onCloseDrawerAction();
-    this.props.onPush('/app/login');
-  };
-
-  handleBallot = (b) => () => {
-    this.props.onCloseDrawerAction();
-    this.props.onPush(`/app/ballots/${b.bId}`);
-  };
-
-  handleLanguageList = () => this.setState({ isLangOpen: !this.state.isLangOpen });
-
-  handleLanguage = (lo) => () => {
-    this.setState({ isLangOpen: false });
-    this.props.onLanguage(lo);
+    this.props.onPush(`/app/p/${name}`);
   };
 
   render() {
     const {
       classes,
-      username,
-      listBallots,
+      listProj,
     } = this.props;
 
-    let ballots;
-    if (username && listBallots) {
-      ballots = listBallots.map((b) => {
+    let projs;
+    if (listProj) {
+      projs = _.toPairs(listProj).map(([name, p]) => {
         const content = (
-          <Link to={`/app/ballots/${b.bId}`}>
-            {b.name}
-            <StatusBadge status={b.status} minor />
+          <Link to={`/app/p/${name}`}>
+            {name}
+            <StatusBadge status={p.status} minor />
           </Link>
         );
         return (
-          <ListItem key={b.bId} button onClick={this.handleBallot(b)}>
+          <ListItem key={name} button onClick={this.handleProj(name)}>
             <ListItemText primary={content} />
           </ListItem>
         );
@@ -109,7 +85,7 @@ class GlobalDrawer extends React.PureComponent {
             />
           </ListItem>
           <Divider />
-          {ballots}
+          {projs}
         </List>
       </Drawer>
     );
@@ -119,9 +95,7 @@ class GlobalDrawer extends React.PureComponent {
 GlobalDrawer.propTypes = {
   classes: PropTypes.object.isRequired,
   onPush: PropTypes.func.isRequired,
-  onLanguage: PropTypes.func.isRequired,
-  username: PropTypes.string,
-  listBallots: PropTypes.array,
+  listProj: PropTypes.object,
   isDrawerOpen: PropTypes.bool.isRequired,
   onCloseDrawerAction: PropTypes.func.isRequired,
 };

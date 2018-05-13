@@ -6,7 +6,7 @@ import { FormattedMessage } from 'react-intl';
 import {
   withStyles,
 } from 'material-ui';
-import { Delete } from 'material-ui-icons';
+import { Delete } from '@material-ui/icons';
 import Button from 'components/Button';
 
 import messages from './messages';

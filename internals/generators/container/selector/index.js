@@ -46,18 +46,6 @@ module.exports = {
       abortOnFail: true,
     });
 
-    // selectors.test.js
-    actions.push({
-      type: 'complexModify',
-      method: 'sectionEnd',
-      indent: 0,
-      section: /.*/g,
-      pattern: /(?!)/g,
-      path: '../../app/containers/{{ properCase name }}/tests/selectors.test.js',
-      templateFile: './container/selector/selectors.test.js.hbs',
-      abortOnFail: true,
-    });
-
     // index.js
     actions.push({
       type: 'complexModify',

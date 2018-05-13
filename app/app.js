@@ -14,7 +14,6 @@ import { Switch, Route } from 'react-router-dom';
 import NotFoundPage from 'components/NotFoundPage';
 import ErrorBoundary from 'containers/ErrorBoundary';
 import GlobalContainer from 'containers/GlobalContainer';
-// import SnackbarContainer from 'containers/SnackbarContainer';
 import SubscriptionContainer from 'containers/SubscriptionContainer';
 
 import createHistory from 'history/createBrowserHistory';
@@ -66,7 +65,6 @@ export const render = () => {
             <MuiThemeProvider theme={theme}>
               <GlobalContainer>
                 <ErrorBoundary>
-                  {/* <SnackbarContainer /> */}
                   <ConnectedSwitch>
                     <Route component={NotFoundPage} />
                   </ConnectedSwitch>

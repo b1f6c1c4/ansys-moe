@@ -60,18 +60,6 @@ module.exports = {
       abortOnFail: true,
     });
 
-    // actions.test.js
-    actions.push({
-      type: 'complexModify',
-      method: 'sectionEnd',
-      indent: 2,
-      section: /^ {2}\/\/ Actions/g,
-      pattern: /^ {2}\/\/ [A-Z][a-zA-Z]*$/g,
-      path: '../../app/containers/{{ properCase name }}/tests/actions.test.js',
-      templateFile: './container/action/actions.test.js.hbs',
-      abortOnFail: true,
-    });
-
     // reducer.js
     actions.push({
       type: 'complexModify',
@@ -82,18 +70,6 @@ module.exports = {
       pattern: /^ {4}\/\/ [A-Z][a-zA-Z]*$/g,
       path: '../../app/containers/{{ properCase name }}/reducer.js',
       templateFile: './container/action/reducer.js.hbs',
-      abortOnFail: true,
-    });
-
-    // reducer.test.js
-    actions.push({
-      type: 'complexModify',
-      method: 'sectionEnd',
-      indent: 2,
-      section: /^ {2}\/\/ Actions/g,
-      pattern: /^ {2}\/\/ [A-Z][a-zA-Z]*$/g,
-      path: '../../app/containers/{{ properCase name }}/tests/reducer.test.js',
-      templateFile: './container/action/reducer.test.js.hbs',
       abortOnFail: true,
     });
 

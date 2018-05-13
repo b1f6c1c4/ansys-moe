@@ -27,7 +27,7 @@ class GlobalPage extends React.PureComponent {
     const {
       classes, // eslint-disable-line no-unused-vars
       onPush,
-      listBallots,
+      listProj,
       isDrawerOpen,
       onOpenDrawerAction,
       onCloseDrawerAction,
@@ -47,7 +47,7 @@ class GlobalPage extends React.PureComponent {
         <GlobalDrawer
           {...{
             onPush,
-            listBallots,
+            listProj,
             isDrawerOpen,
             onCloseDrawerAction,
           }}
@@ -64,7 +64,7 @@ GlobalPage.propTypes = {
   classes: PropTypes.object.isRequired,
   children: PropTypes.any,
   onPush: PropTypes.func.isRequired,
-  listBallots: PropTypes.array,
+  listProj: PropTypes.object,
   isDrawerOpen: PropTypes.bool.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,
   onCloseDrawerAction: PropTypes.func.isRequired,

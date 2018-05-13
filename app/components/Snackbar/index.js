@@ -9,7 +9,7 @@ import {
   IconButton,
   Snackbar as RawSnackbar,
 } from 'material-ui';
-import { Close } from 'material-ui-icons';
+import { Close } from '@material-ui/icons';
 
 import * as CHANGE_PASSWORD_CONTAINER from 'containers/ChangePasswordContainer/constants';
 import * as CREATE_BALLOT_CONTAINER from 'containers/CreateBallotContainer/constants';
