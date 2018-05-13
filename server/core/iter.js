@@ -174,12 +174,10 @@ module.exports = (petri) => {
       }
       return [d.name, ((rst[0][i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
     }));
-    const vard = _.mapValues(cVars, (v, k) =>
-      _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
     const dpars = _.assign({}, cVars, pars);
     const dHash = hash(dpars);
     ongoing[dHash] = dpars;
-    logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
+    logger.info(`Will create eval ${dHash}`, dpars);
     await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
     await r.incr({ '../../../eval/:dHash/init': 1 }, { dHash });
     await r.incr({ '/iter/hint': 1 });

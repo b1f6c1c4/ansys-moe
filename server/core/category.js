@@ -63,8 +63,6 @@ module.exports = (petri) => {
       return;
     }
     logger.debug('Init succeed', rst);
-    const vard = _.mapValues(cVars, (v, k) =>
-      _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
     const ongoing = {};
     await r.dyn('/eval');
     if (rst[0].length) {
@@ -72,7 +70,7 @@ module.exports = (petri) => {
         const dpars = _.assign({}, cVars, pars);
         const dHash = hash(dpars);
         ongoing[dHash] = dpars;
-        logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
+        logger.info(`Will create eval ${dHash}`, dpars);
         await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
         await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
       }

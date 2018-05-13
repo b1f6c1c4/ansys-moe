@@ -35,7 +35,8 @@ module.exports = (petri) => {
     for (const gpar of r.cfg.G) {
       const { name, lowerBound, upperBound } = gpar;
       const val = await r.retrieve('/p/:proj/results/d/:dHash/G/:name', { name }).number();
-      if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
         logger.warn(`G ${name} out of bound`, r.param);
         await r.incr({ '/P0': 1 });
         return;
@@ -95,6 +96,21 @@ module.exports = (petri) => {
           return;
       }
     }
+    let flag = false;
+    for (const mpar of rule.outputs) {
+      const { name, lowerBound, upperBound } = mpar;
+      const val = mVars[name];
+      await r.store('/p/:proj/results/d/:dHash/M/:name', { name }, val);
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
+        logger.warn(`M ${name} out of bound`, r.param);
+        flag = true;
+      }
+    }
+    if (flag) {
+      await r.incr({ '/P0': 1 });
+      return;
+    }
     _.assign(xVars, mVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
     await r.incr({ '/M/done': 1 });
@@ -127,7 +143,8 @@ module.exports = (petri) => {
     for (const epar of r.cfg.E) {
       const { name, lowerBound, upperBound } = epar;
       const val = await r.retrieve('/p/:proj/results/d/:dHash/E/:name', { name }).number();
-      if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
         logger.warn(`E ${name} out of bound`, r.param);
         await r.incr({ '/P0': 1 });
         return;
@@ -155,7 +172,8 @@ module.exports = (petri) => {
     for (const ppar of r.cfg.P) {
       const { name, lowerBound, upperBound } = ppar;
       const val = await r.retrieve('/p/:proj/results/d/:dHash/P/:name', { name }).number();
-      if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
         logger.warn(`P ${name} out of bound`, r.param);
         await r.incr({ '/P0': 1 });
         return;

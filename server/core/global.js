@@ -64,9 +64,7 @@ module.exports = (petri) => {
     for (const values of results) {
       const vars = _.mapKeys(values, (v, i) => cVars[i].name);
       const cHash = hash(vars);
-      const vard = _.mapValues(vars, (v, k) =>
-        _.get(cVars, [dict[k], 'descriptions', v - 1], v));
-      logger.info(`Will create category ${cHash}`, vard);
+      logger.info(`Will create category ${cHash}`, vars);
       await r.store('/hashs/cHash/:cHash', { cHash }, vars);
       await r.incr({ '/cat/:cHash/init': 1 }, { cHash });
     }
