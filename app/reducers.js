@@ -6,6 +6,7 @@ import { reducer as formReducer } from 'redux-form/immutable';
 import globalContainerReducer from 'containers/GlobalContainer/reducer';
 import viewProjContainerReducer from 'containers/ViewProjContainer/reducer';
 import viewCatContainerReducer from 'containers/ViewCatContainer/reducer';
+import viewEvalContainerReducer from 'containers/ViewEvalContainer/reducer';
 
 const routeInitialState = fromJS({
   location: null,
@@ -28,6 +29,7 @@ export default function createReducer() {
     globalContainer: globalContainerReducer,
     viewProjContainer: viewProjContainerReducer,
     viewCatContainer: viewCatContainerReducer,
+    viewEvalContainer: viewEvalContainerReducer,
   });
 
   return appReducer;

@@ -29,3 +29,18 @@ export const CatCanStop = ({ status }) => {
       return false;
   }
 };
+
+export const EvalCanStop = ({ status }) => {
+  switch (status) {
+    case 'Grun':
+      return true;
+    case 'Mrun':
+      return true;
+    case 'Erun':
+      return true;
+    case 'Prun':
+      return true;
+    default:
+      return false;
+  }
+};

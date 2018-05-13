@@ -13,6 +13,7 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
+import { Link } from 'react-router-dom';
 import DocumentTitle from 'components/DocumentTitle';
 import StatusBadge from 'components/StatusBadge';
 import ResultIndicator from 'components/ResultIndicator';
@@ -98,7 +99,12 @@ class ViewCatPage extends React.PureComponent {
           variant="display2"
           gutterBottom
         >
-          <span>分类监控 - {proj}/{cHash}</span>
+          <span>分类监控 - </span>
+          <Link to={`/app/p/${proj}`}>{proj}</Link>
+          <Typography className={classes.badge} variant="subheading" component="span">
+            <StatusBadge status={p.status} />
+          </Typography>
+          <span>/{cHash}</span>
           <Typography className={classes.badge} variant="subheading" component="span">
             <StatusBadge status={cat.status} />
           </Typography>

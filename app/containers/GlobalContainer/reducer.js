@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Map, fromJS } from 'immutable';
+import etcd from '../../jb.json';
 
 import * as SUBSCRIPTION_CONTAINER from 'containers/SubscriptionContainer/constants';
 import * as GLOBAL_CONTAINER from './constants';
@@ -8,7 +9,7 @@ const initialState = fromJS({
   isLoading: false,
   isDrawerOpen: false,
   error: null,
-  etcd: {},
+  etcd,
 });
 
 function globalContainerReducer(state = initialState, action) {

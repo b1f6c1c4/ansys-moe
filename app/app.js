@@ -17,6 +17,7 @@ import GlobalContainer from 'containers/GlobalContainer';
 import SubscriptionContainer from 'containers/SubscriptionContainer';
 import ViewProjContainer from 'containers/ViewProjContainer';
 import ViewCatContainer from 'containers/ViewCatContainer';
+import ViewEvalContainer from 'containers/ViewEvalContainer';
 
 import createHistory from 'history/createBrowserHistory';
 import configureStore from 'utils/configureStore';
@@ -70,6 +71,7 @@ export const render = () => {
                   <ConnectedSwitch>
                     <Route exact path="/app/p/:proj" component={ViewProjContainer} />
                     <Route exact path="/app/p/:proj/cat/:cHash" component={ViewCatContainer} />
+                    <Route exact path="/app/p/:proj/cat/:cHash/d/:dHash" component={ViewEvalContainer} />
                     <Route component={NotFoundPage} />
                   </ConnectedSwitch>
                 </ErrorBoundary>

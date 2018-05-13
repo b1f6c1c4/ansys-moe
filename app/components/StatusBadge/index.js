@@ -29,12 +29,16 @@ const styles = (theme) => ({
     backgroundColor: '#3e2723',
     color: '#fff',
   },
+  waiting: {
+    backgroundColor: '#bce7e0',
+    color: '#000',
+  },
   init: {
     backgroundColor: '#cddc39',
     color: '#000',
   },
   running: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: '#9c27b0',
     color: '#fff',
   },
   iter: {
@@ -42,7 +46,7 @@ const styles = (theme) => ({
     color: '#000',
   },
   done: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#2196f3',
     color: '#fff',
   },
   error: {
@@ -50,23 +54,23 @@ const styles = (theme) => ({
     color: '#fff',
   },
   Grun: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: '#9c27b0',
     color: '#fff',
   },
   Mrun: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: '#9c27b0',
     color: '#fff',
   },
   Erun: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: '#9c27b0',
     color: '#fff',
   },
   Prun: {
-    backgroundColor: '#9C27B0',
+    backgroundColor: '#9c27b0',
     color: '#fff',
   },
   out: {
-    backgroundColor: '#607D8B',
+    backgroundColor: '#607d8B',
     color: '#fff',
   },
 });
@@ -79,6 +83,7 @@ class StatusBadge extends React.PureComponent {
     const cls = minor ? classes.minor : classes.major;
 
     const messages = {
+      waiting: '等待中',
       init: '初始化',
       running: '运行中',
       iter: '计算迭代',

@@ -1,0 +1,5 @@
+query Stop($proj: String!) {
+  data(input: {
+    proj: $proj,
+  })
+}
