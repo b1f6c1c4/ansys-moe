@@ -1,0 +1,59 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import { compose } from 'redux';
+{{#if wantMessages}}
+{{#if wantInjectIntl}}
+import { FormattedMessage, injectIntl, intlShape } from 'react-intl';
+{{else}}
+import { FormattedMessage } from 'react-intl';
+{{/if}}
+{{/if}}
+
+import {
+  withStyles,
+} from 'material-ui';
+
+{{#if wantMessages}}
+import messages from './messages';
+
+{{/if}}
+// eslint-disable-next-line no-unused-vars
+const styles = (theme) => ({
+});
+
+class {{ properCase name }} extends React.PureComponent {
+  render() {
+    // eslint-disable-next-line no-unused-vars
+{{#if wantInjectIntl}}
+    const { intl, classes } = this.props;
+{{else}}
+    const { classes } = this.props;
+{{/if}}
+
+    return (
+      <div>
+{{#if wantMessages}}
+        <FormattedMessage {...messages.header} />
+{{/if}}
+      </div>
+    );
+  }
+}
+
+{{ properCase name }}.propTypes = {
+{{#if wantInjectIntl}}
+  intl: intlShape.isRequired, // eslint-disable-line react/no-typos
+{{/if}}
+  classes: PropTypes.object.isRequired,
+};
+
+{{#if wantInjectIntl}}
+export default compose(
+  injectIntl,
+  withStyles(styles),
+)({{ properCase name }});
+{{else}}
+export default compose(
+  withStyles(styles),
+)({{ properCase name }});
+{{/if}}

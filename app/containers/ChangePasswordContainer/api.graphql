@@ -1,0 +1,6 @@
+mutation Password($oldPassword: String!, $newPassword: String!) {
+  password(input: {
+    oldPassword: $oldPassword,
+    newPassword: $newPassword,
+  })
+}

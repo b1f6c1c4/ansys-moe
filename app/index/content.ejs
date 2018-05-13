@@ -1,0 +1,239 @@
+<svg style="position: absolute; width: 0; height: 0;">
+  <defs>
+    <linearGradient id="gradient">
+      <stop offset="0%" stop-color="#55fabe" />
+      <stop offset="100%" stop-color="#1dc8cd" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<!--==========================
+  Header
+============================-->
+<header id="header">
+  <div class="container">
+
+    <div id="logo" class="pull-left">
+      <h1><a href="#intro" class="scrollto">Ballot</a></h1>
+      <!-- Uncomment below if you prefer to use an image logo -->
+      <!-- <a href="#intro"><img src="resource/logo.png" alt="" title=""></a> -->
+    </div>
+
+    <nav id="nav-menu-container">
+      <ul class="nav-menu">
+        <li class="menu-active"><a href="#intro" data-i18n="home"></a></li>
+        <li><a href="#features" data-i18n="features"></a></li>
+        <li><a href="#faq" data-i18n="faq"></a></li>
+        <li><a href="/app/login" data-i18n="login"></a></li>
+        <li class="menu-has-children">
+          <a class="nav-langs" href="#">Language/语言</a>
+          <span class="nav-langs"><%= require('resource/icons/ic_language_black_18px.svg') %></span>
+          <ul class="list-langs" id="list-langs"></ul>
+        </li>
+      </ul>
+    </nav><!-- #nav-menu-container -->
+  </div>
+</header><!-- #header -->
+
+<!--==========================
+  Intro Section
+============================-->
+<section id="intro">
+
+  <div class="intro-text">
+    <h2 data-i18n="home.title"></h2>
+    <p data-i18n="home.description"></p>
+    <a href="#features" class="btn-get-started scrollto" data-i18n="getStarted"></a>
+    <a href="/app/login" class="btn-get-started scrollto" data-i18n="signUpNow"></a>
+  </div>
+
+</section><!-- #intro -->
+
+<main id="main">
+
+  <!--==========================
+    Features Section
+  ============================-->
+  <section id="features">
+    <div class="container">
+
+      <div class="row">
+
+        <div class="col-lg-12">
+          <div class="section-header wow fadeIn" data-wow-duration="1s">
+            <h3 class="section-title" data-i18n="features.title"></h3>
+            <span class="section-divider"></span>
+          </div>
+        </div>
+
+        <div class="col-lg-12">
+
+          <div class="row">
+
+            <div class="col-lg-6 col-md-6 box wow fadeInLeft">
+              <div class="icon"><%= require('resource/icons/ic_lock_black_48px.svg') %></div>
+              <h4 class="title" data-i18n="features.security"></h4>
+              <p class="description" data-i18n="features.security.description"></p>
+            </div>
+            <div class="col-lg-6 col-md-6 box wow fadeInRight">
+              <div class="icon"><%= require('resource/icons/ic_person_black_48px.svg') %></div>
+              <h4 class="title" data-i18n="features.anonymity"></h4>
+              <p class="description" data-i18n="features.anonymity.description"></p>
+            </div>
+            <div class="col-lg-6 col-md-6 box wow fadeInLeft">
+              <div class="icon"><%= require('resource/icons/ic_remove_circle_outline_black_48px.svg') %></div>
+              <h4 class="title" data-i18n="features.duplication"></h4>
+              <p class="description" data-i18n="features.duplication.description"></p>
+            </div>
+            <div class="col-lg-6 col-md-6 box wow fadeInRight">
+              <div class="icon"><%= require('resource/icons/ic_check_black_48px.svg') %></div>
+              <h4 class="title" data-i18n="features.authenticity"></h4>
+              <p class="description" data-i18n="features.authenticity.description"></p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section><!-- #features -->
+
+  <!--==========================
+    Call To Action Section
+  ============================-->
+  <section id="call-to-action">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-9 text-center text-lg-left">
+          <h3 class="cta-title" data-i18n="cta.title"></h3>
+          <p class="cta-text" data-i18n="cta.description"></p>
+        </div>
+        <div class="col-lg-3 cta-btn-container text-center">
+          <a class="cta-btn align-middle" href="app/login" data-i18n="cta.login"></a>
+        </div>
+      </div>
+
+    </div>
+  </section><!-- #call-to-action -->
+
+  <!--==========================
+    More Features Section
+  ============================-->
+  <section id="more-features" class="section-bg">
+    <div class="container">
+
+      <div class="section-header">
+        <h3 class="section-title" data-i18n="more.title"></h3>
+        <span class="section-divider"></span>
+        <p class="section-description" data-i18n="more.description"></p>
+      </div>
+
+      <div class="row">
+
+        <div class="col-lg-6">
+          <div class="box wow fadeInLeft">
+            <div class="icon"><%= require('resource/icons/ic_mode_edit_black_48px.svg') %></div>
+            <h4 class="title" data-i18n="more.customizable"></h4>
+            <p class="description" data-i18n="more.customizable.description"></p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="box wow fadeInRight">
+            <div class="icon"><%= require('resource/icons/ic_error_outline_black_48px.svg') %></div>
+            <h4 class="title" data-i18n="more.immutable"></h4>
+            <p class="description" data-i18n="more.immutable.description"></p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="box wow fadeInLeft">
+            <div class="icon"><%= require('resource/icons/ic_visibility_black_48px.svg') %></div>
+            <h4 class="title" data-i18n="more.visibility"></h4>
+            <p class="description" data-i18n="more.visibility.description"></p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="box wow fadeInRight">
+            <div class="icon"><%= require('resource/icons/ic_accessibility_black_48px.svg') %></div>
+            <h4 class="title" data-i18n="more.userFriendly"></h4>
+            <p class="description" data-i18n="more.userFriendly.description"></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section><!-- #more-features -->
+
+  <!--==========================
+    Frequently Asked Questions Section
+  ============================-->
+  <section id="faq">
+    <div class="container">
+
+      <div class="section-header">
+        <h3 class="section-title" data-i18n="faq.title"></h3>
+        <span class="section-divider"></span>
+        <p class="section-description" data-i18n="faq.description"></p>
+      </div>
+
+      <ul id="faq-list">
+
+        <li class="wow fadeInUp">
+          <a data-toggle="collapse" class="collapsed" href="#faq1" data-i18n="faq.q1.question"></a>
+          <div class="collapse">
+            <p data-i18n="faq.q1.answer"></p>
+          </div>
+        </li>
+        <li class="wow fadeInUp" data-wow-delay="0.1s">
+          <a data-toggle="collapse" class="collapsed" href="#faq2" data-i18n="faq.q2.question"></a>
+          <div class="collapse">
+            <p data-i18n="faq.q2.answer"></p>
+          </div>
+        </li>
+        <li class="wow fadeInUp" data-wow-delay="0.2s">
+          <a data-toggle="collapse" class="collapsed" href="#faq3" data-i18n="faq.q3.question"></a>
+          <div class="collapse">
+            <p data-i18n="faq.q3.answer"></p>
+          </div>
+        </li>
+        <li class="wow fadeInUp" data-wow-delay="0.3s">
+          <a data-toggle="collapse" class="collapsed" href="#faq4" data-i18n="faq.q4.question"></a>
+          <div class="collapse">
+            <p data-i18n="faq.q4.answer"></p>
+          </div>
+        </li>
+        <li class="wow fadeInUp" data-wow-delay="0.4s">
+          <a data-toggle="collapse" class="collapsed" href="#faq5" data-i18n="faq.q5.question"></a>
+          <div class="collapse">
+            <p data-i18n="faq.q5.answer"></p>
+          </div>
+        </li>
+
+      </ul>
+
+    </div>
+  </section><!-- #faq -->
+
+</main>
+
+<!--==========================
+  Footer
+============================-->
+<footer id="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <nav class="footer-links text-center pt-2 pt-lg-0">
+          <a class="scrollto" href="#intro" data-i18n="home"></a>
+          <a class="scrollto" href="#features" data-i18n="features"></a>
+          <a class="scrollto" href="#faq" data-i18n="faq"></a>
+          <a href="/app/login" data-i18n="login"></a>
+        </nav>
+      </div>
+    </div>
+  </div>
+</footer><!-- #footer -->
+
+<a href="#" class="back-to-top"><%= require('resource/icons/ic_keyboard_arrow_up_black_24px.svg') %></a>

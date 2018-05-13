@@ -1,0 +1,25 @@
+subscription BallotStatus($bId: ID!) {
+  ballotStatus(input: {
+    bId: $bId,
+  }) {
+    bId
+    status
+  }
+}
+
+subscription BallotsStatus {
+  ballotsStatus {
+    bId
+    status
+  }
+}
+
+subscription VoterRegistered($bId: ID!) {
+  voterRegistered(input: {
+    bId: $bId,
+  }) {
+    iCode
+    comment
+    publicKey
+  }
+}

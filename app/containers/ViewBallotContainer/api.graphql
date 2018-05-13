@@ -1,0 +1,56 @@
+query Ballot($bId: ID!) {
+  ballot(input: {
+    bId: $bId,
+  }) {
+    bId
+    name
+    status
+    owner
+    fields {
+      prompt
+    }
+    voters {
+      iCode
+      name
+      publicKey
+    }
+  }
+
+  countTickets(input: {
+    bId: $bId,
+  })
+}
+
+query BallotCrypto($bId: ID!) {
+  ballot(input: {
+    bId: $bId,
+  }) {
+    q
+    g
+    h
+  }
+}
+
+mutation FinalizeVoters($bId: ID!) {
+  finalizeVoters(input: {
+    bId: $bId,
+  })
+}
+
+mutation FinalizeFields($bId: ID!) {
+  finalizeFields(input: {
+    bId: $bId,
+  })
+}
+
+mutation FinalizePreVoting($bId: ID!) {
+  finalizePreVoting(input: {
+    bId: $bId,
+  })
+}
+
+mutation FinalizeVoting($bId: ID!) {
+  finalizeVoting(input: {
+    bId: $bId,
+  })
+}

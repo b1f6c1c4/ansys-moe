@@ -1,0 +1,21 @@
+    <%= require('raw-loader!index/header.html') %>
+
+    <title data-i18n="htmlTitle">Ballot</title>
+
+  </head>
+  <body>
+
+    <% const { en } = require('./translations'); %>
+    <% const raw = require('html-webpack-plugin/lib/loader.js!./content.ejs')({}) %>
+    <%= raw.replace(
+      /data-i18n="([_a-zA-Z0-9.]*)"></g,
+      (match, k) => `data-i18n="${k}">${en[k]}<`,
+    ) %>
+
+    <% if (htmlWebpackPlugin.options.inject) { %>
+      <script src="/dll/main.dll.js"></script>
+    <% } else { %>
+      <%= require('raw-loader!index/outdated.html') %>
+    <% } %>
+  </body>
+</html>
