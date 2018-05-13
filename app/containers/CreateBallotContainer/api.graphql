@@ -1,9 +1,0 @@
-mutation CreateBallot($name: String!) {
-  createBallot(input: {
-    name: $name,
-  }) {
-    bId
-    name
-    status
-  }
-}
