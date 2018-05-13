@@ -14,6 +14,9 @@ import {
 } from 'material-ui';
 import {
   Home,
+  CloudDownload,
+  CloudUpload,
+  AddCircle,
 } from '@material-ui/icons';
 import { Link } from 'react-router-dom';
 import StatusBadge from 'components/StatusBadge';
@@ -35,6 +38,26 @@ class GlobalDrawer extends React.PureComponent {
   handleProj = (name) => () => {
     this.props.onCloseDrawerAction();
     this.props.onPush(`/app/p/${name}`);
+  };
+
+  handleProfile = () => {
+    this.props.onCloseDrawerAction();
+    this.props.onPush('/app/');
+  };
+
+  handleUpload = () => {
+    this.props.onCloseDrawerAction();
+    this.props.onPush('/app/upload');
+  };
+
+  handleRun = () => {
+    this.props.onCloseDrawerAction();
+    this.props.onPush('/app/run');
+  };
+
+  handleDownload = () => {
+    this.props.onCloseDrawerAction();
+    this.props.onPush('/app/download');
   };
 
   render() {
@@ -80,6 +103,51 @@ class GlobalDrawer extends React.PureComponent {
               primary={(
                 <Link to="/app/">
                   控制面板
+                </Link>
+              )}
+            />
+          </ListItem>
+          <ListItem button onClick={this.handleUpload}>
+            <ListItemIcon>
+              <Link to="/app/upload">
+                <CloudUpload />
+              </Link>
+            </ListItemIcon>
+            <ListItemText
+              className={classes.item}
+              primary={(
+                <Link to="/app/upload">
+                  上传仿真文件
+                </Link>
+              )}
+            />
+          </ListItem>
+          <ListItem button onClick={this.handleRun}>
+            <ListItemIcon>
+              <Link to="/app/run">
+                <AddCircle />
+              </Link>
+            </ListItemIcon>
+            <ListItemText
+              className={classes.item}
+              primary={(
+                <Link to="/app/run">
+                  提交新任务
+                </Link>
+              )}
+            />
+          </ListItem>
+          <ListItem button onClick={this.handleDownload}>
+            <ListItemIcon>
+              <Link to="/app/download">
+                <CloudDownload />
+              </Link>
+            </ListItemIcon>
+            <ListItemText
+              className={classes.item}
+              primary={(
+                <Link to="/app/download">
+                  下载仿真结果
                 </Link>
               )}
             />

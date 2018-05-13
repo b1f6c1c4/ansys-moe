@@ -4,7 +4,6 @@ import { compose } from 'redux';
 
 import {
   withStyles,
-  Typography,
 } from 'material-ui';
 import classnames from 'classnames';
 
@@ -30,27 +29,43 @@ const styles = (theme) => ({
     backgroundColor: '#3e2723',
     color: '#fff',
   },
-  creating: {
+  init: {
     backgroundColor: '#cddc39',
     color: '#000',
   },
-  inviting: {
-    backgroundColor: '#ffc107',
-    color: '#000',
-  },
-  invited: {
+  running: {
     backgroundColor: '#9C27B0',
     color: '#fff',
   },
-  preVoting: {
+  iter: {
+    backgroundColor: '#ffc107',
+    color: '#000',
+  },
+  done: {
     backgroundColor: '#2196F3',
     color: '#fff',
   },
-  voting: {
+  error: {
     backgroundColor: '#ff5722',
     color: '#fff',
   },
-  finished: {
+  Grun: {
+    backgroundColor: '#9C27B0',
+    color: '#fff',
+  },
+  Mrun: {
+    backgroundColor: '#9C27B0',
+    color: '#fff',
+  },
+  Erun: {
+    backgroundColor: '#9C27B0',
+    color: '#fff',
+  },
+  Prun: {
+    backgroundColor: '#9C27B0',
+    color: '#fff',
+  },
+  out: {
     backgroundColor: '#607D8B',
     color: '#fff',
   },
@@ -66,22 +81,27 @@ class StatusBadge extends React.PureComponent {
     const messages = {
       init: '初始化',
       running: '运行中',
-      iter: '迭代中',
+      iter: '计算迭代',
       done: '成功',
       error: '错误',
+      Grun: '几何参数',
+      Mrun: 'ANSYS',
+      Erun: '电参数',
+      Prun: '性能参数',
+      out: '出界',
     };
 
     if (!messages[status]) {
       return (
         <div className={classnames(cls, classes.unknown)}>
-          <Typography>{messages.unknown}</Typography>
+          {status}
         </div>
       );
     }
 
     return (
       <div className={classnames(cls, classes[status])}>
-        <Typography>{messages[status]}</Typography>
+        {messages[status]}
       </div>
     );
   }

@@ -34,6 +34,7 @@ export class GlobalContainer extends React.PureComponent {
 GlobalContainer.propTypes = {
   children: PropTypes.any,
   isDrawerOpen: PropTypes.bool.isRequired,
+  listHash: PropTypes.object,
   listProj: PropTypes.object,
   onPush: PropTypes.func.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,
@@ -54,6 +55,7 @@ function mapDispatchToProps(dispatch) {
 
 const mapStateToProps = createStructuredSelector({
   isDrawerOpen: (state) => state.getIn(['globalContainer', 'isDrawerOpen']),
+  listHash: globalContainerSelectors.ListHash(),
   listProj: globalContainerSelectors.ListProj(),
 });
 
