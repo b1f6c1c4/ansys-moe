@@ -17,7 +17,6 @@ const sagaMiddleware = createSagaMiddleware();
 export const slicer = () => (rawState) => {
   const state = rawState.toJS();
   _.unset(state, 'route');
-  // _.unset(state, 'globalContainer.etcd');
 
   const makeFilter = ({ reg, def = null }) => (o) => _.mapValues(o, (v, k) => {
     if (!reg.test(k)) return v;

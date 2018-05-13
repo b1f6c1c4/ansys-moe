@@ -11,11 +11,12 @@ const sepPrefix = (raw) => {
 };
 
 class CompiledPath {
-  constructor(raw) {
+  constructor(raw, exact = false) {
     const [prefix, p] = sepPrefix(raw);
     let r = p;
     this.prefix = prefix;
     this.segments = [];
+    this.exact = exact;
     while (r.length) {
       const match = r.match(patternSgmt);
       if (!match) {
@@ -85,6 +86,9 @@ class CompiledPath {
           throw new Error('Type not supported');
       }
       result.rest = result.rest.substr(match[0].length);
+    }
+    if (this.exact && result.rest.length) {
+      return undefined;
     }
     return result;
   }

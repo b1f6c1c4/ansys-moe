@@ -1,11 +1,10 @@
 import * as SUBSCRIPTION_CONTAINER from './constants';
 
 // Actions
-export function etcdChange({ key, value }) {
+export function etcdChange(kvs) {
   return {
     type: SUBSCRIPTION_CONTAINER.ETCD_CHANGE_ACTION,
-    key,
-    value,
+    kvs,
   };
 }
 

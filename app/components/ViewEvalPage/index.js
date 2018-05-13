@@ -191,6 +191,7 @@ class ViewEvalPage extends React.PureComponent {
                     <TableCell padding="none">名称</TableCell>
                     <TableCell padding="none">设计名称</TableCell>
                     <TableCell padding="none">表格名称</TableCell>
+                    <TableCell padding="none">列编号</TableCell>
                     <TableCell padding="none">最小值</TableCell>
                     <TableCell padding="none">最大值</TableCell>
                     <TableCell padding="none">实际值</TableCell>
@@ -203,6 +204,7 @@ class ViewEvalPage extends React.PureComponent {
                       <TableCell padding="none">{name}</TableCell>
                       <TableCell padding="none">{mm.rule.design}</TableCell>
                       <TableCell padding="none">{mm.rule.table}</TableCell>
+                      <TableCell padding="none">{mm.rule.column}</TableCell>
                       <TableCell padding="none">{mm.rule.lowerBound}</TableCell>
                       <TableCell padding="none">{mm.rule.upperBound}</TableCell>
                       <TableCell padding="none">{mm.value}</TableCell>

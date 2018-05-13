@@ -3,7 +3,9 @@ import { delay, eventChannel } from 'redux-saga';
 import {
   call,
   cancel as rawCancel,
+  cancelled,
   fork,
+  join,
   put,
   race,
   take,
@@ -49,6 +51,29 @@ export const makeChan = (lbl, obs0) => eventChannel((emit) => {
   return () => obs1.unsubscribe();
 });
 
+function* handleEtcdChange(chan, control) {
+  const results = [];
+  while (true) {
+    const { ctrl, res } = yield race({
+      ctrl: take(control),
+      res: take(chan),
+      timeout: delay(500),
+    });
+    if (ctrl) {
+      return { results };
+    }
+    if (!res) {
+      control.close();
+      return { results };
+    }
+    const { error, result } = res;
+    if (error) {
+      return { error, results };
+    }
+    results.push(result);
+  }
+}
+
 export function* handleEtcdRequestAction() {
   const obs0 = yield call(api.subscribe, gql.Etcd);
   const chan = yield call(makeChan, 'watchEtcd', obs0);
@@ -56,7 +81,20 @@ export function* handleEtcdRequestAction() {
     while (true) {
       const { error, result } = yield take(chan);
       if (error) throw error;
-      yield put(subscriptionContainerActions.etcdChange(result));
+      const control = eventChannel((emit) => {
+        const iv = setTimeout(() => {
+          emit({});
+        }, 1000);
+        return () => {
+          clearTimeout(iv);
+        };
+      });
+      const res = yield call(handleEtcdChange, chan, control);
+      res.results.push(result);
+      yield put(subscriptionContainerActions.etcdChange(res.results));
+      if (res.error) {
+        throw res.error;
+      }
     }
   } catch (err) {
     report(err);

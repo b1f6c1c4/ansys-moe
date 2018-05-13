@@ -22,7 +22,7 @@ const compiled = _.mapValues({
   mIdResult: '/p/:proj/results/d/:dHash/Mid',
   varResult: '/p/:proj/results/d/:dHash/var',
   evalP0Result: '/p/:proj/results/d/:dHash/P0',
-}, (p) => (new CompiledPath(p)).match);
+}, (p) => (new CompiledPath(p, true)).match);
 
 const run = (arr, key) => {
   // eslint-disable-next-line no-restricted-syntax
@@ -58,7 +58,6 @@ export const ListProj = () => createSelector(
     if (!etcd) return null;
     const projects = {};
     etcd.forEach((value, key) => {
-      const token = parseInt(value, 10);
       run([[
         'projConfig',
         (m) => {
@@ -67,28 +66,33 @@ export const ListProj = () => createSelector(
       ], [
         'projError',
         (m) => {
-          _.update(projects, [m.proj, 'error'], (v) => v || token);
+          _.update(projects, [m.proj, 'error'], (v) => v || +value);
         },
       ], [
         'projDone',
         (m) => {
-          _.set(projects, [m.proj, 'done'], token);
+          _.set(projects, [m.proj, 'done'], +value);
         },
       ], [
         'catError',
         (m) => {
-          _.update(projects, [m.proj, 'error'], (v) => v || token);
-          _.update(projects, [m.proj, 'cat', m.cHash, 'error'], (v) => v || token);
+          _.update(projects, [m.proj, 'error'], (v) => v || +value);
+          _.update(projects, [m.proj, 'cat', m.cHash, 'error'], (v) => v || +value);
         },
       ], [
         'catInit',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'init'], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'init'], +value);
         },
       ], [
         'catIter',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'iter'], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'iter'], +value);
+        },
+      ], [
+        'catEval',
+        (m) => {
+          _.set(projects, [m.proj, 'cat', m.cHash, 'run'], +value);
         },
       ], [
         'catOngoing',
@@ -103,42 +107,37 @@ export const ListProj = () => createSelector(
       ], [
         'evalError',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, 'error'], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, 'error'], +value);
         },
       ], [
         'gepInit',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, m.gep, m.name, 'init'], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, m.gep, m.name, 'init'], +value);
         },
       ], [
         'gepPrep',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, m.gep, m.name, 'prep'], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, m.gep, m.name, 'prep'], +value);
         },
       ], [
         'evalGep',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, `${m.gep}run`], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, `${m.gep}run`], +value);
         },
       ], [
         'evalM',
         (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, 'Mrun'], token);
-        },
-      ], [
-        'catEval',
-        (m) => {
-          _.set(projects, [m.proj, 'cat', m.cHash, 'run'], token);
+          _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, 'Mrun'], +value);
         },
       ], [
         'gmepResult',
         (m) => {
-          _.set(projects, [m.proj, 'results', 'd', m.dHash, m.gmep, m.name], value);
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, m.gmep, m.name], +value);
         },
       ], [
         'mIdResult',
         (m) => {
-          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'Mid'], token);
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'Mid'], +value);
         },
       ], [
         'varResult',
@@ -148,11 +147,15 @@ export const ListProj = () => createSelector(
       ], [
         'evalP0Result',
         (m) => {
-          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'P0'], value);
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'P0'], +value);
         },
       ]], key);
     });
     return _.mapValues(projects, (p) => {
+      if (!p.config) {
+        _.set(p, 'status', 'init');
+        return p;
+      }
       if (p.error) {
         _.set(p, 'status', 'error');
       } else if (p.done) {
@@ -188,16 +191,14 @@ export const ListProj = () => createSelector(
           } else {
             _.set(e, 'status', 'out');
           }
-          const gepFunc = (kind) => (gep, name) => {
-            const v = _.get(p, ['results', 'd', dHash, kind, name]);
-            const cfg = _.find(p.config[kind], { name });
+          const gepFunc = (kind) => (geps) => _.fromPairs(_.map(p.config[kind], (cfg) => {
+            const v = _.get(p, ['results', 'd', dHash, kind, cfg.name]);
+            const gep = _.assign({}, _.get(geps, [cfg.name]));
             _.set(gep, 'value', v);
-            if (gep.init) {
-              _.set(gep, 'status', 'waiting');
-            } else if (gep.prep) {
+            if (gep.prep) {
               _.set(gep, 'status', 'running');
             } else if (v === undefined) {
-              _.set(gep, 'status', 'done');
+              _.set(gep, 'status', 'waiting');
             } else if (!_.isNil(cfg.lowerBound) && v < cfg.lowerBound) {
               _.set(gep, 'status', 'out');
             } else if (!_.isNil(cfg.upperBound) && v > cfg.upperBound) {
@@ -205,8 +206,10 @@ export const ListProj = () => createSelector(
             } else {
               _.set(gep, 'status', 'done');
             }
-          };
-          _.mapValues(e.G, gepFunc('G'));
+            _.set(gep, 'cfg', cfg);
+            return [cfg.name, gep];
+          }));
+          _.update(e, 'G', gepFunc('G'));
           const mId = _.get(p, ['results', 'd', dHash, 'Mid']);
           if (mId !== undefined) {
             _.set(e, 'M', _.fromPairs(p.config.ansys.rules[mId].outputs.map((rule) => {
@@ -224,8 +227,8 @@ export const ListProj = () => createSelector(
               return [rule.name, { rule, status, value: v }];
             })));
           }
-          _.mapValues(e.E, gepFunc('E'));
-          _.mapValues(e.P, gepFunc('P'));
+          _.update(e, 'E', gepFunc('E'));
+          _.update(e, 'P', gepFunc('P'));
           return e;
         });
         return cat;

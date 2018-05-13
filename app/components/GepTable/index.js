@@ -43,19 +43,16 @@ class GepTable extends React.PureComponent {
             </TableRow>
           </TableHead>
           <TableBody>
-            {_.toPairs(e[kind]).map(([name, gep]) => {
-              const cfg = _.find(p.config[kind], { name });
-              return (
-                <TableRow key={name} hover >
-                  <TableCell padding="none">{name}</TableCell>
-                  <TableCell padding="none">{cfg.kind}</TableCell>
-                  <TableCell padding="none">{cfg.lowerBound}</TableCell>
-                  <TableCell padding="none">{cfg.upperBound}</TableCell>
-                  <TableCell padding="none">{gep.value}</TableCell>
-                  <TableCell padding="none"><StatusBadge status={gep.status} /></TableCell>
-                </TableRow>
-              );
-            })}
+            {_.toPairs(e[kind]).map(([name, gep]) => (
+              <TableRow key={name} hover >
+                <TableCell padding="none">{name}</TableCell>
+                <TableCell padding="none">{gep.cfg.kind}</TableCell>
+                <TableCell padding="none">{gep.cfg.lowerBound}</TableCell>
+                <TableCell padding="none">{gep.cfg.upperBound}</TableCell>
+                <TableCell padding="none">{gep.value}</TableCell>
+                <TableCell padding="none"><StatusBadge status={gep.status} /></TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
         <EmptyIndicator list={e[kind]} />

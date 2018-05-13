@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { Map, fromJS } from 'immutable';
-import etcd from '../../jb.json';
 
 import * as SUBSCRIPTION_CONTAINER from 'containers/SubscriptionContainer/constants';
 import * as GLOBAL_CONTAINER from './constants';
@@ -9,7 +8,7 @@ const initialState = fromJS({
   isLoading: false,
   isDrawerOpen: false,
   error: null,
-  etcd,
+  etcd: {},
 });
 
 function globalContainerReducer(state = initialState, action) {
@@ -20,10 +19,12 @@ function globalContainerReducer(state = initialState, action) {
     case GLOBAL_CONTAINER.CLOSE_DRAWER_ACTION:
       return state.set('isDrawerOpen', false);
     case SUBSCRIPTION_CONTAINER.ETCD_CHANGE_ACTION:
-      if (action.value === null) {
-        return state.deleteIn(['etcd', action.key]);
-      }
-      return state.setIn(['etcd', action.key], action.value);
+      return state.set('etcd', state.get('etcd').withMutations((etcd) => action.kvs.reduce((e, { key, value }) => {
+        if (value === null) {
+          return e.delete(key);
+        }
+        return e.set(key, value);
+      }, etcd)));
     // Sagas
     case GLOBAL_CONTAINER.ETCD_REQUEST:
       return state.set('isLoading', true)

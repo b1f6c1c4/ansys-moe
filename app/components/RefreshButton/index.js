@@ -39,7 +39,7 @@ class RefreshButton extends React.PureComponent {
 RefreshButton.propTypes = {
   onClick: PropTypes.func,
   classes: PropTypes.object.isRequired,
-  isLoading: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 export default compose(
