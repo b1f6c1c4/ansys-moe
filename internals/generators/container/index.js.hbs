@@ -20,7 +20,7 @@ import sagas from './sagas';
 export class {{ properCase name }} extends React.PureComponent {
   render() {
     return (
-      <div {...this.props}></div>
+      <pre>{JSON.stringify(this.props, null, 2)}</pre>
     );
   }
 }

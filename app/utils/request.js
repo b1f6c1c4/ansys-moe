@@ -31,29 +31,9 @@ export const postProcess = (raw) => {
     return raw.data;
   }
 
-  const {
-    message,
-    networkError,
-    graphQLErrors,
-  } = raw;
+  const { message } = raw;
 
-  const err = { raw };
-  const make = () => Object.assign(new Error(message), err);
-
-  if (networkError) {
-    err.codes = ['netw'];
-    throw make();
-  }
-
-  if (Array.isArray(graphQLErrors)) {
-    const codes = graphQLErrors.map((e) => e.errorCode).filter((c) => c);
-    if (codes.length > 0) {
-      err.codes = codes;
-    }
-    throw make();
-  }
-
-  throw make();
+  throw _.assign(new Error(message), { raw });
 };
 
 // eslint-disable-next-line import/no-mutable-exports

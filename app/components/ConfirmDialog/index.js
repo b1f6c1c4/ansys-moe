@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
@@ -12,8 +11,6 @@ import {
   DialogTitle,
 } from 'material-ui';
 import Button from 'components/Button';
-
-import messages from './messages';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -33,11 +30,11 @@ class ConfirmDialog extends React.PureComponent {
         onClose={this.props.onCancel}
       >
         <DialogTitle>
-          <FormattedMessage {...this.props.title} />
+          {this.props.title}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            <FormattedMessage {...this.props.description} />
+            {this.props.description}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -45,13 +42,13 @@ class ConfirmDialog extends React.PureComponent {
             onClick={this.props.onCancel}
             color="secondary"
           >
-            <FormattedMessage {...messages.cancel} />
+            取消
           </Button>
           <Button
             onClick={this.props.onAction}
             color="primary"
           >
-            <FormattedMessage {...messages.confirm} />
+            确定
           </Button>
         </DialogActions>
       </Dialog>

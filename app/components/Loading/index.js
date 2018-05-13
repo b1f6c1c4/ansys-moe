@@ -1,14 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
   CircularProgress,
 } from 'material-ui';
-
-import messages from './messages';
 
 const styles = () => ({
   wrapper: {
@@ -27,14 +24,14 @@ class Loading extends React.PureComponent {
     if (error) {
       return (
         <div>
-          <FormattedMessage {...messages.error} />
+          加载错误
         </div>
       );
     }
     if (pastDelay !== false) {
       return (
         <div className={classes.wrapper}>
-          <FormattedMessage {...messages.loading} />
+          加载中
           <br />
           <CircularProgress className={classes.progress} />
         </div>

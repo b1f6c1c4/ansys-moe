@@ -159,7 +159,7 @@ module.exports = {
     actions.push({
       type: 'complexModify',
       method: 'lastOccurance',
-      pattern: / {4}[a-zA-Z]+Reducer: [a-zA-Z]+Reducer,$/,
+      pattern: / {4}[a-zA-Z]+: [a-zA-Z]+Reducer,$/,
       path: '../../app/reducers.js',
       template: '    {{ camelCase name }}: {{ camelCase name }}Reducer,',
       abortOnFail: true,

@@ -15,6 +15,7 @@ import NotFoundPage from 'components/NotFoundPage';
 import ErrorBoundary from 'containers/ErrorBoundary';
 import GlobalContainer from 'containers/GlobalContainer';
 import SubscriptionContainer from 'containers/SubscriptionContainer';
+import ViewProjContainer from 'containers/ViewProjContainer';
 
 import createHistory from 'history/createBrowserHistory';
 import configureStore from 'utils/configureStore';
@@ -66,6 +67,7 @@ export const render = () => {
               <GlobalContainer>
                 <ErrorBoundary>
                   <ConnectedSwitch>
+                    <Route exact path="/app/p/:proj" component={ViewProjContainer} />
                     <Route component={NotFoundPage} />
                   </ConnectedSwitch>
                 </ErrorBoundary>

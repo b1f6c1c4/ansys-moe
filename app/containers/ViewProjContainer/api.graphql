@@ -1,0 +1,11 @@
+query Stop($proj: String!) {
+  data(input: {
+    proj: $proj,
+  })
+}
+
+query Drop($proj: String!) {
+  data(input: {
+    proj: $proj,
+  })
+}

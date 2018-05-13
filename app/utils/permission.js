@@ -1,27 +1,16 @@
-export const CanEditFields = ({ status }) => {
+export const CanStop = ({ status }) => {
   switch (status) {
-    case 'creating':
-    case 'inviting':
-    case 'invited':
+    case 'running':
       return true;
     default:
       return false;
   }
 };
 
-export const CanEditVoters = ({ status }) => {
+export const CanDrop = ({ status }) => {
   switch (status) {
-    case 'inviting':
-      return true;
-    default:
-      return false;
-  }
-};
-
-export const CanViewStats = ({ status }) => {
-  switch (status) {
-    case 'voting':
-    case 'finished':
+    case 'error':
+    case 'done':
       return true;
     default:
       return false;

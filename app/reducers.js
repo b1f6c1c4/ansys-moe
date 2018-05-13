@@ -4,6 +4,7 @@ import { LOCATION_CHANGE } from 'react-router-redux';
 import { reducer as formReducer } from 'redux-form/immutable';
 
 import globalContainerReducer from 'containers/GlobalContainer/reducer';
+import viewProjContainerReducer from 'containers/ViewProjContainer/reducer';
 
 const routeInitialState = fromJS({
   location: null,
@@ -24,6 +25,7 @@ export default function createReducer() {
     form: formReducer,
     route: routeReducer,
     globalContainer: globalContainerReducer,
+    viewProjContainer: viewProjContainerReducer,
   });
 
   return appReducer;

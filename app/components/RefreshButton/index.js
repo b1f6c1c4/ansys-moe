@@ -1,15 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
 } from 'material-ui';
 import { Refresh } from '@material-ui/icons';
 import Button from 'components/Button';
-
-import messages from './messages';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -32,7 +29,7 @@ class RefreshButton extends React.PureComponent {
         color="primary"
         disabled={isLoading}
       >
-        <FormattedMessage {...messages.text} />
+        刷新
         <Refresh className={classes.rightIcon} />
       </Button>
     );

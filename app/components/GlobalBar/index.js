@@ -47,6 +47,8 @@ class GlobalBar extends React.PureComponent {
     ? this.props.onCloseDrawerAction()
     : this.props.onOpenDrawerAction();
 
+  handleProfile = () => this.props.onPush('/app/');
+
   render() {
     const { classes } = this.props;
 
@@ -63,7 +65,7 @@ class GlobalBar extends React.PureComponent {
           </IconButton>
           <Typography
             component="div"
-            onClick={this.handleDrawer}
+            onClick={this.handleProfile}
             variant="headline"
             color="inherit"
             className={classes.header}
@@ -77,6 +79,7 @@ class GlobalBar extends React.PureComponent {
 }
 
 GlobalBar.propTypes = {
+  onPush: PropTypes.func.isRequired,
   classes: PropTypes.object.isRequired,
   isDrawerOpen: PropTypes.bool.isRequired,
   onOpenDrawerAction: PropTypes.func.isRequired,

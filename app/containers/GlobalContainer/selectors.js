@@ -11,6 +11,7 @@ const compiled = _.mapValues({
   catInit: '/p/:proj/state/cat/:cHash/init',
   catIter: '/p/:proj/state/cat/:cHash/iter/calc',
   catEval: '/p/:proj/state/cat/:cHash/eval',
+  catOngoing: '/p/:proj/results/cat/:cHash/ongoing',
   catHistory: '/p/:proj/results/cat/:cHash/history',
   evalError: '/p/:proj/state/cat/:cHash/eval/:dHash/error',
   evalGep: '/p/:proj/state/cat/:cHash/eval/:dHash/:gep=G|E|P',
@@ -83,6 +84,11 @@ export const ListProj = () => createSelector(
         'catIter',
         (m) => {
           _.set(projects, [m.proj, 'cat', m.cHash, 'iter'], token);
+        },
+      ], [
+        'catOngoing',
+        (m) => {
+          _.set(projects, [m.proj, 'cat', m.cHash, 'ongoing'], JSON.parse(value));
         },
       ], [
         'catHistory',

@@ -20,17 +20,6 @@ module.exports = {
     },
   }, {
     type: 'confirm',
-    name: 'wantMessages',
-    default: true,
-    message: 'Do you want i18n messages (i.e. will this component use text)?',
-  }, {
-    type: 'confirm',
-    name: 'wantInjectIntl',
-    when: (ans) => ans.wantMessages,
-    default: false,
-    message: 'Do you want injected intl?',
-  }, {
-    type: 'confirm',
     name: 'wantLoadable',
     default: false,
     message: 'Do you want to load resources asynchronously?',
@@ -45,16 +34,6 @@ module.exports = {
       templateFile: './component/index.js.hbs',
       abortOnFail: true,
     });
-
-    if (data.wantMessages) {
-      // Generate messages.js
-      actions.push({
-        type: 'add',
-        path: '../../app/components/{{properCase name}}/messages.js',
-        templateFile: './component/messages.js.hbs',
-        abortOnFail: true,
-      });
-    }
 
     if (data.wantLoadable) {
       // Generate loadable.js
