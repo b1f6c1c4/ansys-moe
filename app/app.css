@@ -6,3 +6,7 @@ a {
 .chart-wrapper svg {
   width: 100%;
 }
+
+input {
+  height: 100%;
+}
