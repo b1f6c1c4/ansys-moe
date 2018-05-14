@@ -1,0 +1,70 @@
+# Entry points
+
+type Query {
+
+  # Check system status
+  status: Status
+
+  etcd(prefix: String): [EtcdEntry!]!
+
+  # Check controller docker container status
+  controller: Boolean
+
+  # Check queue status
+  rabbit: RabbitStatus
+}
+
+type Mutation {
+
+  # Run a new project or modify an existing project
+  # name MUST match /^[a-z][-_a-zz0-9]*$/
+  run(name: ID!, config: JSON!): Boolean
+
+  # Start controller docker container
+  startController: Boolean
+
+  stopProj(proj: ID!): Boolean
+
+  stopCat(proj: ID!, cHash: ID!): Boolean
+
+  stopEval(proj: ID!, cHash: ID!, dHash: ID!): Boolean
+
+  dropProj(proj: ID!): Boolean
+}
+
+type Subscription {
+
+  watchEtcd(prefix: String): EtcdEntry
+}
+
+# Inputs
+
+# Objects
+
+type Status {
+  version: String
+  commitHash: String
+}
+
+type EtcdEntry {
+  key: String!
+  value: String
+}
+
+type RabbitStatus {
+  action: QueueStatus
+  ansys: QueueStatus
+  mathematica: QueueStatus
+  rlang: QueueStatus
+}
+
+type QueueStatus {
+  ready: Int
+  unacked: Int
+  consumers: Int
+  prefetches: Int
+}
+
+# Scalars
+
+scalar JSON
