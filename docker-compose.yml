@@ -62,6 +62,7 @@ services:
       ETCD_ENDPOINTS: '["etcd1:2379","etcd2:2379","etcd3:2379"]'
       RABBIT_HOST: rabbit
       RABBIT_PORT: 5672
+      RABBIT_MGMT_PORT: 15672
       RABBIT_USER: "${RABBIT_USER}"
       RABBIT_PASS: "${RABBIT_PASS}"
       LOG_HOST: logstash
