@@ -1,11 +1,7 @@
-query Stop($proj: String!) {
-  data(input: {
-    proj: $proj,
-  })
+mutation Stop($proj: ID!) {
+  stopProj(proj: $proj)
 }
 
-query Drop($proj: String!) {
-  data(input: {
-    proj: $proj,
-  })
+mutation Drop($proj: ID!) {
+  dropProj(proj: $proj)
 }

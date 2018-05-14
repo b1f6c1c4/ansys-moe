@@ -1,5 +1,3 @@
-query Stop($proj: String!) {
-  data(input: {
-    proj: $proj,
-  })
+mutation Stop($proj: ID!, $cHash: ID!, $dHash: ID!) {
+  stopEval(proj: $proj, cHash: $cHash, dHash: $dHash)
 }

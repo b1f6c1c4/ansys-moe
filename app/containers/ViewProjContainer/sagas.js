@@ -1,4 +1,4 @@
-import { call, put, select, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery } from 'redux-saga/effects';
 import * as api from 'utils/request';
 
 import * as VIEW_PROJ_CONTAINER from './constants';
@@ -7,10 +7,8 @@ import gql from './api.graphql';
 
 // Sagas
 export function* handleStopRequest({ proj }) {
-  const cred = yield select((state) => state.getIn(['globalContainer', 'credential', 'token']));
-
   try {
-    const result = yield call(api.query, gql.Stop, { proj }, cred);
+    const result = yield call(api.mutate, gql.Stop, { proj });
     yield put(viewProjContainerActions.stopSuccess(result));
   } catch (err) {
     yield put(viewProjContainerActions.stopFailure(err));
@@ -18,10 +16,8 @@ export function* handleStopRequest({ proj }) {
 }
 
 export function* handleDropRequest({ proj }) {
-  const cred = yield select((state) => state.getIn(['globalContainer', 'credential', 'token']));
-
   try {
-    const result = yield call(api.query, gql.Drop, { proj }, cred);
+    const result = yield call(api.mutate, gql.Drop, { proj });
     yield put(viewProjContainerActions.dropSuccess(result));
   } catch (err) {
     yield put(viewProjContainerActions.dropFailure(err));

@@ -125,7 +125,7 @@ class ViewEvalPage extends React.PureComponent {
               onClick={this.props.onRefresh}
             />
           )}
-          {!isLoading && EvalCanStop(cat) && (
+          {!isLoading && EvalCanStop(e) && (
             <Button
               color="secondary"
               onClick={this.handleConfirm('isOpenStop')}

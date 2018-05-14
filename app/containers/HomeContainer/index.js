@@ -7,6 +7,7 @@ import injectSaga from 'utils/injectSaga';
 
 import HomePage from 'components/HomePage';
 
+import * as globalContainerActions from 'containers/GlobalContainer/actions';
 import * as homeContainerSelectors from './selectors';
 import * as homeContainerActions from './actions';
 import sagas from './sagas';
@@ -27,14 +28,17 @@ HomeContainer.propTypes = {
   isLoading: PropTypes.bool.isRequired,
   controller: PropTypes.bool.isRequired,
   rabbit: PropTypes.object,
-  error: PropTypes.string.isRequired,
+  error: PropTypes.object,
   onStatus: PropTypes.func.isRequired,
   onStart: PropTypes.func.isRequired,
 };
 
 function mapDispatchToProps(dispatch) {
   return {
-    onStatus: () => dispatch(homeContainerActions.statusRequest()),
+    onStatus: () => {
+      dispatch(homeContainerActions.statusRequest());
+      dispatch(globalContainerActions.etcdRequest());
+    },
     onStart: () => dispatch(homeContainerActions.startRequest()),
   };
 }
