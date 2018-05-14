@@ -15,6 +15,7 @@ module.exports = (petri) => {
   }, async (r) => {
     const dVars = await r.retrieve('/hashs/dHash/:dHash').json();
     await r.store('/p/:proj/results/d/:dHash/var', dVars);
+    await r.store('/p/:proj/results/d/:dHash/startTime', new Date().toISOString());
     await r.dyn('/G');
     for (const gpar of r.cfg.G) {
       const { name } = gpar;
@@ -204,6 +205,7 @@ module.exports = (petri) => {
     const ongoing = await r.retrieve('/p/:proj/results/cat/:cHash/ongoing').json();
     delete ongoing[r.param.dHash];
     await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
+    await r.store('/p/:proj/results/d/:dHash/endTime', new Date().toISOString());
     await r.decr({ '../#': 1 });
     await r.incr({ '../@': 1, '../../iter/req': 1 });
   });
