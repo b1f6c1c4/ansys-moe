@@ -15,6 +15,7 @@ import NotFoundPage from 'components/NotFoundPage';
 import ErrorBoundary from 'containers/ErrorBoundary';
 import GlobalContainer from 'containers/GlobalContainer';
 import SubscriptionContainer from 'containers/SubscriptionContainer';
+import HomeContainer from 'containers/HomeContainer';
 import ViewProjContainer from 'containers/ViewProjContainer';
 import ViewCatContainer from 'containers/ViewCatContainer';
 import ViewEvalContainer from 'containers/ViewEvalContainer';
@@ -69,6 +70,7 @@ export const render = () => {
               <GlobalContainer>
                 <ErrorBoundary>
                   <ConnectedSwitch>
+                    <Route exact path="/app/" component={HomeContainer} />
                     <Route exact path="/app/p/:proj" component={ViewProjContainer} />
                     <Route exact path="/app/p/:proj/cat/:cHash" component={ViewCatContainer} />
                     <Route exact path="/app/p/:proj/cat/:cHash/d/:dHash" component={ViewEvalContainer} />

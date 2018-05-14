@@ -1,0 +1,35 @@
+query Status {
+
+  controller
+
+  rabbit {
+    action {
+      ready
+      unacked
+      consumers
+      prefetches
+    }
+    ansys {
+      ready
+      unacked
+      consumers
+      prefetches
+    }
+    mathematica {
+      ready
+      unacked
+      consumers
+      prefetches
+    }
+    rlang {
+      ready
+      unacked
+      consumers
+      prefetches
+    }
+  }
+}
+
+mutation Start {
+  startController
+}

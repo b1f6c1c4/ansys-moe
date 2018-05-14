@@ -1,7 +1,7 @@
+import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { FormattedMessage } from 'react-intl';
 
 import {
   withStyles,
@@ -13,8 +13,7 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
-import { Link } from 'react-router-dom';
-import Abbreviation from 'components/Abbreviation';
+import DocumentTitle from 'components/DocumentTitle';
 import Button from 'components/Button';
 import EmptyIndicator from 'components/EmptyIndicator';
 import LoadingButton from 'components/LoadingButton';
@@ -22,13 +21,12 @@ import RefreshButton from 'components/RefreshButton';
 import ResultIndicator from 'components/ResultIndicator';
 import StatusBadge from 'components/StatusBadge';
 
-import messages from './messages';
-
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
-  title: {
-    margin: theme.spacing.unit,
-    flex: 1,
+  badge: {
+    display: 'inline-block',
+    verticalAlign: 'super',
+    marginLeft: theme.spacing.unit * 2,
   },
   container: {
     width: '100%',
@@ -43,75 +41,80 @@ const styles = (theme) => ({
   actions: {
     display: 'flex',
     flexWrap: 'wrap',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
 });
 
 class HomePage extends React.PureComponent {
-  handleClick = (bId) => () => this.props.onPush(`/app/ballots/${bId}`);
-
   render() {
     // eslint-disable-next-line no-unused-vars
-    const { classes, isLoading, listBallots } = this.props;
+    const {
+      classes,
+      isLoading,
+      controller,
+      rabbit,
+    } = this.props;
 
     return (
       <div className={classes.container}>
-        <Typography variant="display2">
-          <FormattedMessage {...messages.header} />
+        <DocumentTitle title="控制面板" />
+        <Typography
+          component="h1"
+          variant="display2"
+          gutterBottom
+        >
+          <span>控制面板</span>
+          <Typography className={classes.badge} variant="subheading" component="span">
+            <StatusBadge status={controller ? 'running' : 'error'} />
+          </Typography>
         </Typography>
+        <div className={classes.actions}>
+          <LoadingButton {...{ isLoading }}>
+            <RefreshButton
+              isLoading={isLoading}
+              onClick={this.props.onStatus}
+            />
+          </LoadingButton>
+          {!isLoading && !controller && (
+            <Button
+              color="secondary"
+              variant="raised"
+              onClick={this.props.onStart}
+            >
+              恢复运行
+            </Button>
+          )}
+        </div>
+        <ResultIndicator error={this.props.error} />
         <Paper className={classes.root}>
-          <div className={classes.actions}>
-            <Typography variant="title" className={classes.title}>
-              <FormattedMessage {...messages.listBallots} />
-            </Typography>
-            <LoadingButton {...{ isLoading }}>
-              <RefreshButton
-                isLoading={isLoading}
-                onClick={this.props.onRefreshListBallots}
-              />
-            </LoadingButton>
-          </div>
-          <EmptyIndicator isLoading={isLoading} list={listBallots} />
-          <ResultIndicator error={this.props.error} />
-          {!isLoading && listBallots && listBallots.length > 0 && (
+          <Typography variant="title" className={classes.title}>
+            消息队列
+          </Typography>
+          {!isLoading && (
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell padding="none"><FormattedMessage {...messages.bId} /></TableCell>
-                  <TableCell padding="none"><FormattedMessage {...messages.name} /></TableCell>
-                  <TableCell padding="none"><FormattedMessage {...messages.status} /></TableCell>
+                  <TableCell>队列名称</TableCell>
+                  <TableCell>排队中</TableCell>
+                  <TableCell>执行中</TableCell>
+                  <TableCell>最多同时执行</TableCell>
+                  <TableCell>执行者数</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {listBallots.map((b) => (
-                  <TableRow key={b.bId} hover onClick={this.handleClick(b.bId)}>
-                    <TableCell padding="none">
-                      <Link to={`/app/ballots/${b.bId}`}>
-                        <Abbreviation text={b.bId} />
-                      </Link>
-                    </TableCell>
-                    <TableCell padding="none">
-                      <Link to={`/app/ballots/${b.bId}`}>
-                        {b.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell padding="none"><StatusBadge status={b.status} /></TableCell>
+                {_.toPairs(rabbit).map(([name, q]) => (
+                  <TableRow key={name} hover >
+                    <TableCell>{name}</TableCell>
+                    <TableCell>{q.ready}</TableCell>
+                    <TableCell>{q.unacked}</TableCell>
+                    <TableCell>{q.prefetches}</TableCell>
+                    <TableCell>{q.consumers}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
-          <div className={classes.actions}>
-            <LoadingButton>
-              <Button
-                color="secondary"
-                variant="raised"
-                to="/app/create"
-              >
-                <FormattedMessage {...messages.create} />
-              </Button>
-            </LoadingButton>
-          </div>
+          <EmptyIndicator isLoading={isLoading} list={rabbit} />
         </Paper>
       </div>
     );
@@ -119,12 +122,13 @@ class HomePage extends React.PureComponent {
 }
 
 HomePage.propTypes = {
-  onPush: PropTypes.func.isRequired,
   classes: PropTypes.object.isRequired,
   isLoading: PropTypes.bool.isRequired,
-  listBallots: PropTypes.array,
+  controller: PropTypes.bool.isRequired,
+  rabbit: PropTypes.object,
   error: PropTypes.object,
-  onRefreshListBallots: PropTypes.func.isRequired,
+  onStatus: PropTypes.func.isRequired,
+  onStart: PropTypes.func.isRequired,
 };
 
 export default compose(

@@ -31,7 +31,6 @@ function globalContainerReducer(state = initialState, action) {
         .set('error', null);
     case GLOBAL_CONTAINER.ETCD_SUCCESS:
       return state.set('isLoading', false)
-        .set('error', null)
         .set('etcd', Map(_.map(action.result.etcd, ({ key, value }) => [key, value])));
     case GLOBAL_CONTAINER.ETCD_FAILURE:
       return state.set('isLoading', false)
