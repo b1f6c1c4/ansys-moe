@@ -5,7 +5,7 @@
   </head>
   <body>
 
-    <% require('html-webpack-plugin/lib/loader.js!./content.ejs')({}) %>
+    <%= require('html-webpack-plugin/lib/loader.js!./content.ejs')({}) %>
 
     <% if (htmlWebpackPlugin.options.inject) { %>
       <script src="/dll/main.dll.js"></script>

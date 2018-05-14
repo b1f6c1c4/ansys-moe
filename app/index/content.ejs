@@ -14,22 +14,16 @@
   <div class="container">
 
     <div id="logo" class="pull-left">
-      <h1><a href="#intro" class="scrollto">Ballot</a></h1>
+      <h1><a href="#intro" class="scrollto">Ansys-MOE</a></h1>
       <!-- Uncomment below if you prefer to use an image logo -->
       <!-- <a href="#intro"><img src="resource/logo.png" alt="" title=""></a> -->
     </div>
 
     <nav id="nav-menu-container">
       <ul class="nav-menu">
-        <li class="menu-active"><a href="#intro">home</a></li>
-        <li><a href="#features">features</a></li>
-        <li><a href="#faq">faq</a></li>
-        <li><a href="/app/login">login</a></li>
-        <li class="menu-has-children">
-          <a class="nav-langs" href="#">Language/语言</a>
-          <span class="nav-langs"><%= require('resource/icons/ic_language_black_18px.svg') %></span>
-          <ul class="list-langs" id="list-langs"></ul>
-        </li>
+        <li class="menu-active"><a href="#intro">首页</a></li>
+        <li><a href="#features">项目特点</a></li>
+        <li><a href="/app/">控制面板</a></li>
       </ul>
     </nav><!-- #nav-menu-container -->
   </div>
@@ -41,10 +35,9 @@
 <section id="intro">
 
   <div class="intro-text">
-    <h2>home.title</h2>
-    <p>home.description</p>
-    <a href="#features" class="btn-get-started scrollto">getStarted</a>
-    <a href="/app/login" class="btn-get-started scrollto">signUpNow</a>
+    <h2>Ansys-MOE 自动化设计系统</h2>
+    <p>高效解决电磁场仿真闭环优化问题</p>
+    <a href="/app/" class="btn-get-started scrollto">进入控制面板</a>
   </div>
 
 </section><!-- #intro -->
@@ -61,7 +54,7 @@
 
         <div class="col-lg-12">
           <div class="section-header wow fadeIn" data-wow-duration="1s">
-            <h3 class="section-title">features.title</h3>
+            <h3 class="section-title">项目特点</h3>
             <span class="section-divider"></span>
           </div>
         </div>
@@ -71,24 +64,20 @@
           <div class="row">
 
             <div class="col-lg-6 col-md-6 box wow fadeInLeft">
-              <div class="icon"><%= require('resource/icons/ic_lock_black_48px.svg') %></div>
-              <h4 class="title">features.security</h4>
-              <p class="description">features.security.description</p>
+              <h4 class="title">先进的优化算法</h4>
+              <p class="description">该系统采用BGO（贝叶斯全局最优化）方法，建立平稳高斯随机过程模型，将大优化问题转化为“下一步选取哪个点进行求解可以获得最大的目标函数提升的期望”的小优化问题，并迭代求解。该方法旨在尽可能少对目标函数进行求值，以缩短计算时间。</p>
             </div>
             <div class="col-lg-6 col-md-6 box wow fadeInRight">
-              <div class="icon"><%= require('resource/icons/ic_person_black_48px.svg') %></div>
-              <h4 class="title">features.anonymity</h4>
-              <p class="description">features.anonymity.description</p>
+              <h4 class="title">支持多种设计变量</h4>
+              <p class="description">该系统支持任意多个分类型、离散型、连续型随机变量，还支持设计变量之间的依赖关系（不同分类下启用不同的设计变量组合）。用户可以灵活组合各种设计变量，还可以将设计变量进行线性非线性组合以解决复杂的优化设计问题。</p>
             </div>
             <div class="col-lg-6 col-md-6 box wow fadeInLeft">
-              <div class="icon"><%= require('resource/icons/ic_remove_circle_outline_black_48px.svg') %></div>
-              <h4 class="title">features.duplication</h4>
-              <p class="description">features.duplication.description</p>
+              <h4 class="title">集成多种程序语言</h4>
+              <p class="description">该系统除了支持普通的数学表达式进行数据预处理和后处理以外，还支持灵活开源的R语言和商业闭源的Wolfram Mathematica语言。用户可以使用任意R和Mathematica程序来对设计变量进行变换，并从电磁场仿真结果推导出系统性能参数。</p>
             </div>
             <div class="col-lg-6 col-md-6 box wow fadeInRight">
-              <div class="icon"><%= require('resource/icons/ic_check_black_48px.svg') %></div>
-              <h4 class="title">features.authenticity</h4>
-              <p class="description">features.authenticity.description</p>
+              <h4 class="title">灵活的系统架构</h4>
+              <p class="description">该系统内部采用开源分布式强一致性键值数据库etcd进行状态存储，采用开源高性能消息队列RabbitMQ进行远程过程调用，采用业界最流行的ELK（Elasticsearch-Logstash-Kibana）架构对系统运行情况进行监控，最大限度杜绝数据异常丢失。</p>
             </div>
 
           </div>
@@ -101,121 +90,6 @@
 
   </section><!-- #features -->
 
-  <!--==========================
-    Call To Action Section
-  ============================-->
-  <section id="call-to-action">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-9 text-center text-lg-left">
-          <h3 class="cta-title">cta.title</h3>
-          <p class="cta-text">cta.description</p>
-        </div>
-        <div class="col-lg-3 cta-btn-container text-center">
-          <a class="cta-btn align-middle" href="app/login">cta.login</a>
-        </div>
-      </div>
-
-    </div>
-  </section><!-- #call-to-action -->
-
-  <!--==========================
-    More Features Section
-  ============================-->
-  <section id="more-features" class="section-bg">
-    <div class="container">
-
-      <div class="section-header">
-        <h3 class="section-title">more.title</h3>
-        <span class="section-divider"></span>
-        <p class="section-description">more.description</p>
-      </div>
-
-      <div class="row">
-
-        <div class="col-lg-6">
-          <div class="box wow fadeInLeft">
-            <div class="icon"><%= require('resource/icons/ic_mode_edit_black_48px.svg') %></div>
-            <h4 class="title">more.customizable</h4>
-            <p class="description">more.customizable.description</p>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="box wow fadeInRight">
-            <div class="icon"><%= require('resource/icons/ic_error_outline_black_48px.svg') %></div>
-            <h4 class="title">more.immutable</h4>
-            <p class="description">more.immutable.description</p>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="box wow fadeInLeft">
-            <div class="icon"><%= require('resource/icons/ic_visibility_black_48px.svg') %></div>
-            <h4 class="title">more.visibility</h4>
-            <p class="description">more.visibility.description</p>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="box wow fadeInRight">
-            <div class="icon"><%= require('resource/icons/ic_accessibility_black_48px.svg') %></div>
-            <h4 class="title">more.userFriendly</h4>
-            <p class="description">more.userFriendly.description</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section><!-- #more-features -->
-
-  <!--==========================
-    Frequently Asked Questions Section
-  ============================-->
-  <section id="faq">
-    <div class="container">
-
-      <div class="section-header">
-        <h3 class="section-title">faq.title</h3>
-        <span class="section-divider"></span>
-        <p class="section-description">faq.description</p>
-      </div>
-
-      <ul id="faq-list">
-
-        <li class="wow fadeInUp">
-          <a data-toggle="collapse" class="collapsed" href="#faq1">faq.q1.question</a>
-          <div class="collapse">
-            <p>faq.q1.answer</p>
-          </div>
-        </li>
-        <li class="wow fadeInUp" data-wow-delay="0.1s">
-          <a data-toggle="collapse" class="collapsed" href="#faq2">faq.q2.question</a>
-          <div class="collapse">
-            <p>faq.q2.answer</p>
-          </div>
-        </li>
-        <li class="wow fadeInUp" data-wow-delay="0.2s">
-          <a data-toggle="collapse" class="collapsed" href="#faq3">faq.q3.question</a>
-          <div class="collapse">
-            <p>faq.q3.answer</p>
-          </div>
-        </li>
-        <li class="wow fadeInUp" data-wow-delay="0.3s">
-          <a data-toggle="collapse" class="collapsed" href="#faq4">faq.q4.question</a>
-          <div class="collapse">
-            <p>faq.q4.answer</p>
-          </div>
-        </li>
-        <li class="wow fadeInUp" data-wow-delay="0.4s">
-          <a data-toggle="collapse" class="collapsed" href="#faq5">faq.q5.question</a>
-          <div class="collapse">
-            <p>faq.q5.answer</p>
-          </div>
-        </li>
-
-      </ul>
-
-    </div>
-  </section><!-- #faq -->
-
 </main>
 
 <!--==========================
@@ -226,10 +100,9 @@
     <div class="row">
       <div class="col-lg-12">
         <nav class="footer-links text-center pt-2 pt-lg-0">
-          <a class="scrollto" href="#intro">home</a>
-          <a class="scrollto" href="#features">features</a>
-          <a class="scrollto" href="#faq">faq</a>
-          <a href="/app/login">login</a>
+          <a class="scrollto" href="#intro">首页</a>
+          <a class="scrollto" href="#features">项目特点</a>
+          <a href="/app/">控制面板</a>
         </nav>
       </div>
     </div>

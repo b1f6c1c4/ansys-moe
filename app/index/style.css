@@ -5,6 +5,9 @@ body {
   background: #fff !important;
   color: #666666;
   overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .body-x-en {
@@ -124,14 +127,24 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.5s;
 }
 
+#main {
+  flex: 1;
+}
+
 /*--------------------------------------------------------------
 # Intro Section
 --------------------------------------------------------------*/
 #intro {
   width: 100%;
-  height: 100vh;
+  height: 50vh;
   background: linear-gradient(45deg, #1de099, #1dc8cd);
   position: relative;
+}
+
+@media (max-width: 384px) {
+  #intro {
+    height: 100vh;
+  }
 }
 
 .intro-text {
@@ -474,140 +487,6 @@ body.mobile-nav-active #mobile-nav-toggle {
 
 #features .section-description {
   padding-bottom: 10px;
-}
-
-/* Call To Action Section
---------------------------------*/
-#call-to-action {
-  background: linear-gradient(rgba(29, 200, 205, 0.65), rgba(29, 205, 89, 0.2));
-  background-size: cover;
-  padding: 80px 0;
-  text-align: center;
-}
-
-.cta-title {
-  color: #fff;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.cta-text {
-  color: #fff;
-}
-
-@media (min-width: 769px) {
-  .cta-btn-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-}
-
-.cta-btn {
-  font-weight: 500;
-  font-size: 16px;
-  letter-spacing: 1px;
-  display: inline-block;
-  padding: 8px 30px;
-  border-radius: 25px;
-  transition: background 0.5s;
-  margin: 10px;
-  border: 2px solid #fff;
-  color: #fff;
-}
-
-.cta-btn:hover {
-  background: #fff;
-}
-
-/* More Features Section
---------------------------------*/
-#more-features {
-  padding: 60px 0 60px 0;
-}
-
-#more-features .box {
-  padding: 40px;
-  margin-bottom: 30px;
-  box-shadow: 0px 0px 30px rgba(73, 78, 92, 0.15);
-  background: #fff;
-  transition: 0.4s;
-}
-
-#more-features .icon {
-  float: left;
-}
-
-#more-features h4 {
-  margin-left: 100px;
-  font-weight: 700;
-  margin-bottom: 15px;
-  font-size: 18px;
-}
-
-#more-features h4 a {
-  color: #111;
-}
-
-#more-features p {
-  font-size: 14px;
-  margin-left: 100px;
-  margin-bottom: 0;
-  line-height: 24px;
-}
-
-@media (max-width: 767px) {
-  #more-features .box {
-    margin-bottom: 20px;
-  }
-  #more-features .icon {
-    float: none;
-    text-align: center;
-    padding-bottom: 15px;
-  }
-  #more-features h4, #more-features p {
-    margin-left: 0;
-    text-align: center;
-  }
-}
-
-/* Frequently Asked Questions Section
---------------------------------*/
-#faq {
-  padding: 60px 0;
-}
-
-#faq-list {
-  padding: 0;
-  list-style: none;
-}
-
-#faq-list li {
-  border-bottom: 1px solid #ddd;
-}
-
-#faq-list a {
-  padding: 18px 0;
-  display: block;
-  position: relative;
-  font-size: 22px;
-  line-height: 1;
-  font-weight: 300;
-  padding-right: 20px;
-}
-
-#faq-list p {
-  margin-bottom: 20px;
-}
-
-@media (max-width: 768px) {
-  #faq #faq-list a {
-    font-size: 18px;
-  }
-}
-
-#faq-list a.collapsed {
-  color: #000;
 }
 
 
