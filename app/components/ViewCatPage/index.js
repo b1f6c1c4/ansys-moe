@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import moment from 'moment';
+import { format } from 'date-fns';
 
 import {
   withStyles,
@@ -158,8 +158,8 @@ class ViewCatPage extends React.PureComponent {
                   className={classes.clickable}
                 >
                   <TableCell padding="none">{dHash}</TableCell>
-                  <TableCell padding="none">{e.startTime && moment(e.startTime).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-                  <TableCell padding="none">{e.endTime && moment(e.endTime).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                  <TableCell padding="none">{e.startTime && format(e.startTime, 'YYYY-MM-DD HH:mm:ss')}</TableCell>
+                  <TableCell padding="none">{e.endTime && format(e.endTime, 'YYYY-MM-DD HH:mm:ss')}</TableCell>
                   <TableCell padding="none">
                     {JSON.stringify(listHash.dHash[dHash])}
                   </TableCell>

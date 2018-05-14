@@ -14,11 +14,11 @@ const {
 } = require('advanced-injection-plugin');
 
 const extractCss0 = new ExtractTextPlugin({
-  filename: 'assets/[name].[contenthash:8].css',
+  filename: 'assets/[name].[sha1:contenthash:hex:8].css',
   allChunks: true,
 });
 const extractCss1 = new ExtractTextPlugin({
-  filename: 'assets/[name].vendor.[contenthash:8].css',
+  filename: 'assets/[name].vendor.[sha1:contenthash:hex:8].css',
   allChunks: true,
 });
 

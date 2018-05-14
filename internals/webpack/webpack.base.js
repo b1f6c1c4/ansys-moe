@@ -126,10 +126,10 @@ module.exports = ({
         '.js',
       ],
       alias: {
+        'date-fns': 'date-fns/esm',
         history: 'history/es',
         lodash: 'lodash-es',
         'material-ui': 'material-ui/es',
-        '@material-ui/icons': '@material-ui/icons/es',
         '@material-ui/icons': '@material-ui/icons/es',
         'react-beautiful-dnd': 'react-beautiful-dnd/dist/react-beautiful-dnd.esm',
         'react-redux': 'react-redux/es',

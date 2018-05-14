@@ -24,7 +24,7 @@ class Loading extends React.PureComponent {
     if (error) {
       return (
         <div>
-          加载错误
+          {`加载错误：${error}`}
         </div>
       );
     }
