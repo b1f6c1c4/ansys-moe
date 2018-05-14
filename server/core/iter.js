@@ -141,15 +141,28 @@ module.exports = (petri) => {
       return;
     }
     logger.debug('Iter succeed', rst);
+    const nextPoint = rst[0].x;
+    const nextEI = rst[0].ei[0];
+    if (!_.isNil(r.cfg.minEI) && nextEI < r.cfg.minEI) {
+      logger.debug('EI not sufficient', {
+        x: nextPoint,
+        ei: nextEI,
+      });
+      if (!_.keys(ongoing).length) {
+        r.logger.debug('Iteration successfully converged!');
+        await r.incr({ '../../../conv': 1 });
+      }
+      return;
+    }
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
     const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
     const hasDone = (dpar) => _.every(dVars, (d, i) => {
       if (d.kind === 'discrete') {
         const id = ((dpar[d.name] - d.lowerBound) / (d.upperBound - d.lowerBound)) * (d.steps - 1);
-        return Math.round(id) === rst[0][i];
+        return Math.round(id) === nextPoint[i];
       }
-      return Math.abs(dpar[d.name] - ((rst[0][i] * d.precision) * (d.upperBound - d.lowerBound))) < d.precision;
+      return Math.abs(dpar[d.name] - ((nextPoint[i] * d.precision) * (d.upperBound - d.lowerBound))) < d.precision;
     });
     const hisDone = _.chain(history)
       .map('D')
@@ -170,9 +183,9 @@ module.exports = (petri) => {
     }
     const pars = _.fromPairs(dVars.map((d, i) => {
       if (d.kind === 'discrete') {
-        return [d.name, ((rst[0][i] / (d.steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+        return [d.name, ((nextPoint[i] / (d.steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
       }
-      return [d.name, ((rst[0][i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+      return [d.name, ((nextPoint[i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
     }));
     const dpars = _.assign({}, cVars, pars);
     const dHash = hash(dpars);
