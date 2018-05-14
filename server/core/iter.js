@@ -2,7 +2,6 @@ const _ = require('lodash');
 const { hash, newId, cIdGen, dedent } = require('../util');
 const amqp = require('../amqp');
 const { cancel, parse } = require('../integration');
-const logger = require('../logger')('core/iter');
 
 module.exports = (petri) => {
   petri.register({
@@ -40,17 +39,17 @@ module.exports = (petri) => {
   }, async (r) => {
     // Check if enough evals have done
     if (await r.ensure('/eval/@') < r.cfg.minEvals) {
-      logger.debug('Evals not enough');
+      r.logger.debug('Evals not enough');
       return;
     }
     // Check if concurrent evals are enough
     if (await r.ensure('/eval/#') >= r.cfg.concurrent) {
-      logger.debug('Enough concurrent evals');
+      r.logger.debug('Enough concurrent evals');
       return;
     }
     // Cancel ongoing iter calculation
     if (await r.decr({ '/iter/calc': 1 })) {
-      logger.warn('Detected old eval');
+      r.logger.warn('Detected old eval');
       const iId = await r.retrieve('/p/:proj/results/cat/:cHash/iterate').string();
       cancel('rlang', r.action('i-done', '/cat/:cHash/iter/t/:iId', { iId }));
     }
@@ -100,7 +99,7 @@ module.exports = (petri) => {
       beingSampled,
     });
     const iId = newId();
-    logger.debug('Iter calculation started', iId);
+    r.logger.debug('Iter calculation started', iId);
     amqp.publish(
       'rlang',
       { script },
@@ -122,9 +121,9 @@ module.exports = (petri) => {
   }, async (r, payload) => {
     if (r.param.iId !== await r.retrieve('/p/:proj/results/cat/:cHash/iterate').string()) {
       if (payload.action.type === 'cancel') {
-        logger.debug('Iter properly cancelled');
+        r.logger.debug('Iter properly cancelled');
       } else {
-        logger.warn('iId not match, drop result');
+        r.logger.warn('iId not match, drop result');
       }
       return;
     }
@@ -133,18 +132,18 @@ module.exports = (petri) => {
     const ongoing = await r.retrieve('/p/:proj/results/cat/:cHash/ongoing').json();
     if (!rst) {
       if (_.keys(ongoing).length) {
-        logger.warn('Iter calc failed', payload);
+        r.logger.warn('Iter calc failed', payload);
       } else {
-        logger.error('Iter calc failed', payload);
+        r.logger.error('Iter calc failed', payload);
         await r.incr({ '../../../error': 1 });
       }
       return;
     }
-    logger.debug('Iter succeed', rst);
+    r.logger.debug('Iter succeed', rst);
     const nextPoint = rst[0].x;
     const nextEI = rst[0].ei[0];
     if (!_.isNil(r.cfg.minEI) && nextEI < r.cfg.minEI) {
-      logger.debug('EI not sufficient', {
+      r.logger.debug('EI not sufficient', {
         x: nextPoint,
         ei: nextEI,
       });
@@ -174,9 +173,9 @@ module.exports = (petri) => {
       .value();
     if (hisDone || ongDone) {
       if (_.keys(ongoing).length) {
-        logger.warn('Same eval ongoing or has done');
+        r.logger.warn('Same eval ongoing or has done');
       } else {
-        logger.debug('Iteration successfully converged!');
+        r.logger.debug('Iteration successfully converged!');
         await r.incr({ '../../../conv': 1 });
       }
       return;
@@ -190,7 +189,7 @@ module.exports = (petri) => {
     const dpars = _.assign({}, cVars, pars);
     const dHash = hash(dpars);
     ongoing[dHash] = dpars;
-    logger.info(`Will create eval ${dHash}`, dpars);
+    r.logger.info(`Will create eval ${dHash}`, dpars);
     await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
     await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
     await r.incr({
