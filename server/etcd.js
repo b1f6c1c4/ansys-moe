@@ -16,28 +16,8 @@ const connect = () => {
   });
 };
 
-const db = {};
-const mocking = {
-  connect: () => {
-    logger.warn('Mocking etcd');
-  },
-  get: (key) => ({
-    number: async () => db[key] && parseInt(db[key], 10),
-    json: async () => db[key] && JSON.parse(db[key]),
-  }),
-  put: (key) => ({
-    value: (value) => ({
-      exec: async () => { db[key] = JSON.stringify(value); },
-    }),
-  }),
-  mock: () => db,
-};
-
 module.exports = new Proxy({}, {
   get(target, propKey) {
-    if (process.env.MOCK_ETCD) {
-      return mocking[propKey];
-    }
     if (propKey === 'connect') {
       return connect;
     }
