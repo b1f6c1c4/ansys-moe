@@ -9,7 +9,7 @@ import {
   CssBaseline,
   MuiThemeProvider,
 } from 'material-ui';
-import { brown, teal } from 'material-ui/colors';
+import { brown, indigo } from 'material-ui/colors';
 import { Switch, Route } from 'react-router-dom';
 import NotFoundPage from 'components/NotFoundPage';
 import ErrorBoundary from 'containers/ErrorBoundary';
@@ -37,9 +37,9 @@ const theme = createMuiTheme({
   },
   palette: {
     primary: {
-      light: teal[600],
-      main: teal[800],
-      dark: teal[900],
+      light: indigo[600],
+      main: indigo[800],
+      dark: indigo[900],
       contrastText: '#fff',
     },
     secondary: {
