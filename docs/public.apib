@@ -81,11 +81,25 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 ### List [GET]
 
++ Request
+
+    + Header
+            Accept: application/json
+
 + Response 200 (application/json; charset=utf-8)
 
     + Attributes
         + name (string)
         + dir (boolean)
+
+### List download [GET]
+
++ Request
+
+    + Header
+            Accept: application/zip
+
++ Response 200 (application/zip)
 
 ### Delete [DELETE]
 

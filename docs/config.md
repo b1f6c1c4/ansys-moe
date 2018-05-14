@@ -10,6 +10,7 @@ All other strings MUST match `/^[a-z][-_a-z0-9]*$/`
 - initEvals (number, required)
 - minEvals (number, required)
 - concurrent (number, required)
+- minEI (number)
 - D (array[DParameter], required)
 - G (array[GParameter], required)
 - E (array[EParameter], required)

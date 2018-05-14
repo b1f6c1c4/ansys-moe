@@ -49,6 +49,8 @@
 ## /results
 
 - /d/:dHash
+  - /startTime
+  - /endTime
   - /var
   - /Mid
   - /G/:name

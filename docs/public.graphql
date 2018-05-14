@@ -9,6 +9,9 @@ type Query {
 
   # Check controller docker container status
   controller: Boolean
+
+  # Check queue status
+  rabbit: RabbitStatus
 }
 
 type Mutation {
@@ -19,6 +22,14 @@ type Mutation {
 
   # Start controller docker container
   startController: Boolean
+
+  stopProj(proj: ID!): Boolean
+
+  stopCat(proj: ID!, cHash: ID!): Boolean
+
+  stopEval(proj: ID!, cHash: ID!, dHash: ID!): Boolean
+
+  dropProj(proj: ID!): Boolean
 }
 
 type Subscription {
@@ -38,6 +49,20 @@ type Status {
 type EtcdEntry {
   key: String!
   value: String
+}
+
+type RabbitStatus {
+  action: QueueStatus
+  ansys: QueueStatus
+  mathematica: QueueStatus
+  rlang: QueueStatus
+}
+
+type QueueStatus {
+  ready: Int
+  unacked: Int
+  consumers: Int
+  prefetches: Int
 }
 
 # Scalars
