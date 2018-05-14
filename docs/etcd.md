@@ -29,6 +29,7 @@
       - /init
       - /prep
     - /M/solve
+    - /M/done
     - /E/:name
       - /error
       - /init
@@ -37,18 +38,23 @@
       - /error
       - /init
       - /prep
+    - /P0
   - /iter
     - /hint
     - /req
     - /calc
+  - /conv
 - /done
 
 ## /results
 
 - /d/:dHash
+  - /startTime
+  - /endTime
   - /var
   - /Mid
   - /G/:name
+  - /M/:name
   - /E/:name
   - /P/:name
   - /P0
@@ -57,5 +63,6 @@
   - /history
   - /ongoing
   - /iterate
+- /finals
 - /final
 
