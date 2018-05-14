@@ -1,0 +1,3 @@
+mutation Run($name: String!, $config: JSON!) {
+  run(name: $name, config: $config)
+}

@@ -8,6 +8,7 @@ import viewProjContainerReducer from 'containers/ViewProjContainer/reducer';
 import viewCatContainerReducer from 'containers/ViewCatContainer/reducer';
 import viewEvalContainerReducer from 'containers/ViewEvalContainer/reducer';
 import homeContainerReducer from 'containers/HomeContainer/reducer';
+import runContainerReducer from 'containers/RunContainer/reducer';
 
 const routeInitialState = fromJS({
   location: null,
@@ -32,6 +33,7 @@ export default function createReducer() {
     viewCatContainer: viewCatContainerReducer,
     viewEvalContainer: viewEvalContainerReducer,
     homeContainer: homeContainerReducer,
+    runContainer: runContainerReducer,
   });
 
   return appReducer;

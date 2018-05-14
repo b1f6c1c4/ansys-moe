@@ -19,6 +19,7 @@ import HomeContainer from 'containers/HomeContainer/Loadable';
 import ViewProjContainer from 'containers/ViewProjContainer/Loadable';
 import ViewCatContainer from 'containers/ViewCatContainer/Loadable';
 import ViewEvalContainer from 'containers/ViewEvalContainer/Loadable';
+import RunContainer from 'containers/RunContainer/Loadable';
 
 import createHistory from 'history/createBrowserHistory';
 import configureStore from 'utils/configureStore';
@@ -71,6 +72,7 @@ export const render = () => {
                 <ErrorBoundary>
                   <ConnectedSwitch>
                     <Route exact path="/app/" component={HomeContainer} />
+                    <Route exact path="/app/run" component={RunContainer} />
                     <Route exact path="/app/p/:proj" component={ViewProjContainer} />
                     <Route exact path="/app/p/:proj/cat/:cHash" component={ViewCatContainer} />
                     <Route exact path="/app/p/:proj/cat/:cHash/d/:dHash" component={ViewEvalContainer} />
