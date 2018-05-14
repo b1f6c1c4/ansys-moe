@@ -150,7 +150,7 @@ class ViewCatPage extends React.PureComponent {
               </TableRow>
             </TableHead>
             <TableBody>
-              {_.toPairs(cat.eval).map(([dHash, e]) => (
+              {_.sortBy(_.toPairs(cat.eval), '1.startTime').map(([dHash, e]) => (
                 <TableRow
                   key={dHash}
                   hover
@@ -158,8 +158,8 @@ class ViewCatPage extends React.PureComponent {
                   className={classes.clickable}
                 >
                   <TableCell padding="none">{dHash}</TableCell>
-                  <TableCell padding="none">{e.startTime && moment(e.startTime).format()}</TableCell>
-                  <TableCell padding="none">{e.endTime && moment(e.endTime).format()}</TableCell>
+                  <TableCell padding="none">{e.startTime && moment(e.startTime).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                  <TableCell padding="none">{e.endTime && moment(e.endTime).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                   <TableCell padding="none">
                     {JSON.stringify(listHash.dHash[dHash])}
                   </TableCell>

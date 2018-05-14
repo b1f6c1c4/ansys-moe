@@ -20,8 +20,6 @@ class GepTable extends React.PureComponent {
     const {
       classes,
       header,
-      p,
-      dHash,
       e,
       kind,
     } = this.props;
@@ -34,23 +32,23 @@ class GepTable extends React.PureComponent {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell padding="none">名称</TableCell>
-              <TableCell padding="none">类型</TableCell>
-              <TableCell padding="none">最小值</TableCell>
-              <TableCell padding="none">最大值</TableCell>
-              <TableCell padding="none">实际值</TableCell>
-              <TableCell padding="none">状态</TableCell>
+              <TableCell>名称</TableCell>
+              <TableCell>类型</TableCell>
+              <TableCell>最小值</TableCell>
+              <TableCell>最大值</TableCell>
+              <TableCell>实际值</TableCell>
+              <TableCell>状态</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {_.toPairs(e[kind]).map(([name, gep]) => (
+            {_.sortBy(_.toPairs(e[kind]), 'name').map(([name, gep]) => (
               <TableRow key={name} hover >
-                <TableCell padding="none">{name}</TableCell>
-                <TableCell padding="none">{gep.cfg.kind}</TableCell>
-                <TableCell padding="none">{gep.cfg.lowerBound}</TableCell>
-                <TableCell padding="none">{gep.cfg.upperBound}</TableCell>
-                <TableCell padding="none">{gep.value}</TableCell>
-                <TableCell padding="none"><StatusBadge status={gep.status} /></TableCell>
+                <TableCell>{name}</TableCell>
+                <TableCell>{gep.cfg.kind}</TableCell>
+                <TableCell>{gep.cfg.lowerBound}</TableCell>
+                <TableCell>{gep.cfg.upperBound}</TableCell>
+                <TableCell>{gep.value}</TableCell>
+                <TableCell><StatusBadge status={gep.status} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -64,8 +62,6 @@ class GepTable extends React.PureComponent {
 GepTable.propTypes = {
   classes: PropTypes.object.isRequired,
   header: PropTypes.string.isRequired,
-  p: PropTypes.object.isRequired,
-  dHash: PropTypes.string.isRequired,
   e: PropTypes.object.isRequired,
   kind: PropTypes.string.isRequired,
 };

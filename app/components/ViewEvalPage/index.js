@@ -167,19 +167,19 @@ class ViewEvalPage extends React.PureComponent {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="none">名称</TableCell>
-                    <TableCell padding="none">设计名称</TableCell>
-                    <TableCell padding="none">变量</TableCell>
-                    <TableCell padding="none">实际值</TableCell>
+                    <TableCell>名称</TableCell>
+                    <TableCell>设计名称</TableCell>
+                    <TableCell>变量</TableCell>
+                    <TableCell>实际值</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {m.inputs.map((o) => (
                     <TableRow key={o.name} hover >
-                      <TableCell padding="none">{o.name}</TableCell>
-                      <TableCell padding="none">{o.design}</TableCell>
-                      <TableCell padding="none">{o.variable}</TableCell>
-                      <TableCell padding="none">{_.get(p, ['results', 'd', dHash, 'var', o.variable])}</TableCell>
+                      <TableCell>{o.name}</TableCell>
+                      <TableCell>{o.design}</TableCell>
+                      <TableCell>{o.variable}</TableCell>
+                      <TableCell>{_.get(p, ['results', 'd', dHash, 'var', o.variable])}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -190,27 +190,27 @@ class ViewEvalPage extends React.PureComponent {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="none">名称</TableCell>
-                    <TableCell padding="none">设计名称</TableCell>
-                    <TableCell padding="none">表格名称</TableCell>
-                    <TableCell padding="none">列编号</TableCell>
-                    <TableCell padding="none">最小值</TableCell>
-                    <TableCell padding="none">最大值</TableCell>
-                    <TableCell padding="none">实际值</TableCell>
-                    <TableCell padding="none">状态</TableCell>
+                    <TableCell>名称</TableCell>
+                    <TableCell>设计名称</TableCell>
+                    <TableCell>表格名称</TableCell>
+                    <TableCell>列编号</TableCell>
+                    <TableCell>最小值</TableCell>
+                    <TableCell>最大值</TableCell>
+                    <TableCell>实际值</TableCell>
+                    <TableCell>状态</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {_.toPairs(e.M).map(([name, mm]) => (
+                  {_.sortBy(_.toPairs(e.M), 0).map(([name, mm]) => (
                     <TableRow key={name} hover >
-                      <TableCell padding="none">{name}</TableCell>
-                      <TableCell padding="none">{mm.rule.design}</TableCell>
-                      <TableCell padding="none">{mm.rule.table}</TableCell>
-                      <TableCell padding="none">{mm.rule.column}</TableCell>
-                      <TableCell padding="none">{mm.rule.lowerBound}</TableCell>
-                      <TableCell padding="none">{mm.rule.upperBound}</TableCell>
-                      <TableCell padding="none">{mm.value}</TableCell>
-                      <TableCell padding="none"><StatusBadge status={mm.status} /></TableCell>
+                      <TableCell>{name}</TableCell>
+                      <TableCell>{mm.rule.design}</TableCell>
+                      <TableCell>{mm.rule.table}</TableCell>
+                      <TableCell>{mm.rule.column}</TableCell>
+                      <TableCell>{mm.rule.lowerBound}</TableCell>
+                      <TableCell>{mm.rule.upperBound}</TableCell>
+                      <TableCell>{mm.value}</TableCell>
+                      <TableCell><StatusBadge status={mm.status} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -223,22 +223,8 @@ class ViewEvalPage extends React.PureComponent {
             </Typography>
           )}
         </Paper>
-        <GepTable
-          classes={classes}
-          header="电参数"
-          p={p}
-          dHash={dHash}
-          e={e}
-          kind="E"
-        />
-        <GepTable
-          classes={classes}
-          header="性能参数"
-          p={p}
-          dHash={dHash}
-          e={e}
-          kind="P"
-        />
+        <GepTable classes={classes} header="电参数" e={e} kind="E" />
+        <GepTable classes={classes} header="性能参数" e={e} kind="P" />
       </div>
     );
   }

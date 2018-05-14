@@ -156,7 +156,7 @@ class ViewProjPage extends React.PureComponent {
               </TableRow>
             </TableHead>
             <TableBody>
-              {_.toPairs(p.cat).map(([cHash, cat]) => (
+              {_.sortBy(_.toPairs(p.cat), 0).map(([cHash, cat]) => (
                 <TableRow
                   key={cHash}
                   hover

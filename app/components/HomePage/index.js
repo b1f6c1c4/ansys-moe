@@ -23,6 +23,9 @@ import StatusBadge from 'components/StatusBadge';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
+  clickable: {
+    cursor: 'pointer',
+  },
   badge: {
     display: 'inline-block',
     verticalAlign: 'super',
@@ -46,6 +49,8 @@ const styles = (theme) => ({
 });
 
 class HomePage extends React.PureComponent {
+  handleClick = (proj) => () => this.props.onPush(`/app/p/${proj}`);
+
   render() {
     // eslint-disable-next-line no-unused-vars
     const {
@@ -53,6 +58,7 @@ class HomePage extends React.PureComponent {
       isLoading,
       controller,
       rabbit,
+      listProj,
     } = this.props;
 
     return (
@@ -116,16 +122,51 @@ class HomePage extends React.PureComponent {
           )}
           <EmptyIndicator isLoading={isLoading} list={rabbit} />
         </Paper>
+        <Paper className={classes.root}>
+          <Typography variant="title" className={classes.title}>
+            项目
+          </Typography>
+          {listProj && (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>项目名称</TableCell>
+                  <TableCell>分类总数</TableCell>
+                  <TableCell>迭代总数</TableCell>
+                  <TableCell>项目状态</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {_.toPairs(listProj).map(([proj, p]) => (
+                  <TableRow
+                    key={proj}
+                    hover
+                    onClick={this.handleClick(proj)}
+                    className={classes.clickable}
+                  >
+                    <TableCell>{proj}</TableCell>
+                    <TableCell>{p.cat && _.keys(p.cat).length}</TableCell>
+                    <TableCell>{_.sumBy(_.toPairs(p.cat), ([, cat]) => _.keys(cat.eval).length)}</TableCell>
+                    <TableCell><StatusBadge status={p.status} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+          <EmptyIndicator isLoading={isLoading} list={rabbit} />
+        </Paper>
       </div>
     );
   }
 }
 
 HomePage.propTypes = {
+  onPush: PropTypes.func.isRequired,
   classes: PropTypes.object.isRequired,
   isLoading: PropTypes.bool.isRequired,
   controller: PropTypes.bool.isRequired,
   rabbit: PropTypes.object,
+  listProj: PropTypes.object,
   error: PropTypes.object,
   onStatus: PropTypes.func.isRequired,
   onStart: PropTypes.func.isRequired,

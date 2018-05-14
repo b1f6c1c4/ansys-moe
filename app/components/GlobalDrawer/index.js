@@ -68,15 +68,15 @@ class GlobalDrawer extends React.PureComponent {
 
     let projs;
     if (listProj) {
-      projs = _.toPairs(listProj).map(([name, p]) => {
+      projs = _.toPairs(listProj).map(([proj, p]) => {
         const content = (
-          <Link to={`/app/p/${name}`}>
-            {name}
+          <Link to={`/app/p/${proj}`}>
+            {proj}
             <StatusBadge status={p.status} minor />
           </Link>
         );
         return (
-          <ListItem key={name} button onClick={this.handleProj(name)}>
+          <ListItem key={proj} button onClick={this.handleProj(proj)}>
             <ListItemText primary={content} />
           </ListItem>
         );
