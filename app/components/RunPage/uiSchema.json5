@@ -1,0 +1,53 @@
+{
+  name: { size: 12 },
+  config: {
+    title: 'headline',
+    padding: false,
+    initEvals: { size: 3 },
+    minEvals: { size: 3 },
+    concurrent: { size: 3 },
+    minEI: { size: 3 },
+    D: {
+      title: 'headline',
+      items: {
+        name: { size: { xs: 12, sm: 6, md: 2 } },
+        kind: { size: { xs: 12, sm: 6, md: 2 } },
+        condition: { size: { xs: 12, sm: 12, md: 8 } },
+      },
+    },
+    G: {
+      title: 'headline',
+      items: {
+        code: { multiline: true, size: 12 },
+      },
+    },
+    ansys: {
+      title: 'subheading',
+      padding: false,
+      rules: {
+        title: 'headline',
+        items: {
+          source: { size: { xs: 12, sm: 8, md: 8 } },
+          destination: { size: { xs: 12, sm: 4, md: 4 } },
+          condition: { size: 12 },
+        },
+      },
+    },
+    E: {
+      title: 'headline',
+      items: {
+        code: { multiline: true, size: 12 },
+      },
+    },
+    P: {
+      title: 'headline',
+      items: {
+        code: { multiline: true, size: 12 },
+      },
+    },
+    P0: {
+      title: 'headline',
+      code: { multiline: true, size: 12 },
+    },
+  },
+}

@@ -59,6 +59,10 @@ module.exports = ({
           }],
         },
         {
+          test: /\.json5$/,
+          loader: 'json5-loader',
+        },
+        {
           test: /\.css$/,
           include: /node_modules/,
           exclude: /outdatedbrowser/,

@@ -4243,6 +4243,12 @@ json-stable-stringify@1.0.1:
   dependencies:
     jsonify "~0.0.0"
 
+json5-loader@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/json5-loader/-/json5-loader-1.0.1.tgz#c169f46655dde445cf3906b5eb6eb59615ced1cc"
+  dependencies:
+    json5 "^0.5.0"
+
 json5@^0.5.0:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/json5/-/json5-0.5.1.tgz#1eade7acc012034ad84e2396767ead9fa5495821"

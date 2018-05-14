@@ -152,6 +152,7 @@
     "html-webpack-plugin": "3.2.0",
     "import-sort": "4.2.0",
     "import-sort-parser-babylon": "4.2.0",
+    "json5-loader": "1.0.1",
     "lodash": "4.17.10",
     "node-fetch": "2.1.2",
     "node-plop": "0.13.0",
