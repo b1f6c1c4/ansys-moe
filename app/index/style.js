@@ -3,7 +3,6 @@ import 'animate.css/animate.min.css';
 import 'paper-css/paper.min.css';
 
 import jQuery from 'jquery';
-import { WOW } from 'wowjs';
 import 'jquery.easing';
 import 'superfish';
 import 'superfish/dist/js/hoverIntent';
@@ -32,9 +31,6 @@ jQuery(document).ready(($) => {
     }, 500, 'easeOutExpo');
     return false;
   });
-
-  // Initiate the wowjs animation library
-  new WOW().init();
 
   // Toggle faq
   $('a[data-toggle="collapse"]').click(function () {

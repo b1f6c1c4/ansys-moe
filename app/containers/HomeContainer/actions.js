@@ -29,13 +29,6 @@ export function startRequest() {
   };
 }
 
-export function startSuccess(result) {
-  return {
-    type: HOME_CONTAINER.START_SUCCESS,
-    result,
-  };
-}
-
 export function startFailure(error) {
   return {
     type: HOME_CONTAINER.START_FAILURE,

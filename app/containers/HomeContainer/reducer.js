@@ -27,8 +27,6 @@ function homeContainerReducer(state = initialState, action) {
     case HOME_CONTAINER.START_REQUEST:
       return state.set('isLoading', true)
         .set('error', null);
-    case HOME_CONTAINER.START_SUCCESS:
-      return state.set('isLoading', false);
     case HOME_CONTAINER.START_FAILURE:
       return state.set('isLoading', false)
         .set('error', fromJS(_.toPlainObject(action.error)));

@@ -1,3 +1,4 @@
+import { delay } from 'redux-saga';
 import { call, put, takeEvery } from 'redux-saga/effects';
 import * as api from 'utils/request';
 
@@ -17,8 +18,9 @@ export function* handleStatusRequest() {
 
 export function* handleStartRequest() {
   try {
-    const result = yield call(api.mutate, gql.Start);
-    yield put(homeContainerActions.startSuccess(result));
+    yield call(api.mutate, gql.Start);
+    yield delay(1000);
+    yield put(homeContainerActions.statusRequest());
   } catch (err) {
     yield put(homeContainerActions.startFailure(err));
   }
