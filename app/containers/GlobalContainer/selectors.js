@@ -21,6 +21,8 @@ const compiled = _.mapValues({
   gmepResult: '/p/:proj/results/d/:dHash/:gmep=G|M|E|P/:name',
   mIdResult: '/p/:proj/results/d/:dHash/Mid',
   varResult: '/p/:proj/results/d/:dHash/var',
+  startResult: '/p/:proj/results/d/:dHash/startTime',
+  endResult: '/p/:proj/results/d/:dHash/endTime',
   evalP0Result: '/p/:proj/results/d/:dHash/P0',
 }, (p) => (new CompiledPath(p, true)).match);
 
@@ -145,6 +147,16 @@ export const ListProj = () => createSelector(
           _.set(projects, [m.proj, 'results', 'd', m.dHash, 'var'], JSON.parse(value));
         },
       ], [
+        'startResult',
+        (m) => {
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'startTime'], new Date(value));
+        },
+      ], [
+        'endResult',
+        (m) => {
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'endTime'], new Date(value));
+        },
+      ], [
         'evalP0Result',
         (m) => {
           _.set(projects, [m.proj, 'results', 'd', m.dHash, 'P0'], +value);
@@ -191,6 +203,8 @@ export const ListProj = () => createSelector(
           } else {
             _.set(e, 'status', 'out');
           }
+          _.set(e, 'startTime', _.get(p, ['results', 'd', dHash, 'startTime']));
+          _.set(e, 'endTime', _.get(p, ['results', 'd', dHash, 'endTime']));
           const gepFunc = (kind) => (geps) => _.fromPairs(_.map(p.config[kind], (cfg) => {
             const v = _.get(p, ['results', 'd', dHash, kind, cfg.name]);
             const gep = _.assign({}, _.get(geps, [cfg.name]));

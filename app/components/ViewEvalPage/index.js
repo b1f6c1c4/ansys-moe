@@ -87,11 +87,13 @@ class ViewEvalPage extends React.PureComponent {
     } = this.props;
 
     if (!listProj || !(proj in listProj)) return null;
-
     const p = listProj[proj];
+    if (!p || !p.config) return null;
     const cat = p.cat[cHash];
+    if (!cat) return null;
     const e = cat.eval[dHash];
-    const mId = p.results.d[dHash].Mid;
+    if (!e) return null;
+    const mId = _.get(p, ['results', 'd', dHash, 'Mid']);
     const m = mId !== undefined && p.config.ansys.rules[mId];
 
     return (

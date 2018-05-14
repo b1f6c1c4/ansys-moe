@@ -86,8 +86,8 @@ class ViewProjPage extends React.PureComponent {
     } = this.props;
 
     if (!listProj || !(proj in listProj)) return null;
-
     const p = listProj[proj];
+    if (!p || !p.config) return null;
 
     return (
       <div className={classes.container}>

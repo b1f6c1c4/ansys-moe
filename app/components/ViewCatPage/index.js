@@ -2,6 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
+import moment from 'moment';
 
 import {
   withStyles,
@@ -87,9 +88,10 @@ class ViewCatPage extends React.PureComponent {
     } = this.props;
 
     if (!listProj || !(proj in listProj)) return null;
-
     const p = listProj[proj];
+    if (!p || !p.config) return null;
     const cat = p.cat[cHash];
+    if (!cat) return null;
 
     return (
       <div className={classes.container}>
@@ -140,6 +142,8 @@ class ViewCatPage extends React.PureComponent {
             <TableHead>
               <TableRow>
                 <TableCell padding="none">迭代编号</TableCell>
+                <TableCell padding="none">开始时间</TableCell>
+                <TableCell padding="none">结束时间</TableCell>
                 <TableCell padding="none">迭代参数</TableCell>
                 <TableCell padding="none">目标函数</TableCell>
                 <TableCell padding="none">迭代状态</TableCell>
@@ -154,6 +158,8 @@ class ViewCatPage extends React.PureComponent {
                   className={classes.clickable}
                 >
                   <TableCell padding="none">{dHash}</TableCell>
+                  <TableCell padding="none">{e.startTime && moment(e.startTime).format()}</TableCell>
+                  <TableCell padding="none">{e.endTime && moment(e.endTime).format()}</TableCell>
                   <TableCell padding="none">
                     {JSON.stringify(listHash.dHash[dHash])}
                   </TableCell>
