@@ -6,6 +6,7 @@ const rimraf = require('rimraf');
 const path = require('path');
 const shell = require('shelljs');
 const async = require('async');
+const archiver = require('archiver');
 const contentstream = require('./contentstream');
 const hashDiskStorage = require('./disk');
 const logger = require('./logger')('file');
@@ -50,36 +51,71 @@ const getRealFilePath = (fn) => {
 
 router.get(/\/$/, (req, res) => {
   const fn = path.normalize(req.path.substr(1, req.path.length - 2));
-  logger.silly('Will list directory', fn);
+  logger.silly('Will list or download directory', fn);
   const fullPath = getRealFilePath(fn);
   if (!fullPath) {
     logger.warn('Declined directory', req.path);
     res.status(403).send();
     return;
   }
-  fs.readdir(fullPath, (err, files) => {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        res.status(404).send();
-      } else {
-        logger.error('List directory', err);
+  switch (req.accepts(['application/zip', 'application/json'])) {
+    case 'application/zip': {
+      const archive = archiver('zip');
+
+      archive.on('error', (err) => {
+        logger.error('Download directory', err);
         res.status(500).send(err);
-      }
-      return;
-    }
-    async.mapLimit(files.map((f) => path.join(fullPath, f)), 10, fs.lstat, (err2, results) => {
-      if (err2) {
-        logger.error('List directory', err2);
-        res.status(500).send(err2);
+      });
+
+      archive.on('end', () => {
+        logger.info('Downloaded directory', fn);
+      });
+
+      let stem;
+      if (fn === '.') {
+        stem = 'storage';
       } else {
-        logger.debug('List directory succeed', fn);
-        res.status(200).json(_.zipWith(files, results, (f, r) => ({
-          name: f,
-          dir: r.isDirectory(),
-        })));
+        stem = path.basename(fn);
       }
-    });
-  });
+      res.attachment(`${stem}.zip`);
+      archive.pipe(res);
+      logger.trace('Prepare downloading directory', fn);
+      archive.directory(fullPath, stem);
+      archive.finalize();
+      break;
+    }
+    case 'application/json':
+      fs.readdir(fullPath, (err, files) => {
+        if (err) {
+          if (err.code === 'ENOENT') {
+            res.status(404).send();
+          } else {
+            logger.error('List directory', err);
+            res.status(500).send(err);
+          }
+          return;
+        }
+        async.mapLimit(files.map((f) => path.join(fullPath, f)), 10, fs.lstat, (err2, results) => {
+          if (err2) {
+            logger.error('List directory', err2);
+            res.status(500).send(err2);
+          } else {
+            logger.debug('List directory succeed', fn);
+            res.status(200).json(_.zipWith(files, results, (f, r) => ({
+              name: f,
+              dir: r.isDirectory(),
+              size: r.size,
+              createdAt: r.birthtimeMs,
+              updatedAt: r.mtimeMs,
+            })));
+          }
+        });
+      });
+      break;
+    default:
+      res.status(406).send();
+      break;
+  }
 });
 
 router.put(/^\/.*[^/]$/, (req, res) => {
