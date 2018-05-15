@@ -12,7 +12,7 @@ import {
 } from 'material-ui';
 import JSON5 from 'json5';
 import Form from 'react-jsonschema-form';
-import ReactFileLoader from 'react-file-reader';
+import ReactFileReader from 'react-file-reader';
 import DocumentTitle from 'components/DocumentTitle';
 import Button from 'components/Button';
 import LoadingButton from 'components/LoadingButton';
@@ -213,14 +213,14 @@ class RunPage extends React.PureComponent {
           >
             下载配置文件
           </Button>
-          <ReactFileLoader
+          <ReactFileReader
             handleFiles={this.handleUpload}
             fileTypes={['.json', '.json5']}
           >
             <Button color="primary">
               上传配置文件
             </Button>
-          </ReactFileLoader>
+          </ReactFileReader>
           <Button
             color="secondary"
             onClick={this.handleReset}

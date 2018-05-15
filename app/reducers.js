@@ -9,6 +9,7 @@ import viewCatContainerReducer from 'containers/ViewCatContainer/reducer';
 import viewEvalContainerReducer from 'containers/ViewEvalContainer/reducer';
 import homeContainerReducer from 'containers/HomeContainer/reducer';
 import runContainerReducer from 'containers/RunContainer/reducer';
+import uploadContainerReducer from 'containers/UploadContainer/reducer';
 
 const routeInitialState = fromJS({
   location: null,
@@ -34,6 +35,7 @@ export default function createReducer() {
     viewEvalContainer: viewEvalContainerReducer,
     homeContainer: homeContainerReducer,
     runContainer: runContainerReducer,
+    uploadContainer: uploadContainerReducer,
   });
 
   return appReducer;

@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import axios from 'axios';
 
 const apiUrl = (raw) => raw || '';
 
@@ -92,4 +93,30 @@ export const subscribe = async (gql, vars) => {
   } catch (e) {
     return postProcess(e);
   }
+};
+
+const storageApi = axios.create({
+  baseURL: makeApi('/storage'),
+  headers: {
+    Accept: 'application/json',
+  },
+});
+
+export const listStorage = async (path) => {
+  const { data } = await storageApi.get(`${path}/`);
+  return data;
+};
+
+export const uploadStorage = async (files) => {
+  const form = new FormData();
+  // eslint-disable-next-line no-restricted-syntax
+  for (const f of files) {
+    form.append('upload', f);
+  }
+  const { data } = await storageApi.post('upload/', form, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return data;
 };
