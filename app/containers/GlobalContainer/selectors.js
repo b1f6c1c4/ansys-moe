@@ -188,6 +188,9 @@ export const ListProj = () => createSelector(
           _.set(cat, 'status', 'done');
         }
         _.mapValues(cat.eval, (e, dHash) => {
+          _.set(e, 'P0', _.get(p, ['results', 'd', dHash, 'P0']));
+          _.set(e, 'startTime', _.get(p, ['results', 'd', dHash, 'startTime']));
+          _.set(e, 'endTime', _.get(p, ['results', 'd', dHash, 'endTime']));
           if (e.error) {
             _.set(e, 'status', 'error');
           } else if (e.Grun) {
@@ -198,13 +201,11 @@ export const ListProj = () => createSelector(
             _.set(e, 'status', 'Erun');
           } else if (e.Prun) {
             _.set(e, 'status', 'Prun');
-          } else if (_.get(p, ['results', 'd', dHash, 'P0']) !== undefined) {
+          } else if (e.P0 !== undefined) {
             _.set(e, 'status', 'done');
           } else {
             _.set(e, 'status', 'out');
           }
-          _.set(e, 'startTime', _.get(p, ['results', 'd', dHash, 'startTime']));
-          _.set(e, 'endTime', _.get(p, ['results', 'd', dHash, 'endTime']));
           const gepFunc = (kind) => (geps) => _.fromPairs(_.map(p.config[kind], (cfg) => {
             const v = _.get(p, ['results', 'd', dHash, kind, cfg.name]);
             const gep = _.assign({}, _.get(geps, [cfg.name]));
@@ -245,8 +246,18 @@ export const ListProj = () => createSelector(
           _.update(e, 'P', gepFunc('P'));
           return e;
         });
+        const opt = _.minBy(_.values(cat.eval), 'P0');
+        if (opt) {
+          _.set(cat, 'optimal', opt.P0);
+          _.set(opt, 'isOptimal', true);
+        }
         return cat;
       });
+      const opt = _.minBy(_.values(p.cat), 'optimal');
+      if (opt) {
+        _.set(p, 'optimal', opt.optimal);
+        _.set(opt, 'isOptimal', true);
+      }
       return p;
     });
   },

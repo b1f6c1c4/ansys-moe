@@ -53,6 +53,10 @@ const styles = (theme) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
   },
+  optimal: {
+    fontWeight: 900,
+    color: 'red',
+  },
 });
 
 class ViewCatPage extends React.PureComponent {
@@ -167,7 +171,9 @@ class ViewCatPage extends React.PureComponent {
                   <TableCell padding="none">
                     {JSON.stringify(listHash.dHash[dHash])}
                   </TableCell>
-                  <TableCell padding="none">{_.get(p, ['results', 'd', dHash, 'P0'])}</TableCell>
+                  <TableCell className={e.isOptimal && classes.optimal} padding="none">
+                    {e.P0}
+                  </TableCell>
                   <TableCell padding="none"><StatusBadge status={e.status} /></TableCell>
                 </TableRow>
               ))}

@@ -51,6 +51,10 @@ const styles = (theme) => ({
     flexWrap: 'wrap',
     alignItems: 'center',
   },
+  optimal: {
+    fontWeight: 900,
+    color: 'red',
+  },
 });
 
 class ViewProjPage extends React.PureComponent {
@@ -167,6 +171,7 @@ class ViewProjPage extends React.PureComponent {
                 <TableCell padding="none">分类参数</TableCell>
                 <TableCell padding="none">正在迭代</TableCell>
                 <TableCell padding="none">完成迭代</TableCell>
+                <TableCell padding="none">目标函数</TableCell>
                 <TableCell padding="none">分类状态</TableCell>
               </TableRow>
             </TableHead>
@@ -184,6 +189,9 @@ class ViewProjPage extends React.PureComponent {
                   </TableCell>
                   <TableCell padding="none">{_.keys(cat.ongoing).length}</TableCell>
                   <TableCell padding="none">{cat.history.length}</TableCell>
+                  <TableCell className={cat.isOptimal && classes.optimal} padding="none">
+                    {cat.optimal}
+                  </TableCell>
                   <TableCell padding="none"><StatusBadge status={cat.status} /></TableCell>
                 </TableRow>
               ))}

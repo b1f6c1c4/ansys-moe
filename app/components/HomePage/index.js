@@ -169,6 +169,7 @@ class HomePage extends React.PureComponent {
                   <TableCell>项目名称</TableCell>
                   <TableCell>分类总数</TableCell>
                   <TableCell>迭代总数</TableCell>
+                  <TableCell>目标函数</TableCell>
                   <TableCell>项目状态</TableCell>
                 </TableRow>
               </TableHead>
@@ -183,6 +184,7 @@ class HomePage extends React.PureComponent {
                     <TableCell>{proj}</TableCell>
                     <TableCell>{p.cat && _.keys(p.cat).length}</TableCell>
                     <TableCell>{_.sumBy(_.toPairs(p.cat), ([, cat]) => _.keys(cat.eval).length)}</TableCell>
+                    <TableCell>{p.optimal}</TableCell>
                     <TableCell><StatusBadge status={p.status} /></TableCell>
                   </TableRow>
                 ))}
