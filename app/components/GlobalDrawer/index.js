@@ -14,7 +14,6 @@ import {
 } from 'material-ui';
 import {
   AddCircle,
-  CloudDownload,
   CloudUpload,
   Home,
 } from '@material-ui/icons';
@@ -133,21 +132,6 @@ class GlobalDrawer extends React.PureComponent {
               primary={(
                 <Link to="/app/run">
                   提交任务
-                </Link>
-              )}
-            />
-          </ListItem>
-          <ListItem button onClick={this.handleDownload}>
-            <ListItemIcon>
-              <Link to="/app/download">
-                <CloudDownload />
-              </Link>
-            </ListItemIcon>
-            <ListItemText
-              className={classes.item}
-              primary={(
-                <Link to="/app/download">
-                  下载仿真结果
                 </Link>
               )}
             />

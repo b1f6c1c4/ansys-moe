@@ -15,7 +15,6 @@ import {
 } from 'material-ui';
 import {
   Add,
-  CloudDownload,
   CloudUpload,
   PlayArrow,
 } from '@material-ui/icons';
@@ -108,13 +107,6 @@ class HomePage extends React.PureComponent {
           >
             新任务
             <Add className={classes.rightIcon} />
-          </Button>
-          <Button
-            color="primary"
-            onClick={this.handleDownload}
-          >
-            下载仿真结果
-            <CloudDownload className={classes.rightIcon} />
           </Button>
           {!isLoading && !controller && (
             <Button
