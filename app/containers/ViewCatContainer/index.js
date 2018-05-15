@@ -7,9 +7,9 @@ import { createStructuredSelector } from 'reselect';
 import injectSaga from 'utils/injectSaga';
 
 import ViewCatPage from 'components/ViewCatPage';
-import * as globalContainerActions from 'containers/GlobalContainer/actions';
-import * as globalContainerSelectors from 'containers/GlobalContainer/selectors';
 
+import * as globalContainerSelectors from 'containers/GlobalContainer/selectors';
+import * as globalContainerActions from 'containers/GlobalContainer/actions';
 import * as viewCatContainerSelectors from './selectors';
 import * as viewCatContainerActions from './actions';
 import sagas from './sagas';

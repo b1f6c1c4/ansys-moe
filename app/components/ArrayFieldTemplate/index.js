@@ -4,8 +4,8 @@ import { compose } from 'redux';
 
 import {
   withStyles,
-  Paper,
   Grid,
+  Paper,
   Typography,
 } from 'material-ui';
 import { Add, ArrowDropDown, ArrowDropUp, Delete } from '@material-ui/icons';

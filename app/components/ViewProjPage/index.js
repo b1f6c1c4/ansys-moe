@@ -2,27 +2,26 @@ import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
+import { ProjCanStop, ProjCanDrop } from 'utils/permission';
 
 import {
   withStyles,
   Paper,
   Table,
   TableBody,
-  TableHead,
   TableCell,
+  TableHead,
   TableRow,
   Typography,
 } from 'material-ui';
-import { Edit, Delete, Stop } from '@material-ui/icons';
-import DocumentTitle from 'components/DocumentTitle';
-import StatusBadge from 'components/StatusBadge';
-import ResultIndicator from 'components/ResultIndicator';
-import ConfirmDialog from 'components/ConfirmDialog';
-import EmptyIndicator from 'components/EmptyIndicator';
+import { Delete, Edit, Stop } from '@material-ui/icons';
 import Button from 'components/Button';
+import ConfirmDialog from 'components/ConfirmDialog';
+import DocumentTitle from 'components/DocumentTitle';
+import EmptyIndicator from 'components/EmptyIndicator';
 import RefreshButton from 'components/RefreshButton';
-
-import { ProjCanStop, ProjCanDrop } from 'utils/permission';
+import ResultIndicator from 'components/ResultIndicator';
+import StatusBadge from 'components/StatusBadge';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({

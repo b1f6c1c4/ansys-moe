@@ -5,18 +5,18 @@ import { compose } from 'redux';
 
 import {
   withStyles,
+  MenuItem,
   Paper,
   TextField,
-  MenuItem,
   Typography,
 } from 'material-ui';
-import JSON5 from 'json5';
-import Form from 'react-jsonschema-form';
 import ReactFileReader from 'react-file-reader';
-import DocumentTitle from 'components/DocumentTitle';
-import Button from 'components/Button';
-import LoadingButton from 'components/LoadingButton';
+import Form from 'react-jsonschema-form';
+import JSON5 from 'json5';
 import ArrayFieldTemplate from 'components/ArrayFieldTemplate';
+import Button from 'components/Button';
+import DocumentTitle from 'components/DocumentTitle';
+import LoadingButton from 'components/LoadingButton';
 import ObjectFieldTemplate from 'components/ObjectFieldTemplate';
 import ResultIndicator from 'components/ResultIndicator';
 

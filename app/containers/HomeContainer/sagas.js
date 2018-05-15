@@ -1,7 +1,7 @@
 import { delay } from 'redux-saga';
 import { call, put, takeEvery } from 'redux-saga/effects';
-import { push } from 'react-router-redux';
 import * as api from 'utils/request';
+import { push } from 'react-router-redux';
 
 import * as runContainerActions from 'containers/RunContainer/actions';
 import * as HOME_CONTAINER from './constants';

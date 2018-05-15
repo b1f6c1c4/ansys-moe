@@ -6,13 +6,13 @@ import {
   Paper,
   Table,
   TableBody,
-  TableHead,
   TableCell,
+  TableHead,
   TableRow,
   Typography,
 } from 'material-ui';
-import StatusBadge from 'components/StatusBadge';
 import EmptyIndicator from 'components/EmptyIndicator';
+import StatusBadge from 'components/StatusBadge';
 
 class GepTable extends React.PureComponent {
   render() {

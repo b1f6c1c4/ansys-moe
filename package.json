@@ -105,6 +105,7 @@
     "superfish": "1.7.10"
   },
   "devDependencies": {
+    "@b1f6c1c4/import-sort": "4.2.1",
     "@babel/cli": "7.0.0-beta.46",
     "@babel/core": "7.0.0-beta.46",
     "@babel/plugin-transform-modules-commonjs": "7.0.0-beta.46",
@@ -138,7 +139,6 @@
     "graphql-tag": "2.9.2",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "3.2.0",
-    "import-sort": "4.2.0",
     "import-sort-parser-babylon": "4.2.0",
     "json5-loader": "1.0.1",
     "lodash": "4.17.10",

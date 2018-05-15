@@ -2,7 +2,6 @@ import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
-import { format } from 'date-fns';
 
 import {
   withStyles,
@@ -14,10 +13,11 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
-import { Delete, CloudUpload } from '@material-ui/icons';
+import { CloudUpload, Delete } from '@material-ui/icons';
 import ReactFileReader from 'react-file-reader';
-import DocumentTitle from 'components/DocumentTitle';
+import { format } from 'date-fns';
 import Button from 'components/Button';
+import DocumentTitle from 'components/DocumentTitle';
 import EmptyIndicator from 'components/EmptyIndicator';
 import LoadingButton from 'components/LoadingButton';
 import RefreshButton from 'components/RefreshButton';

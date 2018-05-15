@@ -15,12 +15,12 @@ import {
 } from 'material-ui';
 import {
   Add,
-  PlayArrow,
-  CloudUpload,
   CloudDownload,
+  CloudUpload,
+  PlayArrow,
 } from '@material-ui/icons';
-import DocumentTitle from 'components/DocumentTitle';
 import Button from 'components/Button';
+import DocumentTitle from 'components/DocumentTitle';
 import EmptyIndicator from 'components/EmptyIndicator';
 import LoadingButton from 'components/LoadingButton';
 import RefreshButton from 'components/RefreshButton';

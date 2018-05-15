@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import { delay } from 'redux-saga';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
-import { push } from 'react-router-redux';
 import * as api from 'utils/request';
+import { push } from 'react-router-redux';
 
-import * as globalContainerActions from 'containers/GlobalContainer/actions';
 import * as globalContainerSelectors from 'containers/GlobalContainer/selectors';
+import * as globalContainerActions from 'containers/GlobalContainer/actions';
 import * as runContainerActions from 'containers/RunContainer/actions';
 import * as VIEW_PROJ_CONTAINER from './constants';
 import * as viewProjContainerActions from './actions';

@@ -16,11 +16,11 @@ import ErrorBoundary from 'containers/ErrorBoundary';
 import GlobalContainer from 'containers/GlobalContainer';
 import SubscriptionContainer from 'containers/SubscriptionContainer';
 import HomeContainer from 'containers/HomeContainer/Loadable';
-import ViewProjContainer from 'containers/ViewProjContainer/Loadable';
-import ViewCatContainer from 'containers/ViewCatContainer/Loadable';
-import ViewEvalContainer from 'containers/ViewEvalContainer/Loadable';
 import RunContainer from 'containers/RunContainer/Loadable';
 import UploadContainer from 'containers/UploadContainer/Loadable';
+import ViewCatContainer from 'containers/ViewCatContainer/Loadable';
+import ViewEvalContainer from 'containers/ViewEvalContainer/Loadable';
+import ViewProjContainer from 'containers/ViewProjContainer/Loadable';
 
 import createHistory from 'history/createBrowserHistory';
 import configureStore from 'utils/configureStore';

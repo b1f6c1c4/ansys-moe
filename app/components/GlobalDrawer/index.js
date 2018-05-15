@@ -13,10 +13,10 @@ import {
   ListItemText,
 } from 'material-ui';
 import {
-  Home,
+  AddCircle,
   CloudDownload,
   CloudUpload,
-  AddCircle,
+  Home,
 } from '@material-ui/icons';
 import { Link } from 'react-router-dom';
 import StatusBadge from 'components/StatusBadge';

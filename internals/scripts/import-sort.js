@@ -3,7 +3,7 @@
 const { exec } = require('shelljs');
 const fs = require('fs');
 const async = require('async');
-const sortImports = require('import-sort').default;
+const sortImports = require('@b1f6c1c4/import-sort').default;
 const parser = require('import-sort-parser-babylon');
 
 const listFiles = (t) => new Promise((resolve, reject) => {
@@ -94,11 +94,7 @@ const style = (file) => (styleApi) => {
       match: moduleNameIs('redux-saga/effects'),
       sortNamedMembers: name(proper),
     },
-    { match: moduleNameIs('redux-saga-test-plan') },
-    { match: moduleNameIs('redux-saga-test-plan/providers') },
-    { match: moduleNameIs('redux-saga-test-plan/matchers') },
     { match: moduleNameIs('utils/request') },
-    { match: moduleNameIs('redux-form') },
     { match: moduleNameIs('react-redux') },
     { match: moduleNameIs('react-router') },
     { match: moduleNameIs('react-router-redux') },
@@ -131,15 +127,12 @@ const style = (file) => (styleApi) => {
       sortNamedMembers: name(proper),
     },
     { match: moduleNameIs('classnames') },
-    { match: moduleNameIs('redux-form-material-ui') },
-    { match: moduleNameIs('redux-form/immutable') },
     { match: moduleNameIs('react-router-dom') },
-    { match: moduleNameIs('react-beautiful-dnd') },
-    { match: moduleNameIs(/^react-d3-components/) },
+    { match: moduleNameIs('react-file-reader') },
+    { match: moduleNameIs('react-jsonschema-form') },
     {
       match: and(
         () => /components/.test(file),
-        not(moduleNameIs('translations')),
         moduleNameIs(/^[-a-z0-9.]+$/),
       ),
       sort: moduleName(unicode),
@@ -165,13 +158,6 @@ const style = (file) => (styleApi) => {
         hasOnlyDefaultMember,
       ),
       sort: moduleName(unicode),
-    },
-    {
-      match: and(
-        () => /components/.test(file),
-        not(moduleNameIs('utils/messages')),
-        moduleNameIs(/^utils\//),
-      ),
     },
     { separator: true },
 
@@ -207,9 +193,6 @@ const style = (file) => (styleApi) => {
       ),
     },
     { match: moduleNameIs(/^\.\.?\/api.graphql/) },
-    { match: moduleNameIs('translations') },
-    { match: moduleNameIs('utils/messages') },
-    { match: moduleNameIs('./messages') },
     { separator: true },
 
     {

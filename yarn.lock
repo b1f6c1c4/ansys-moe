@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@b1f6c1c4/import-sort@4.2.1":
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/@b1f6c1c4/import-sort/-/import-sort-4.2.1.tgz#a2f53cb26aa2fbbdc35e6fa2bd652e095f95374b"
+  dependencies:
+    detect-newline "^2.1.0"
+    import-sort-parser "^4.2.0"
+    import-sort-style "^4.2.0"
+    is-builtin-module "^1.0.0"
+    resolve "^1.5.0"
+
 "@babel/cli@7.0.0-beta.46":
   version "7.0.0-beta.46"
   resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.0.0-beta.46.tgz#4fcede56d20659bf063b2c30c444267aa23f1bd3"
@@ -3732,16 +3742,6 @@ import-sort-parser@^4.2.0:
 import-sort-style@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/import-sort-style/-/import-sort-style-4.2.0.tgz#ab9194424495045b6ab5fe0b51215efe25c4afb8"
-
-import-sort@4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/import-sort/-/import-sort-4.2.0.tgz#4a4daab500ef766cebfac6a9e66a5a143a8bf520"
-  dependencies:
-    detect-newline "^2.1.0"
-    import-sort-parser "^4.2.0"
-    import-sort-style "^4.2.0"
-    is-builtin-module "^1.0.0"
-    resolve "^1.5.0"
 
 imurmurhash@^0.1.4:
   version "0.1.4"

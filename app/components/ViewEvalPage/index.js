@@ -2,28 +2,27 @@ import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
+import { EvalCanStop } from 'utils/permission';
 
 import {
   withStyles,
   Paper,
   Table,
   TableBody,
-  TableHead,
   TableCell,
+  TableHead,
   TableRow,
   Typography,
 } from 'material-ui';
 import { Stop } from '@material-ui/icons';
 import { Link } from 'react-router-dom';
-import DocumentTitle from 'components/DocumentTitle';
-import StatusBadge from 'components/StatusBadge';
-import ResultIndicator from 'components/ResultIndicator';
-import ConfirmDialog from 'components/ConfirmDialog';
 import Button from 'components/Button';
-import RefreshButton from 'components/RefreshButton';
+import ConfirmDialog from 'components/ConfirmDialog';
+import DocumentTitle from 'components/DocumentTitle';
 import GepTable from 'components/GepTable';
-
-import { EvalCanStop } from 'utils/permission';
+import RefreshButton from 'components/RefreshButton';
+import ResultIndicator from 'components/ResultIndicator';
+import StatusBadge from 'components/StatusBadge';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
