@@ -42,6 +42,8 @@ const styles = (theme) => ({
   },
 });
 
+const regularize = (v) => _.isNil(v) ? '' : v;
+
 /* eslint-disable react/prop-types */
 function TextWidget(props) {
   return (
@@ -50,12 +52,13 @@ function TextWidget(props) {
       multiline={_.get(props, 'uiSchema.multiline')}
       disabled={props.disabled}
       required={props.required}
-      error={!!props.rawErrors}
+      error={_.some(props.rawErrors, _.isString)}
       id={props.id}
-      value={props.value || ''}
+      value={regularize(props.value)}
       label={props.label}
       helperText={props.schema.description}
       margin="dense"
+      InputProps={{ style: { lineHeight: 'unset' } }}
       onChange={(e) => props.onChange(e.target.value)}
     />
   );
@@ -65,16 +68,16 @@ function SelectWidget(props) {
   return (
     <TextField
       select
-      SelectProps={{ native: false }}
       fullWidth
       disabled={props.disabled}
       required={props.required}
-      error={!!props.rawErrors}
+      error={_.some(props.rawErrors, _.isString)}
       id={props.id}
-      value={props.value || ''}
+      value={regularize(props.value)}
       label={props.label}
       helperText={props.schema.description}
       margin="dense"
+      SelectProps={{ style: { lineHeight: 'unset' } }}
       onChange={(e) => props.onChange(e.target.value)}
     >
       {props.options.enumOptions.map(({ label, value }) => (
@@ -87,14 +90,62 @@ function SelectWidget(props) {
 }
 
 function FieldTemplate(props) {
+  const errs = _.without(props.rawErrors, null);
   return (
     <div className={props.classNames}>
       {props.children}
-      {props.errors}
+      <ul>
+        {errs.map((e) => (
+          <li>{e}</li>
+        ))}
+      </ul>
     </div>
   );
 }
+
+function ErrorListTemplate(props) {
+  return (
+    <ul>
+      {_.reject(props.errors, { name: null }).map((e) => (
+        <li>{e.property} {e.message}</li>
+      ))}
+    </ul>
+  );
+}
 /* eslint-enable react/prop-types */
+
+function transformErrors(errors) {
+  return _.map(errors, (e) => {
+    switch (e.name) {
+      case 'enum':
+      case 'oneOf':
+        _.set(e, 'name', null);
+        _.set(e, 'message', null);
+        break;
+      case 'required':
+        _.set(e, 'message', '必填');
+        break;
+      case 'type':
+        switch (e.params.type) {
+          case 'string':
+            _.set(e, 'message', '必填');
+            break;
+          case 'number':
+            _.set(e, 'message', '必须为实数');
+            break;
+          case 'integer':
+            _.set(e, 'message', '必须为整数');
+            break;
+          default:
+            break;
+        }
+        break;
+      default:
+        break;
+    }
+    return e;
+  });
+}
 
 class RunPage extends React.PureComponent {
   handleChange = ({ formData: { name, config } }) => this.props.onUploadAction(name || '', config);
@@ -128,7 +179,9 @@ class RunPage extends React.PureComponent {
     }, 0);
   };
 
-  handleReset = () => { this.props.onUploadAction(undefined, {}); };
+  handleReset = () => this.props.onUploadAction(undefined, {});;
+
+  handleSubmit = () => this.props.onRun();;
 
   render() {
     // eslint-disable-next-line no-unused-vars
@@ -180,23 +233,28 @@ class RunPage extends React.PureComponent {
             schema={schema}
             uiSchema={uiSchema}
             widgets={widgets}
-            FieldTemplate={FieldTemplate}
             ArrayFieldTemplate={ArrayFieldTemplate}
             ObjectFieldTemplate={ObjectFieldTemplate}
+            FieldTemplate={FieldTemplate}
+            ErrorList={ErrorListTemplate}
             formData={form}
+            liveValidate
             onChange={this.handleChange}
             onSubmit={this.handleSubmit}
-            onError={console.error}
+            transformErrors={transformErrors}
           >
-            <LoadingButton {...{ isLoading }}>
-              <Button
-                color="primary"
-                variant="raised"
-                type="submit"
-              >
-                直接提交
-              </Button>
-            </LoadingButton>
+            <div className={classes.actions}>
+              <LoadingButton {...{ isLoading }}>
+                <Button
+                  color="primary"
+                  variant="raised"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  直接提交
+                </Button>
+              </LoadingButton>
+            </div>
             <ResultIndicator error={this.props.error} />
           </Form>
         </Paper>

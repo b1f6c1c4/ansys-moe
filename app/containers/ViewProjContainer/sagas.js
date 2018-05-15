@@ -1,6 +1,9 @@
+import { delay } from 'redux-saga';
 import { call, put, takeEvery } from 'redux-saga/effects';
+import { push } from 'react-router-redux';
 import * as api from 'utils/request';
 
+import * as globalContainerActions from 'containers/GlobalContainer/actions';
 import * as VIEW_PROJ_CONTAINER from './constants';
 import * as viewProjContainerActions from './actions';
 import gql from './api.graphql';
@@ -9,6 +12,8 @@ import gql from './api.graphql';
 export function* handleStopRequest({ proj }) {
   try {
     const result = yield call(api.mutate, gql.Stop, { proj });
+    yield delay(1000);
+    yield put(globalContainerActions.etcdRequest());
     yield put(viewProjContainerActions.stopSuccess(result));
   } catch (err) {
     yield put(viewProjContainerActions.stopFailure(err));
@@ -18,6 +23,9 @@ export function* handleStopRequest({ proj }) {
 export function* handleDropRequest({ proj }) {
   try {
     const result = yield call(api.mutate, gql.Drop, { proj });
+    yield delay(100);
+    yield put(globalContainerActions.etcdRequest());
+    yield put(push('/app/'));
     yield put(viewProjContainerActions.dropSuccess(result));
   } catch (err) {
     yield put(viewProjContainerActions.dropFailure(err));

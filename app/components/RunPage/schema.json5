@@ -10,6 +10,11 @@
         'initEvals',
         'minEvals',
         'concurrent',
+        'D',
+        'G',
+        'E',
+        'P',
+        'P0',
       ],
       properties: {
         initEvals: { type: 'integer', title: '初始迭代数', description: '每个分类在初始化后，采用实验设计方法，先作出初步尝试' },
