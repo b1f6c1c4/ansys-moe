@@ -49,7 +49,6 @@ export default function configureStore(initialState = {}, history) {
   if (process.env.NODE_ENV !== 'test') {
     if (process.env.NODE_ENV !== 'production' || window.debug) {
       middlewares.push(createLogger({
-        predicate: (getState, { type }) => !type || !type.startsWith('@@redux-form'),
         level: 'debug',
       }));
     }

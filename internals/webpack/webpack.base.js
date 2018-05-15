@@ -141,9 +141,6 @@ module.exports = ({
         'react-router-dom': 'react-router-dom/es',
         'react-router-redux': 'react-router-redux/es',
         redux: 'redux/es/redux',
-        'redux-form': 'redux-form/es',
-        // [#176](https://github.com/erikras/redux-form-material-ui/pull/176)
-        // 'redux-form-material-ui': 'redux-form-material-ui/es',
         'redux-saga': 'redux-saga/es',
         'redux-thunk': 'redux-thunk/es',
         reselect: 'reselect/es',
