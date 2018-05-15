@@ -6,11 +6,6 @@ import { WebSocketLink } from 'apollo-link-ws';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { getMainDefinition } from 'apollo-utilities';
 import { InMemoryCache, IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
-import fragmentTypes from './fragmentTypes.json';
-
-const fragmentMatcher = new IntrospectionFragmentMatcher({
-  introspectionQueryResultData: fragmentTypes,
-});
 
 export default (makeApi) => {
   const httpLink = new HttpLink({
@@ -36,6 +31,6 @@ export default (makeApi) => {
 
   return new ApolloClient({
     link,
-    cache: new InMemoryCache({ fragmentMatcher }),
+    cache: new InMemoryCache(),
   });
 };

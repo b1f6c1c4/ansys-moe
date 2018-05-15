@@ -1,1 +1,0 @@
-{"__schema":{"types":[{"kind":"INTERFACE","name":"BallotField","possibleTypes":[{"name":"StringField"},{"name":"EnumField"}]}]}}
