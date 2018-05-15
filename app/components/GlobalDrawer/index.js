@@ -132,7 +132,7 @@ class GlobalDrawer extends React.PureComponent {
               className={classes.item}
               primary={(
                 <Link to="/app/run">
-                  提交新任务
+                  提交任务
                 </Link>
               )}
             />

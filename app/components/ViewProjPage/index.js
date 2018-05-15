@@ -13,6 +13,7 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
+import { Edit, Delete, Stop } from '@material-ui/icons';
 import DocumentTitle from 'components/DocumentTitle';
 import StatusBadge from 'components/StatusBadge';
 import ResultIndicator from 'components/ResultIndicator';
@@ -27,6 +28,9 @@ import { ProjCanStop, ProjCanDrop } from 'utils/permission';
 const styles = (theme) => ({
   clickable: {
     cursor: 'pointer',
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
   },
   badge: {
     display: 'inline-block',
@@ -75,6 +79,8 @@ class ViewProjPage extends React.PureComponent {
 
   handleClick = (cHash) => () => this.props.onPush(`/app/p/${this.props.proj}/cat/${cHash}`);
 
+  handleEdit = () => this.props.onEditAction();
+
   render() {
     const {
       // eslint-disable-next-line no-unused-vars
@@ -108,12 +114,21 @@ class ViewProjPage extends React.PureComponent {
               onClick={this.props.onRefresh}
             />
           )}
+          <Button
+            color="primary"
+            variant="raised"
+            onClick={this.handleEdit}
+          >
+            编辑配置
+            <Edit className={classes.rightIcon} />
+          </Button>
           {!isLoading && ProjCanStop(p) && (
             <Button
               color="secondary"
               onClick={this.handleConfirm('isOpenStop')}
             >
               终止执行
+              <Stop className={classes.rightIcon} />
             </Button>
           )}
           {!isLoading && ProjCanDrop(p) && (
@@ -123,6 +138,7 @@ class ViewProjPage extends React.PureComponent {
               onClick={this.handleConfirm('isOpenDrop')}
             >
               彻底删除
+              <Delete className={classes.rightIcon} />
             </Button>
           )}
         </div>
@@ -192,6 +208,7 @@ ViewProjPage.propTypes = {
   error: PropTypes.object,
   onStop: PropTypes.func.isRequired,
   onDrop: PropTypes.func.isRequired,
+  onEditAction: PropTypes.func.isRequired,
 };
 
 export default compose(

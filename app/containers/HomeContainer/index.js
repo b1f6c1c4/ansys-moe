@@ -35,6 +35,7 @@ HomeContainer.propTypes = {
   error: PropTypes.object,
   onStatus: PropTypes.func.isRequired,
   onStart: PropTypes.func.isRequired,
+  onCreateAction: PropTypes.func.isRequired,
 };
 
 function mapDispatchToProps(dispatch) {
@@ -45,6 +46,7 @@ function mapDispatchToProps(dispatch) {
       dispatch(globalContainerActions.etcdRequest());
     },
     onStart: () => dispatch(homeContainerActions.startRequest()),
+    onCreateAction: () => dispatch(homeContainerActions.create()),
   };
 }
 

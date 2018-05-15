@@ -2,6 +2,12 @@ import * as HOME_CONTAINER from './constants';
 
 // Actions
 
+export function create() {
+  return {
+    type: HOME_CONTAINER.CREATE_ACTION,
+  };
+}
+
 // Sagas
 export function statusRequest() {
   return {

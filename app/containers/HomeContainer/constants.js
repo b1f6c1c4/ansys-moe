@@ -1,4 +1,5 @@
 // Actions
+export const CREATE_ACTION = 'HomeContainer/CREATE_ACTION';
 
 // Sagas
 export const STATUS_REQUEST = 'HomeContainer/STATUS_REQUEST';

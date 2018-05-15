@@ -1,7 +1,9 @@
 import { delay } from 'redux-saga';
 import { call, put, takeEvery } from 'redux-saga/effects';
+import { push } from 'react-router-redux';
 import * as api from 'utils/request';
 
+import * as runContainerActions from 'containers/RunContainer/actions';
 import * as HOME_CONTAINER from './constants';
 import * as homeContainerActions from './actions';
 import gql from './api.graphql';
@@ -26,9 +28,15 @@ export function* handleStartRequest() {
   }
 }
 
+export function* handleCreateAction() {
+  yield put(runContainerActions.upload('', {}));
+  yield put(push('/app/run'));
+}
+
 // Watcher
 /* eslint-disable func-names */
 export default function* watcher() {
   yield takeEvery(HOME_CONTAINER.STATUS_REQUEST, handleStatusRequest);
   yield takeEvery(HOME_CONTAINER.START_REQUEST, handleStartRequest);
+  yield takeEvery(HOME_CONTAINER.CREATE_ACTION, handleCreateAction);
 }

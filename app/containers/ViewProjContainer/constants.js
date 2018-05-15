@@ -1,4 +1,5 @@
 // Actions
+export const EDIT_ACTION = 'ViewProjContainer/EDIT_ACTION';
 
 // Sagas
 export const STOP_REQUEST = 'ViewProjContainer/STOP_REQUEST';

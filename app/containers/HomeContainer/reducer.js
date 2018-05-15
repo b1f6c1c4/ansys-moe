@@ -13,6 +13,8 @@ const initialState = fromJS({
 function homeContainerReducer(state = initialState, action) {
   switch (action.type) {
     // Actions
+    case HOME_CONTAINER.CREATE_ACTION:
+      return state;
     // Sagas
     case HOME_CONTAINER.STATUS_REQUEST:
       return state.set('isLoading', true)

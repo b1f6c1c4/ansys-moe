@@ -11,6 +11,7 @@ import {
   Typography,
 } from 'material-ui';
 import { Menu as MenuIcon } from '@material-ui/icons';
+import Button from 'components/Button';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -49,6 +50,8 @@ class GlobalBar extends React.PureComponent {
 
   handleProfile = () => this.props.onPush('/app/');
 
+  handleHome = () => { window.location = '/'; };
+
   render() {
     const { classes } = this.props;
 
@@ -72,6 +75,12 @@ class GlobalBar extends React.PureComponent {
           >
             Ansys-MOE 自动化设计系统
           </Typography>
+          <Button
+            color="inherit"
+            onClick={this.handleHome}
+          >
+            返回首页
+          </Button>
         </Toolbar>
       </AppBar>
     );

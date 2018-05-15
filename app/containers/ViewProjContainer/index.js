@@ -40,6 +40,7 @@ ViewProjContainer.propTypes = {
   error: PropTypes.object,
   onStop: PropTypes.func.isRequired,
   onDrop: PropTypes.func.isRequired,
+  onEditAction: PropTypes.func.isRequired,
 };
 
 function mapDispatchToProps(dispatch, props) {
@@ -49,6 +50,7 @@ function mapDispatchToProps(dispatch, props) {
     onRefresh: () => dispatch(globalContainerActions.etcdRequest()),
     onStop: () => dispatch(viewProjContainerActions.stopRequest({ proj })),
     onDrop: () => dispatch(viewProjContainerActions.dropRequest({ proj })),
+    onEditAction: () => dispatch(viewProjContainerActions.edit({ proj })),
   };
 }
 

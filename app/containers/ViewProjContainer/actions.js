@@ -1,6 +1,12 @@
 import * as VIEW_PROJ_CONTAINER from './constants';
 
 // Actions
+export function edit({ proj }) {
+  return {
+    type: VIEW_PROJ_CONTAINER.EDIT_ACTION,
+    proj,
+  };
+}
 
 // Sagas
 export function stopRequest({ proj }) {

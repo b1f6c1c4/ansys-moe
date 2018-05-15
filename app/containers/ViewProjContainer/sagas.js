@@ -1,9 +1,12 @@
+import _ from 'lodash';
 import { delay } from 'redux-saga';
-import { call, put, takeEvery } from 'redux-saga/effects';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
 import { push } from 'react-router-redux';
 import * as api from 'utils/request';
 
 import * as globalContainerActions from 'containers/GlobalContainer/actions';
+import * as globalContainerSelectors from 'containers/GlobalContainer/selectors';
+import * as runContainerActions from 'containers/RunContainer/actions';
 import * as VIEW_PROJ_CONTAINER from './constants';
 import * as viewProjContainerActions from './actions';
 import gql from './api.graphql';
@@ -32,9 +35,17 @@ export function* handleDropRequest({ proj }) {
   }
 }
 
+export function* handleEditAction({ proj }) {
+  const listProj = yield select(globalContainerSelectors.ListProj());
+  const config = _.get(listProj, [proj, 'config']);
+  yield put(runContainerActions.upload(proj, config));
+  yield put(push('/app/run'));
+}
+
 // Watcher
 /* eslint-disable func-names */
 export default function* watcher() {
   yield takeEvery(VIEW_PROJ_CONTAINER.STOP_REQUEST, handleStopRequest);
   yield takeEvery(VIEW_PROJ_CONTAINER.DROP_REQUEST, handleDropRequest);
+  yield takeEvery(VIEW_PROJ_CONTAINER.EDIT_ACTION, handleEditAction);
 }

@@ -14,6 +14,7 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
+import { Stop } from '@material-ui/icons';
 import { Link } from 'react-router-dom';
 import DocumentTitle from 'components/DocumentTitle';
 import StatusBadge from 'components/StatusBadge';
@@ -29,6 +30,9 @@ import { CatCanStop } from 'utils/permission';
 const styles = (theme) => ({
   clickable: {
     cursor: 'pointer',
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
   },
   badge: {
     display: 'inline-block',
@@ -123,6 +127,7 @@ class ViewCatPage extends React.PureComponent {
               onClick={this.handleConfirm('isOpenStop')}
             >
               终止执行
+              <Stop className={classes.rightIcon} />
             </Button>
           )}
         </div>

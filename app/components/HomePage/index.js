@@ -13,6 +13,12 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
+import {
+  Add,
+  PlayArrow,
+  CloudUpload,
+  CloudDownload,
+} from '@material-ui/icons';
 import DocumentTitle from 'components/DocumentTitle';
 import Button from 'components/Button';
 import EmptyIndicator from 'components/EmptyIndicator';
@@ -25,6 +31,9 @@ import StatusBadge from 'components/StatusBadge';
 const styles = (theme) => ({
   clickable: {
     cursor: 'pointer',
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
   },
   badge: {
     display: 'inline-block',
@@ -50,6 +59,10 @@ const styles = (theme) => ({
 
 class HomePage extends React.PureComponent {
   handleClick = (proj) => () => this.props.onPush(`/app/p/${proj}`);
+
+  handleUpload = () => this.props.onPush('/app/upload');
+
+  handleDownload = () => this.props.onPush('/app/download');
 
   render() {
     // eslint-disable-next-line no-unused-vars
@@ -81,6 +94,28 @@ class HomePage extends React.PureComponent {
               onClick={this.props.onStatus}
             />
           </LoadingButton>
+          <Button
+            color="primary"
+            onClick={this.handleUpload}
+          >
+            上传仿真文件
+            <CloudUpload className={classes.rightIcon} />
+          </Button>
+          <Button
+            color="primary"
+            variant="raised"
+            onClick={this.props.onCreateAction}
+          >
+            新任务
+            <Add className={classes.rightIcon} />
+          </Button>
+          <Button
+            color="primary"
+            onClick={this.handleDownload}
+          >
+            下载仿真结果
+            <CloudDownload className={classes.rightIcon} />
+          </Button>
           {!isLoading && !controller && (
             <Button
               color="secondary"
@@ -88,6 +123,7 @@ class HomePage extends React.PureComponent {
               onClick={this.props.onStart}
             >
               恢复运行
+              <PlayArrow className={classes.rightIcon} />
             </Button>
           )}
         </div>
@@ -170,6 +206,7 @@ HomePage.propTypes = {
   error: PropTypes.object,
   onStatus: PropTypes.func.isRequired,
   onStart: PropTypes.func.isRequired,
+  onCreateAction: PropTypes.func.isRequired,
 };
 
 export default compose(
