@@ -14,7 +14,8 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
-import { Delete, Edit, Stop } from '@material-ui/icons';
+import { CloudDownload, Delete, Edit, Stop } from '@material-ui/icons';
+import downloadCsv from 'download-csv';
 import Button from 'components/Button';
 import ConfirmDialog from 'components/ConfirmDialog';
 import DocumentTitle from 'components/DocumentTitle';
@@ -84,6 +85,21 @@ class ViewProjPage extends React.PureComponent {
 
   handleEdit = () => this.props.onEditAction();
 
+  handleExport = () => {
+    const { proj, listProj } = this.props;
+    const mapper = (e) => ({
+      ...e.var,
+      _P0: e.P0,
+    });
+    downloadCsv(
+      _.values(_.get(listProj, [proj, 'results', 'd'])).map(mapper),
+      {
+        _P0: '目标函数',
+      },
+      `${proj}.csv`,
+    );
+  };
+
   render() {
     const {
       // eslint-disable-next-line no-unused-vars
@@ -125,6 +141,15 @@ class ViewProjPage extends React.PureComponent {
             编辑配置
             <Edit className={classes.rightIcon} />
           </Button>
+          {!isLoading && (
+            <Button
+              color="primary"
+              onClick={this.handleExport}
+            >
+              导出CSV
+              <CloudDownload className={classes.rightIcon} />
+            </Button>
+          )}
           {!isLoading && ProjCanStop(p) && (
             <Button
               color="secondary"
@@ -137,7 +162,6 @@ class ViewProjPage extends React.PureComponent {
           {!isLoading && ProjCanDrop(p) && (
             <Button
               color="secondary"
-              variant="raised"
               onClick={this.handleConfirm('isOpenDrop')}
             >
               彻底删除

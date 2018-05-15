@@ -14,9 +14,10 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
-import { Stop } from '@material-ui/icons';
+import { CloudDownload, Stop } from '@material-ui/icons';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import downloadCsv from 'download-csv';
 import Button from 'components/Button';
 import ConfirmDialog from 'components/ConfirmDialog';
 import DocumentTitle from 'components/DocumentTitle';
@@ -83,6 +84,21 @@ class ViewCatPage extends React.PureComponent {
 
   handleClick = (dHash) => () => this.props.onPush(`/app/p/${this.props.proj}/cat/${this.props.cHash}/d/${dHash}`);
 
+  handleExport = () => {
+    const { proj, cHash, listProj } = this.props;
+    const mapper = (e) => ({
+      ...e.var,
+      _P0: e.P0,
+    });
+    downloadCsv(
+      _.values(_.get(listProj, [proj, 'cat', cHash, 'eval'])).map(mapper),
+      {
+        _P0: '目标函数',
+      },
+      `${proj}-${cHash}.csv`,
+    );
+  };
+
   render() {
     const {
       // eslint-disable-next-line no-unused-vars
@@ -123,6 +139,15 @@ class ViewCatPage extends React.PureComponent {
             <RefreshButton
               onClick={this.props.onRefresh}
             />
+          )}
+          {!isLoading && (
+            <Button
+              color="primary"
+              onClick={this.handleExport}
+            >
+              导出CSV
+              <CloudDownload className={classes.rightIcon} />
+            </Button>
           )}
           {!isLoading && CatCanStop(cat) && (
             <Button

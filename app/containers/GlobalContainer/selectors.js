@@ -189,6 +189,7 @@ export const ListProj = () => createSelector(
         }
         _.mapValues(cat.eval, (e, dHash) => {
           _.set(e, 'P0', _.get(p, ['results', 'd', dHash, 'P0']));
+          _.set(e, 'var', _.get(p, ['results', 'd', dHash, 'var']));
           _.set(e, 'startTime', _.get(p, ['results', 'd', dHash, 'startTime']));
           _.set(e, 'endTime', _.get(p, ['results', 'd', dHash, 'endTime']));
           if (e.error) {
