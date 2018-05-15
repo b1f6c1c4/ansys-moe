@@ -104,6 +104,9 @@ router.get(/\/$/, (req, res) => {
             res.status(200).json(_.zipWith(files, results, (f, r) => ({
               name: f,
               dir: r.isDirectory(),
+              size: r.size,
+              createdAt: r.birthtimeMs,
+              updatedAt: r.mtimeMs,
             })));
           }
         });
