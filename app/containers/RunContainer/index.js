@@ -20,18 +20,22 @@ export class RunContainer extends React.PureComponent {
 
 RunContainer.propTypes = {
   isLoading: PropTypes.bool.isRequired,
+  form: PropTypes.object,
   error: PropTypes.object,
   onRun: PropTypes.func.isRequired,
+  onUploadAction: PropTypes.func.isRequired,
 };
 
 function mapDispatchToProps(dispatch) {
   return {
-    onRun: (param) => dispatch(runContainerActions.runRequest(param)),
+    onRun: (...param) => dispatch(runContainerActions.runRequest(...param)),
+    onUploadAction: (...param) => dispatch(runContainerActions.upload(...param)),
   };
 }
 
 const mapStateToProps = createStructuredSelector({
   isLoading: (state) => state.getIn(['runContainer', 'isLoading']),
+  form: runContainerSelectors.Form(),
   error: runContainerSelectors.Error(),
 });
 

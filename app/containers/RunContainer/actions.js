@@ -1,6 +1,13 @@
 import * as RUN_CONTAINER from './constants';
 
 // Actions
+export function upload(name, config) {
+  return {
+    type: RUN_CONTAINER.UPLOAD_ACTION,
+    name,
+    config,
+  };
+}
 
 // Sagas
 export function runRequest() {

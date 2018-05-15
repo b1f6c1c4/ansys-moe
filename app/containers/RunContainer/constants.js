@@ -1,4 +1,5 @@
 // Actions
+export const UPLOAD_ACTION = 'RunContainer/UPLOAD_ACTION';
 
 // Sagas
 export const RUN_REQUEST = 'RunContainer/RUN_REQUEST';
