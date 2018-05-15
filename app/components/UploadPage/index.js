@@ -14,7 +14,7 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
-import { CloudUpload } from '@material-ui/icons';
+import { Delete, CloudUpload } from '@material-ui/icons';
 import ReactFileReader from 'react-file-reader';
 import DocumentTitle from 'components/DocumentTitle';
 import Button from 'components/Button';
@@ -43,6 +43,8 @@ const styles = (theme) => ({
 });
 
 class UploadPage extends React.PureComponent {
+  handleDelete = (file) => () => this.props.onDelete(file);
+
   render() {
     // eslint-disable-next-line no-unused-vars
     const {
@@ -98,6 +100,7 @@ class UploadPage extends React.PureComponent {
                   <TableCell padding="none">文件名</TableCell>
                   <TableCell padding="none">文件大小</TableCell>
                   <TableCell padding="none">上传时间</TableCell>
+                  <TableCell padding="none">操作</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -107,6 +110,14 @@ class UploadPage extends React.PureComponent {
                     <TableCell padding="none"><pre>{file.name}</pre></TableCell>
                     <TableCell padding="none">{file.size}</TableCell>
                     <TableCell padding="none">{file.createdAt && format(file.createdAt, 'YYYY-MM-DD HH:mm:ss')}</TableCell>
+                    <TableCell padding="none">
+                      <Button
+                        color="secondary"
+                        onClick={this.handleDelete(file)}
+                      >
+                        <Delete />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -126,6 +137,7 @@ UploadPage.propTypes = {
   error: PropTypes.object,
   onList: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 export default compose(

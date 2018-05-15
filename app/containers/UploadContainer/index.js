@@ -29,12 +29,14 @@ UploadContainer.propTypes = {
   error: PropTypes.object,
   onList: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 function mapDispatchToProps(dispatch) {
   return {
     onList: () => dispatch(uploadContainerActions.listRequest()),
     onUpload: (...param) => dispatch(uploadContainerActions.uploadRequest(...param)),
+    onDelete: (...param) => dispatch(uploadContainerActions.deleteRequest(...param)),
   };
 }
 

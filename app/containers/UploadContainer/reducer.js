@@ -34,6 +34,15 @@ function uploadContainerReducer(state = initialState, action) {
     case UPLOAD_CONTAINER.LIST_FAILURE:
       return state.set('isLoading', false)
         .set('error', fromJS(_.toPlainObject(action.error)));
+    case UPLOAD_CONTAINER.DELETE_REQUEST:
+      return state.set('isLoading', true)
+        .set('error', null);
+    case UPLOAD_CONTAINER.DELETE_SUCCESS:
+      return state.set('isLoading', false)
+        .deleteIn(['uploaded', action.name]);
+    case UPLOAD_CONTAINER.DELETE_FAILURE:
+      return state.set('isLoading', false)
+        .set('error', fromJS(_.toPlainObject(action.error)));
     // Default
     default:
       return state;

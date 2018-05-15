@@ -26,9 +26,21 @@ export function* handleListRequest() {
   }
 }
 
+export function* handleDeleteRequest({ name }) {
+  try {
+    const result = yield call(api.deleteStorage, name);
+    yield put(uploadContainerActions.listRequest());
+    yield delay(100);
+    yield put(uploadContainerActions.deleteSuccess(result, name));
+  } catch (err) {
+    yield put(uploadContainerActions.deleteFailure(err));
+  }
+}
+
 // Watcher
 /* eslint-disable func-names */
 export default function* watcher() {
   yield takeEvery(UPLOAD_CONTAINER.UPLOAD_REQUEST, handleUploadRequest);
   yield takeEvery(UPLOAD_CONTAINER.LIST_REQUEST, handleListRequest);
+  yield takeEvery(UPLOAD_CONTAINER.DELETE_REQUEST, handleDeleteRequest);
 }

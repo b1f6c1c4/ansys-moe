@@ -43,3 +43,25 @@ export function listFailure(error) {
     error,
   };
 }
+
+export function deleteRequest({ name }) {
+  return {
+    type: UPLOAD_CONTAINER.DELETE_REQUEST,
+    name,
+  };
+}
+
+export function deleteSuccess(result, name) {
+  return {
+    type: UPLOAD_CONTAINER.DELETE_SUCCESS,
+    result,
+    name,
+  };
+}
+
+export function deleteFailure(error) {
+  return {
+    type: UPLOAD_CONTAINER.DELETE_FAILURE,
+    error,
+  };
+}

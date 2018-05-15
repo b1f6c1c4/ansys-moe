@@ -107,6 +107,15 @@ export const listStorage = async (path) => {
   return data;
 };
 
+export const deleteStorage = async (path) => {
+  const { data } = await storageApi.delete(path, {
+    headers: {
+      Accept: '*/*',
+    },
+  });
+  return data;
+};
+
 export const uploadStorage = async (files) => {
   const form = new FormData();
   // eslint-disable-next-line no-restricted-syntax
