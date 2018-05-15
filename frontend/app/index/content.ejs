@@ -1,0 +1,112 @@
+<svg style="position: absolute; width: 0; height: 0;">
+  <defs>
+    <linearGradient id="gradient">
+      <stop offset="0%" stop-color="#55fabe" />
+      <stop offset="100%" stop-color="#1dc8cd" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<!--==========================
+  Header
+============================-->
+<header id="header">
+  <div class="container">
+
+    <div id="logo" class="pull-left">
+      <h1><a href="#intro" class="scrollto">Ansys-MOE</a></h1>
+      <!-- Uncomment below if you prefer to use an image logo -->
+      <!-- <a href="#intro"><img src="resource/logo.png" alt="" title=""></a> -->
+    </div>
+
+    <nav id="nav-menu-container">
+      <ul class="nav-menu">
+        <li class="menu-active"><a href="#intro">首页</a></li>
+        <li><a href="#features">项目特点</a></li>
+        <li><a href="/app/">控制面板</a></li>
+      </ul>
+    </nav><!-- #nav-menu-container -->
+  </div>
+</header><!-- #header -->
+
+<!--==========================
+  Intro Section
+============================-->
+<section id="intro">
+
+  <div class="intro-text">
+    <h2>Ansys-MOE 自动化设计系统</h2>
+    <p>高效解决电磁场仿真闭环优化问题</p>
+    <a href="/app/" class="btn-get-started scrollto">进入控制面板</a>
+  </div>
+
+</section><!-- #intro -->
+
+<main id="main">
+
+  <!--==========================
+    Features Section
+  ============================-->
+  <section id="features">
+    <div class="container">
+
+      <div class="row">
+
+        <div class="col-lg-12">
+          <div class="section-header">
+            <h3 class="section-title">项目特点</h3>
+            <span class="section-divider"></span>
+          </div>
+        </div>
+
+        <div class="col-lg-12">
+
+          <div class="row">
+
+            <div class="col-lg-6 col-md-6 box">
+              <h4 class="title">先进的优化算法</h4>
+              <p class="description">该系统采用BGO（贝叶斯全局最优化）方法，建立平稳高斯随机过程模型，将大优化问题转化为“下一步选取哪个点进行求解可以获得最大的目标函数提升的期望”的小优化问题，并迭代求解。该方法旨在尽可能少对目标函数进行求值，以缩短计算时间。</p>
+            </div>
+            <div class="col-lg-6 col-md-6 box">
+              <h4 class="title">支持多种设计变量</h4>
+              <p class="description">该系统支持任意多个分类型、离散型、连续型随机变量，还支持设计变量之间的依赖关系（不同分类下启用不同的设计变量组合）。用户可以灵活组合各种设计变量，还可以将设计变量进行线性非线性组合以解决复杂的优化设计问题。</p>
+            </div>
+            <div class="col-lg-6 col-md-6 box">
+              <h4 class="title">集成多种程序语言</h4>
+              <p class="description">该系统除了支持普通的数学表达式进行数据预处理和后处理以外，还支持灵活开源的R语言和商业闭源的Wolfram Mathematica语言。用户可以使用任意R和Mathematica程序来对设计变量进行变换，并从电磁场仿真结果推导出系统性能参数。</p>
+            </div>
+            <div class="col-lg-6 col-md-6 box">
+              <h4 class="title">灵活的系统架构</h4>
+              <p class="description">该系统内部采用开源分布式强一致性键值数据库etcd进行状态存储，采用开源高性能消息队列RabbitMQ进行远程过程调用，采用业界最流行的ELK<wbr>（Elasticsearch<wbr>/<wbr>Logstash<wbr>/<wbr>Kibana）架构对系统运行情况进行监控，最大限度杜绝数据异常丢失。</p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section><!-- #features -->
+
+</main>
+
+<!--==========================
+  Footer
+============================-->
+<footer id="footer">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <nav class="footer-links text-center pt-2 pt-lg-0">
+          <a class="scrollto" href="#intro">首页</a>
+          <a class="scrollto" href="#features">项目特点</a>
+          <a href="/app/">控制面板</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+</footer><!-- #footer -->
+
+<a href="#" class="back-to-top"><%= require('resource/icons/ic_keyboard_arrow_up_black_24px.svg') %></a>

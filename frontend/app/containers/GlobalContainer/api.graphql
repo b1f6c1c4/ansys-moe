@@ -1,0 +1,6 @@
+query Etcd {
+  etcd {
+    key
+    value
+  }
+}

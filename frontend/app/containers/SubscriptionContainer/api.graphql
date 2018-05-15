@@ -1,0 +1,6 @@
+subscription Etcd {
+  watchEtcd {
+    key
+    value
+  }
+}

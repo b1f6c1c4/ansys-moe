@@ -1,0 +1,3 @@
+mutation Run($name: ID!, $config: JSON!) {
+  run(name: $name, config: $config)
+}

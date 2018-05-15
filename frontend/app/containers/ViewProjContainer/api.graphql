@@ -1,0 +1,7 @@
+mutation Stop($proj: ID!) {
+  stopProj(proj: $proj)
+}
+
+mutation Drop($proj: ID!) {
+  dropProj(proj: $proj)
+}

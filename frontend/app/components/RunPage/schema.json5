@@ -1,0 +1,194 @@
+{
+  type: 'object',
+  required: ['name'],
+  properties: {
+    name: { type: 'string', title: '项目名称', description: '如果同名项目存在，则会覆盖之前的设置；如果不存在，会创建新项目' },
+    config: {
+      type: 'object',
+      title: '项目设置',
+      required: [
+        'initEvals',
+        'minEvals',
+        'concurrent',
+        'D',
+        'G',
+        'E',
+        'P',
+        'P0',
+      ],
+      properties: {
+        initEvals: { type: 'integer', title: '初始迭代数', description: '每个分类在初始化后，采用实验设计方法，先作出初步尝试' },
+        minEvals: { type: 'integer', title: '最少迭代数', description: '每个分类在达到最少迭代数之前不会尝试下一步迭代' },
+        concurrent: { type: 'integer', title: '并发数', description: '每个分类最多同时进行的迭代数' },
+        minEI: { type: 'number', title: '收敛条件', description: '最小目标函数增量期望' },
+        D: {
+          type: 'array',
+          title: '设计变量',
+          items: {
+            type: 'object',
+            required: ['name', 'kind'],
+            properties: {
+              name: { type: 'string', title: '名称' },
+              kind: {
+                type: 'string',
+                enum: ['categorical', 'discrete', 'continuous'],
+                enumNames: ['分类', '离散', '连续'],
+                title: '类型',
+              },
+              condition: {
+                type: 'string',
+                title: '启动条件',
+                description: '满足什么条件（其他分类设计变量的表达式）时启用该变量',
+              },
+            },
+            dependencies: {
+              kind: {
+                oneOf: [{
+                  required: ['steps'],
+                  properties: {
+                    kind: { enum: ['categorical'] },
+                    steps: { type: 'integer', title: '分类数量' },
+                  },
+                }, {
+                  required: ['lowerBound', 'upperBound', 'steps'],
+                  properties: {
+                    kind: { enum: ['discrete'] },
+                    lowerBound: { type: 'number', title: '最小值' },
+                    upperBound: { type: 'number', title: '最大值' },
+                    steps: { type: 'integer', title: '步数' },
+                  },
+                }, {
+                  required: ['lowerBound', 'upperBound', 'precision'],
+                  properties: {
+                    kind: { enum: ['continuous'] },
+                    lowerBound: { type: 'number', title: '最小值' },
+                    upperBound: { type: 'number', title: '最大值' },
+                    precision: { type: 'number', title: '收敛精度' },
+                  },
+                }],
+              },
+              condition: {
+                required: ['dependsOn'],
+                properties: {
+                  dependsOn: {
+                    type: 'array',
+                    title: '该条件用到了哪些分类设计变量',
+                    items: { type: 'string' },
+                    description: '如果没有用到启动条件，留空即可',
+                  },
+                },
+              },
+            },
+          },
+        },
+        G: {
+          type: 'array',
+          title: '几何参数',
+          items: { $ref: '#/definitions/gepPar' },
+        },
+        ansys: {
+          type: 'object',
+          title: '仿真设置',
+          description: '从上向下依次匹配；若都不匹配则会继续向后执行',
+          required: ['rules'],
+          properties: {
+            rules: {
+              type: 'array',
+              title: '仿真规则',
+              items: {
+                type: 'object',
+                required: ['source', 'destination', 'onError'],
+                properties: {
+                  source: { type: 'string', title: '源文件地址' },
+                  destination: { type: 'string', title: '文件名' },
+                  condition: { type: 'string', title: '启用条件', description: '可以输入设计变量和几何参数的表达式；留空表示强制匹配' },
+                  inputs: {
+                    type: 'array',
+                    title: '仿真参数',
+                    items: { $ref: '#/definitions/ansysInput' },
+                  },
+                  outputs: {
+                    type: 'array',
+                    title: '仿真结果',
+                    items: { $ref: '#/definitions/ansysOutput' },
+                  },
+                  onError: {
+                    type: 'string',
+                    title: '错误处理',
+                    enum: ['halt', 'ignore', 'default'],
+                    enumNames: ['中止项目', '忽略并继续', '视作出界'],
+                    default: 'halt',
+                  },
+                },
+              },
+            },
+          },
+        },
+        E: {
+          type: 'array',
+          title: '电参数',
+          items: { $ref: '#/definitions/gepPar' },
+        },
+        P: {
+          type: 'array',
+          title: '性能参数',
+          items: { $ref: '#/definitions/gepPar' },
+        },
+        P0: {
+          type: 'object',
+          title: '目标函数',
+          required: ['code'],
+          properties: {
+            default: { type: 'number', title: '默认值', description: '任意参数出界则使用该数值' },
+            code: { type: 'string', title: '表达式' },
+          },
+        },
+      },
+    },
+  },
+  definitions: {
+    gepPar: {
+      type: 'object',
+      required: ['name', 'kind', 'code'],
+      properties: {
+        name: { type: 'string', title: '名称' },
+        kind: {
+          type: 'string',
+          title: '计算方式',
+          enum: ['expression', 'mathematica', 'rlang'],
+          enumNames: ['简单表达式', 'Mathematica语言表达式', 'R语言表达式'],
+          default: 'expression',
+        },
+        code: { type: 'string', title: '表达式', description: '可以使用设计变量和前级任何参数；若要使用同级参数，需要在下方声明' },
+        dependsOn: {
+          type: 'array',
+          title: '表达式中用到的同级参数',
+          items: { type: 'string' },
+        },
+        lowerBound: { type: 'number', title: '下限', description: '若不满足约束，本次迭代中止，目标函数为默认值' },
+        upperBound: { type: 'number', title: '上限', description: '若不满足约束，本次迭代中止，目标函数为默认值' },
+      },
+    },
+    ansysInput: {
+      type: 'object',
+      required: ['name', 'variable'],
+      properties: {
+        name: { type: 'string', title: '名称', description: 'Ansys内部仿真参数名' },
+        design: { type: 'string', title: '设计名称', description: '留空表示全局' },
+        variable: { type: 'string', title: '变量名', description: '使用哪个设计变量或几何参数' },
+      },
+    },
+    ansysOutput: {
+      type: 'object',
+      required: ['name', 'design', 'table', 'column'],
+      properties: {
+        name: { type: 'string', title: '名称', description: '保存结果的参数名称' },
+        design: { type: 'string', title: '设计名称' },
+        table: { type: 'string', title: '表格名称' },
+        column: { type: 'integer', title: '列编号' },
+        lowerBound: { type: 'number', title: '下限', description: '若不满足约束，本次迭代中止，目标函数为默认值' },
+        upperBound: { type: 'number', title: '上限', description: '若不满足约束，本次迭代中止，目标函数为默认值' },
+      },
+    },
+  },
+}

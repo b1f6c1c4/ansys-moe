@@ -1,0 +1,3 @@
+mutation Stop($proj: ID!, $cHash: ID!) {
+  stopCat(proj: $proj, cHash: $cHash)
+}
