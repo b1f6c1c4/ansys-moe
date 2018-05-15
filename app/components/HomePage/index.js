@@ -73,6 +73,23 @@ class HomePage extends React.PureComponent {
       listProj,
     } = this.props;
 
+    let status;
+    if (!controller) {
+      status = 'error';
+    } else if (!rabbit) {
+      status = 'unknown';
+    } else {
+      const queued = _.sumBy(_.values(rabbit), (q) => q.ready + q.unacked);
+      const noConsumer = _.some(rabbit, (q) => q.ready && !q.prefetches);
+      if (noConsumer) {
+        status = 'waiting';
+      } else if (queued) {
+        status = 'running';
+      } else {
+        status = 'idle';
+      }
+    }
+
     return (
       <div className={classes.container}>
         <DocumentTitle title="控制面板" />
@@ -83,7 +100,7 @@ class HomePage extends React.PureComponent {
         >
           <span>控制面板</span>
           <Typography className={classes.badge} variant="subheading" component="span">
-            <StatusBadge status={controller ? 'running' : 'error'} />
+            <StatusBadge status={status} />
           </Typography>
         </Typography>
         <div className={classes.actions}>

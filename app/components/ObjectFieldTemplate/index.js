@@ -11,7 +11,7 @@ import {
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
   wrapper: {
-    padding: 8,
+    padding: theme.spacing.unit,
   },
   desc: {
     display: 'inline-block',

@@ -29,6 +29,10 @@ const styles = (theme) => ({
     backgroundColor: '#3e2723',
     color: '#fff',
   },
+  idle: {
+    backgroundColor: '#7f7',
+    color: '#000',
+  },
   waiting: {
     backgroundColor: '#bce7e0',
     color: '#000',
@@ -83,6 +87,7 @@ class StatusBadge extends React.PureComponent {
     const cls = minor ? classes.minor : classes.major;
 
     const messages = {
+      idle: '空闲',
       waiting: '等待中',
       init: '初始化',
       running: '运行中',
