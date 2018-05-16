@@ -13,7 +13,19 @@ const safeLstat = (...args) => {
 };
 
 module.exports = (router) => {
-  router.move('*', (req, res) => {
+  router.move('*', (req, res, next) => {
+    const dest = req.headers.destination;
+    if (!dest) {
+      res.status(400).send();
+      return;
+    }
+    if (!dest.startsWith('/storage')) {
+      res.status(403).send();
+      return;
+    }
+    req.headers.destination = dest.replace(/^\/storage/, '');
+    next();
+  }, (req, res) => {
     const trimmed = trim(req.path);
     if (req.path.endsWith('/')) {
       if (trimmed === '') {
@@ -31,10 +43,6 @@ module.exports = (router) => {
       return;
     }
     const dest = req.headers.destination;
-    if (!dest) {
-      res.status(400).send();
-      return;
-    }
     const fnD = path.normalize(trim(dest));
     const fullPathD = getRealFilePath(fnD);
     if (!fullPathD) {
@@ -62,16 +70,6 @@ module.exports = (router) => {
           res.status(500).send(d.err);
           return;
         }
-        if (dest.endsWith('/')) {
-          try {
-            logger.trace('Create folder for move', fnD);
-            shell.mkdir('-p', fullPathD);
-          } catch (e) {
-            logger.error('Create folder for move', e);
-            res.status(500).send(e);
-            return;
-          }
-        }
       } else if (d.r.isDirectory()) {
         if (!dest.endsWith('/')) {
           res.status(409).send();
@@ -79,6 +77,17 @@ module.exports = (router) => {
         }
       } else {
         res.status(409).send();
+        return;
+      }
+      try {
+        if (dest.endsWith('/')) {
+          shell.mkdir('-p', fullPathD);
+        } else {
+          shell.mkdir('-p', path.dirname(fullPathD));
+        }
+      } catch (e) {
+        logger.error('Create folder for move', e);
+        res.status(500).send(e);
         return;
       }
       try {
