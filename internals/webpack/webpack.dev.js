@@ -47,7 +47,7 @@ module.exports = require('./webpack.base')({
   inject: true,
 
   output: {
-    path: '/tmp/ballot', // Imaginary path
+    path: '/tmp/ansys-moe', // Imaginary path
     filename: 'assets/[name].js',
     chunkFilename: 'assets/[name].chunk.js',
     // [#6642](https://github.com/webpack/webpack/issues/6642)

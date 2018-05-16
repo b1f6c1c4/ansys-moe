@@ -61,7 +61,7 @@ export default function configureStore(initialState = {}, history) {
   /* istanbul ignore if */
   if (process.env.NODE_ENV !== 'test') {
     enhancers.push(persistState(undefined, {
-      key: 'ballot',
+      key: 'ansys-moe',
       slicer,
       deserialize: /* istanbul ignore next */ (raw) => fromJS(JSON.parse(raw)),
       merge: /* istanbul ignore next */ (init, stat) => init.mergeDeep(stat),
@@ -74,7 +74,7 @@ export default function configureStore(initialState = {}, history) {
     process.env.NODE_ENV !== 'production' &&
     typeof window === 'object' &&
     window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
-      ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'Ballot' })
+      ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({ name: 'ansys-moe' })
       : compose;
   /* eslint-enable no-underscore-dangle */
 
