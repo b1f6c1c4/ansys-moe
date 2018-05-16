@@ -3,9 +3,7 @@ import { delay, eventChannel } from 'redux-saga';
 import {
   call,
   cancel as rawCancel,
-  cancelled,
   fork,
-  join,
   put,
   race,
   take,

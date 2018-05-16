@@ -62,31 +62,29 @@ const ConnectedSwitch = connect(createStructuredSelector({
 
 export const render = () => {
   ReactDOM.render(
-    <Provider store={store}>
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <Provider store={store}>
         <ConnectedRouter history={history}>
-          <ErrorBoundary>
+          <React.Fragment>
             <CssBaseline />
             <SubscriptionContainer />
             <MuiThemeProvider theme={theme}>
               <GlobalContainer>
-                <ErrorBoundary>
-                  <ConnectedSwitch>
-                    <Route exact path="/app/" component={HomeContainer} />
-                    <Route exact path="/app/run" component={RunContainer} />
-                    <Route exact path="/app/upload" component={UploadContainer} />
-                    <Route exact path="/app/p/:proj" component={ViewProjContainer} />
-                    <Route exact path="/app/p/:proj/cat/:cHash" component={ViewCatContainer} />
-                    <Route exact path="/app/p/:proj/cat/:cHash/d/:dHash" component={ViewEvalContainer} />
-                    <Route component={NotFoundPage} />
-                  </ConnectedSwitch>
-                </ErrorBoundary>
+                <ConnectedSwitch>
+                  <Route exact path="/app/" component={HomeContainer} />
+                  <Route exact path="/app/run" component={RunContainer} />
+                  <Route exact path="/app/upload" component={UploadContainer} />
+                  <Route exact path="/app/p/:proj" component={ViewProjContainer} />
+                  <Route exact path="/app/p/:proj/cat/:cHash" component={ViewCatContainer} />
+                  <Route exact path="/app/p/:proj/cat/:cHash/d/:dHash" component={ViewEvalContainer} />
+                  <Route component={NotFoundPage} />
+                </ConnectedSwitch>
               </GlobalContainer>
             </MuiThemeProvider>
-          </ErrorBoundary>
+          </React.Fragment>
         </ConnectedRouter>
-      </ErrorBoundary>
-    </Provider>,
+      </Provider>
+    </ErrorBoundary>,
     MOUNT_NODE,
   );
 };

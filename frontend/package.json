@@ -5,8 +5,8 @@
   "author": "b1f6c1c4 <b1f6c1c4@gmail.com>",
   "scripts": {
     "import-sort": "node ./internals/scripts/import-sort.js",
-    "build": "node ./internals/scripts/build.js",
-    "build:dev": "node ./internals/scripts/build.js --profile",
+    "build": "cross-env API_URL='' node ./internals/scripts/build.js",
+    "build:dev": "node ./internals/scripts/build.js --no-docker --profile",
     "build:dll": "node ./internals/scripts/build.js dll",
     "start": "cross-env NODE_ENV=development node server",
     "start:prod": "cross-env NODE_ENV=production node server",
