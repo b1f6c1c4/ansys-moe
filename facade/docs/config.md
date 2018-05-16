@@ -1,6 +1,7 @@
 # config json in ansys-moe
 
-All strings MUST match `/^[a-z][-_a-z0-9]*$/`, unless specified.
+All name strings MUST match `/^[a-z][_a-z0-9]*$/`
+All other strings MUST match `/^[a-z][-_a-z0-9]*$/`
 
 # Data Structures
 
@@ -9,6 +10,7 @@ All strings MUST match `/^[a-z][-_a-z0-9]*$/`, unless specified.
 - initEvals (number, required)
 - minEvals (number, required)
 - concurrent (number, required)
+- minEI (number)
 - D (array[DParameter], required)
 - G (array[GParameter], required)
 - E (array[EParameter], required)
@@ -26,7 +28,6 @@ All strings MUST match `/^[a-z][-_a-z0-9]*$/`, unless specified.
 
 If kind `categorical`: `[1, steps]`
 - steps (number, required) - at least 2
-- descriptions (array[string])
 - dependsOn (array[string]) - other kind `categorical`
 - condition (string) - kind expression
 
@@ -116,4 +117,6 @@ If kind `continuous`:
 - design (string, required) - any string is acceptable
 - table (string, required) - any string is acceptable
 - column (number, required)
+- lowerBound (number)
+- upperBound (number)
 

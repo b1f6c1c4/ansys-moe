@@ -45,7 +45,11 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 # Group Storage
 
-## Upload file by content [POST /storage/]
+## Upload file by name [POST /storage/]
+
++ Response 204 (application/json; charset=utf-8)
+
+## Upload file by sha1 [POST /storage/upload/]
 
 + Response 200 (application/json; charset=utf-8)
 
@@ -77,11 +81,25 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 ### List [GET]
 
++ Request
+
+    + Header
+            Accept: application/json
+
 + Response 200 (application/json; charset=utf-8)
 
     + Attributes
         + name (string)
         + dir (boolean)
+
+### List download [GET]
+
++ Request
+
+    + Header
+            Accept: application/zip
+
++ Response 200 (application/zip)
 
 ### Delete [DELETE]
 

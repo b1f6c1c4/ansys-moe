@@ -35,14 +35,15 @@
 
 ## AnsysCommand (object)
 
-- file (string, required)
+- source (string, required)
+- destination (string, required)
 - script (string)
 
 Make directory `data/{cId}/output`
-Download `storage/{file}` to `data/{cId}/{file.name}`
+Download `storage/{source}` to `data/{cId}/{destination}`
 Replace `$OUT_DIR` in `script` to `data/{cId}/output`
 Save `script` to `data/{cId}/script.vbs`
-Run `batchsave` over `data/{cId}/{file.name}`
+Run `batchsave` over `data/{cId}/{destination}`
 Log to `data/{cId}/solve.log`
 Report log difference
 Upload `data/{cId}/` to `storage/{cId}/`

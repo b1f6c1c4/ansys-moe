@@ -8,6 +8,8 @@ const status = require('../status');
 
 const core = require('./core').resolvers;
 const etcd = require('./etcd').resolvers;
+const rabbit = require('./rabbit').resolvers;
+const control = require('./control').resolvers;
 const controller = require('./controller').resolvers;
 const {
   onOperation,
@@ -28,6 +30,8 @@ const schema = makeExecutableSchema({
     resolvers,
     core,
     etcd,
+    rabbit,
+    control,
     controller,
     subscription,
   ),
