@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/teris-io/shortid"
 )
 
 func (m Module) run(cmd *mmaCommand, cancel <-chan struct{}) (string, error) {
-	id := cmd.Raw.CommandID
+	id := cmd.Raw.CommandID + "." + shortid.MustGenerate()
 	common.RL.Info(cmd.Raw, "mma/run", "Command started")
 
 	if !cmd.Script.Valid {
@@ -19,7 +21,7 @@ func (m Module) run(cmd *mmaCommand, cancel <-chan struct{}) (string, error) {
 	}
 	script := cmd.Script.String
 
-	// Save `script` to `data/{cId}.wls`
+	// Save `script` to `data/{xId}.wls`
 	scriptFile := filepath.Join(common.DataPath, id+".wls")
 	err := ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
 	if err != nil {
@@ -27,7 +29,7 @@ func (m Module) run(cmd *mmaCommand, cancel <-chan struct{}) (string, error) {
 		return "", err
 	}
 
-	// Run `data/{cId}.wls`
+	// Run `data/{xId}.wls`
 	r, err := m.execMma(cmd.Raw, []string{
 		"-file",
 		scriptFile,
@@ -36,7 +38,7 @@ func (m Module) run(cmd *mmaCommand, cancel <-chan struct{}) (string, error) {
 		return "", err
 	}
 
-	// Drop file `data/{cId}.wls`
+	// Drop file `data/{xId}.wls`
 	err = os.Remove(scriptFile)
 	if err != nil {
 		return "", err
