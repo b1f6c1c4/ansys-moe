@@ -15,7 +15,7 @@ module.exports = (petri) => {
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const dVars = _.chain(r.cfg.D)
       .reject({ kind: 'categorical' })
-      .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
+      .filter(({ condition }) => !condition || expression.exec(condition, cVars) > 0)
       .value();
     r.logger.debug('Category D vars', dVars);
     await r.store('/p/:proj/results/cat/:cHash/D', dVars);

@@ -5,22 +5,15 @@ const mma = require('./mma');
 const { cIdGen } = require('../util');
 const logger = require('../logger')('integration');
 
-const theQueue = [];
-
-module.exports.virtualQueue = theQueue;
-
 module.exports.run = (kind, code, variables, info) => {
   logger.debug(`Run integration ${kind}`, info);
-  const { proj, name, root } = info;
   const id = cIdGen(info);
   switch (kind) {
     case 'expression':
-      theQueue.push(expression.wrapped(code, variables, {
-        name,
-        base: `/p/${proj}/state`,
-        root,
+      amqp.publish('action', expression.wrapped(code, variables), id, {
+        kind: 'expression',
         cfg: info.cfgHash,
-      }));
+      });
       break;
     case 'rlang':
       amqp.publish(kind, rlang.run(code, variables), id, {
@@ -33,13 +26,9 @@ module.exports.run = (kind, code, variables, info) => {
       });
       break;
     default:
-      theQueue.push({
-        name,
-        base: `/p/${proj}/state`,
-        root,
+      amqp.publish('action', { type: 'failure', result: 'Kind not supported' }, {
         kind,
         cfgHash: info.cfgHash,
-        action: { type: 'failure', result: 'Kind not supported' },
       });
       break;
   }

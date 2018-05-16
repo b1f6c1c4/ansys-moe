@@ -46,7 +46,7 @@ module.exports = (petri) => {
     r.logger.debug('G pars done', xVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
     const ruleId = _.findIndex(r.cfg.ansys.rules, ({ condition }) =>
-      !condition || expression.run(condition, xVars) > 0);
+      !condition || expression.exec(condition, xVars) > 0);
     if (ruleId === -1) {
       r.logger.warn('No ansys rule matched, proceed directly');
       await r.incr({ '/M/done': 1 });
@@ -182,7 +182,7 @@ module.exports = (petri) => {
     }
     r.logger.debug('P pars done', xVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
-    const p0 = expression.run(r.cfg.P0.code, xVars);
+    const p0 = expression.exec(r.cfg.P0.code, xVars);
     await r.store('/p/:proj/results/d/:dHash/P0', p0);
     await r.incr({ '/P0': 1 });
   });

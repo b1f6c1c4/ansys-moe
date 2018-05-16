@@ -21,7 +21,7 @@ function enumerateCategories(values, results, cVars, dict) {
     if (!condition) {
       return true;
     }
-    return expression.run(condition, vars) > 0;
+    return expression.exec(condition, vars) > 0;
   });
   if (id === -1) {
     results.push([...values]);

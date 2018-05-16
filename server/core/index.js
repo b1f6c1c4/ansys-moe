@@ -2,7 +2,6 @@ const _ = require('lodash');
 const etcd = require('../etcd');
 const { PetriNet, CompiledPath } = require('../petri');
 const EtcdAdapter = require('../adapter');
-const { virtualQueue } = require('../integration');
 const logicGlobal = require('./global');
 const logicCategory = require('./category');
 const logicEval = require('./eval');
@@ -123,14 +122,6 @@ const dispatch = async (payload, context, cust) => {
   return true;
 };
 
-const purgeVirtualQueue = async (context, cust) => {
-  while (virtualQueue.length !== 0) {
-    const evpld = virtualQueue.shift();
-    logger.debug('Dispatching virtual payload', evpld);
-    await dispatch(evpld, context, cust);
-  }
-};
-
 module.exports.run = async (msg) => {
   if (msg.headers.kind === 'core') {
     const res = await processCore(msg.body);
@@ -141,7 +132,7 @@ module.exports.run = async (msg) => {
     const cfg = await etcd.get(`/p/${proj}/config`).json();
     const context = { proj, cfg };
     const cust = customizer(context);
-    await purgeVirtualQueue(context, cust);
+    await dispatch(res, context, cust);
     return;
   }
   const id = msg.correlationId;
@@ -170,5 +161,4 @@ module.exports.run = async (msg) => {
   logger.debug('Dispatching payload', payload);
   logger.silly('With config', cfg);
   await dispatch(payload, context, cust);
-  await purgeVirtualQueue(context, cust);
 };
