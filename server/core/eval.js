@@ -58,8 +58,21 @@ module.exports = (petri) => {
     const mHashContent = {
       file: rule.source,
       vars,
+      output: _.chain(rule.outputs)
+        .map(({ name, design, table, column }) => [name, { design, table, column }])
+        .fromPairs()
+        .value(),
     };
     const mHash = hash(mHashContent);
+    await r.store('/p/:proj/results/d/:dHash/mHash', mHash);
+    const mVars = await r.retrieve('/results/M/:mHash', { mHash }).json();
+    if (mVars) {
+      r.logger.trace(`Ansys cache hit ${mHash}`, mVars);
+      _.assign(xVars, mVars);
+      await r.store('/p/:proj/results/d/:dHash/var', xVars);
+      await r.incr({ '/M/done': 1 });
+      return;
+    }
     await r.store('/hashs/mHash/:mHash', { mHash }, mHashContent);
     ansys.solve(rule, vars, r.action('e-m-done'));
     await r.incr({ '/M/solve': 1 });
@@ -100,13 +113,15 @@ module.exports = (petri) => {
     for (const mpar of rule.outputs) {
       const { name, lowerBound, upperBound } = mpar;
       const val = mVars[name];
-      await r.store('/p/:proj/results/d/:dHash/M/:name', { name }, val);
       if ((!_.isNil(lowerBound) && lowerBound > val)
         || (!_.isNil(upperBound) && upperBound < val)) {
         r.logger.warn(`M ${name} out of bound`, r.param);
         flag = true;
       }
     }
+    const mHash = await r.retrieve('/p/:proj/results/d/:dHash/mHash').string();
+    await r.store('/results/M/:mHash', { mHash }, mVars);
+    await ansys.store(payload, mHash);
     if (flag) {
       await r.incr({ '/P0': 1 });
       return;

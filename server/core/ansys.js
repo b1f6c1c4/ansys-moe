@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const fp = require('lodash/fp');
+const { URL } = require('url');
 const axios = require('axios');
 const Papa = require('papaparse');
 const amqp = require('../amqp');
@@ -94,5 +95,21 @@ module.exports.parse = async (payload, { outputs }) => {
   } catch (e) {
     logger.error('Parsing ansys result', e);
     return null;
+  }
+};
+
+module.exports.store = async (payload, mHash) => {
+  try {
+    await axios({
+      method: 'move',
+      url: `${process.env.STORAGE_URL}/${payload.id}`,
+      headers: {
+        Destination: `${new URL(process.env.STORAGE_URL).pathname}/results/${mHash}`,
+      },
+    });
+    return true;
+  } catch (e) {
+    logger.error('Store ansys result', e);
+    return false;
   }
 };
