@@ -2,7 +2,6 @@ const _ = require('lodash');
 const { hash, dedent } = require('../util');
 const { run, parse } = require('../integration');
 const expression = require('../integration/expression');
-const logger = require('../logger')('core/category');
 
 module.exports = (petri) => {
   petri.register({
@@ -16,9 +15,9 @@ module.exports = (petri) => {
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const dVars = _.chain(r.cfg.D)
       .reject({ kind: 'categorical' })
-      .filter(({ condition }) => !condition || expression.run(condition, cVars) > 0)
+      .filter(({ condition }) => !condition || expression.exec(condition, cVars) > 0)
       .value();
-    logger.debug('Category D vars', dVars);
+    r.logger.debug('Category D vars', dVars);
     await r.store('/p/:proj/results/cat/:cHash/D', dVars);
     // TODO: Use Design of Experiments algorithms
     // r.cfg.initEvals
@@ -58,13 +57,11 @@ module.exports = (petri) => {
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const rst = parse(payload, false);
     if (!rst) {
-      logger.error('Init failed', payload);
+      r.logger.error('Init failed', payload);
       await r.incr({ '/error': 1 });
       return;
     }
-    logger.debug('Init succeed', rst);
-    const vard = _.mapValues(cVars, (v, k) =>
-      _.get(_.filter(r.cfg.D, { name: k }), [0, 'descriptions', v - 1], v));
+    r.logger.debug('Init succeed', rst);
     const ongoing = {};
     await r.dyn('/eval');
     if (rst[0].length) {
@@ -72,14 +69,14 @@ module.exports = (petri) => {
         const dpars = _.assign({}, cVars, pars);
         const dHash = hash(dpars);
         ongoing[dHash] = dpars;
-        logger.info(`Will create eval ${dHash}`, _.assign({}, vard, pars));
+        r.logger.info(`Will create eval ${dHash}`, dpars);
         await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
         await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
       }
     } else {
       const dHash = hash(cVars);
       ongoing[dHash] = cVars;
-      logger.info(`Will create eval ${dHash}`, _.assign({}, vard));
+      r.logger.info(`Will create eval ${dHash}`, _.assign({}, cVars));
       await r.store('/hashs/dHash/:dHash', { dHash }, cVars);
       await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
     }
@@ -100,11 +97,11 @@ module.exports = (petri) => {
     const min = _.min(_.map(history, 'P0'));
     const final = min !== undefined && _.find(history, { P0: min });
     if (!final) {
-      logger.warn('No valid solution found in category');
+      r.logger.warn('No valid solution found in category');
       await r.incr({ '../@': 1 });
       return;
     }
-    logger.info('Found optimal solution in category', final);
+    r.logger.info('Found optimal solution in category', final);
     const finals = (await r.retrieve('/p/:proj/results/finals').json()) || [];
     finals.push(final);
     await r.store('/p/:proj/results/finals', finals);

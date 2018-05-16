@@ -1,4 +1,3 @@
-const { virtualQueue } = require('../integration');
 const etcd = require('../etcd');
 const logger = require('../logger')('core/core');
 
@@ -12,9 +11,9 @@ module.exports = async (action) => {
   // TODO: don't purge everything
   await etcd.delete().prefix(`/p/${proj}`).exec();
   await etcd.put(`/p/${proj}/config`).json(config).exec();
-  await virtualQueue.push({
+  return {
     name: 'init',
+    proj,
     base: `/p/${proj}/state`,
-  });
-  return { proj };
+  };
 };

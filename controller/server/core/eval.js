@@ -3,7 +3,6 @@ const { hash } = require('../util');
 const { run, parse } = require('../integration');
 const ansys = require('./ansys');
 const expression = require('../integration/expression');
-const logger = require('../logger')('core/eval');
 
 module.exports = (petri) => {
   petri.register({
@@ -16,6 +15,7 @@ module.exports = (petri) => {
   }, async (r) => {
     const dVars = await r.retrieve('/hashs/dHash/:dHash').json();
     await r.store('/p/:proj/results/d/:dHash/var', dVars);
+    await r.store('/p/:proj/results/d/:dHash/startTime', new Date().toISOString());
     await r.dyn('/G');
     for (const gpar of r.cfg.G) {
       const { name } = gpar;
@@ -35,19 +35,20 @@ module.exports = (petri) => {
     for (const gpar of r.cfg.G) {
       const { name, lowerBound, upperBound } = gpar;
       const val = await r.retrieve('/p/:proj/results/d/:dHash/G/:name', { name }).number();
-      if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
-        logger.warn(`G ${name} out of bound`, r.param);
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
+        r.logger.warn(`G ${name} out of bound`, r.param);
         await r.incr({ '/P0': 1 });
         return;
       }
       xVars[name] = val;
     }
-    logger.debug('G pars done', xVars);
+    r.logger.debug('G pars done', xVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
     const ruleId = _.findIndex(r.cfg.ansys.rules, ({ condition }) =>
-      !condition || expression.run(condition, xVars) > 0);
+      !condition || expression.exec(condition, xVars) > 0);
     if (ruleId === -1) {
-      logger.warn('No ansys rule matched, proceed directly');
+      r.logger.warn('No ansys rule matched, proceed directly');
       await r.incr({ '/M/done': 1 });
       return;
     }
@@ -57,8 +58,21 @@ module.exports = (petri) => {
     const mHashContent = {
       file: rule.source,
       vars,
+      output: _.chain(rule.outputs)
+        .map(({ name, design, table, column }) => [name, { design, table, column }])
+        .fromPairs()
+        .value(),
     };
     const mHash = hash(mHashContent);
+    await r.store('/p/:proj/results/d/:dHash/mHash', mHash);
+    const mVars = await r.retrieve('/results/M/:mHash', { mHash }).json();
+    if (mVars) {
+      r.logger.trace(`Ansys cache hit ${mHash}`, mVars);
+      _.assign(xVars, mVars);
+      await r.store('/p/:proj/results/d/:dHash/var', xVars);
+      await r.incr({ '/M/done': 1 });
+      return;
+    }
     await r.store('/hashs/mHash/:mHash', { mHash }, mHashContent);
     ansys.solve(rule, vars, r.action('e-m-done'));
     await r.incr({ '/M/solve': 1 });
@@ -81,19 +95,36 @@ module.exports = (petri) => {
     if (!mVars) {
       switch (rule.onError) {
         case 'ignore':
-          logger.warn('M failed, ignore and proceed', r.param);
+          r.logger.warn('M failed, ignore and proceed', r.param);
           await r.incr({ '/M/done': 1 });
           return;
         case 'default':
-          logger.warn('M failed, use default value', r.param);
+          r.logger.warn('M failed, use default value', r.param);
           await r.incr({ '/P0': 1 });
           return;
         case 'halt':
         default:
-          logger.error('M failed', r.param);
+          r.logger.error('M failed', r.param);
           await r.incr({ '/error': 1 });
           return;
       }
+    }
+    let flag = false;
+    for (const mpar of rule.outputs) {
+      const { name, lowerBound, upperBound } = mpar;
+      const val = mVars[name];
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
+        r.logger.warn(`M ${name} out of bound`, r.param);
+        flag = true;
+      }
+    }
+    const mHash = await r.retrieve('/p/:proj/results/d/:dHash/mHash').string();
+    await r.store('/results/M/:mHash', { mHash }, mVars);
+    await ansys.store(payload, mHash);
+    if (flag) {
+      await r.incr({ '/P0': 1 });
+      return;
     }
     _.assign(xVars, mVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
@@ -127,14 +158,15 @@ module.exports = (petri) => {
     for (const epar of r.cfg.E) {
       const { name, lowerBound, upperBound } = epar;
       const val = await r.retrieve('/p/:proj/results/d/:dHash/E/:name', { name }).number();
-      if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
-        logger.warn(`E ${name} out of bound`, r.param);
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
+        r.logger.warn(`E ${name} out of bound`, r.param);
         await r.incr({ '/P0': 1 });
         return;
       }
       xVars[name] = val;
     }
-    logger.debug('E pars done', xVars);
+    r.logger.debug('E pars done', xVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
     await r.dyn('/P');
     for (const ppar of r.cfg.P) {
@@ -155,16 +187,17 @@ module.exports = (petri) => {
     for (const ppar of r.cfg.P) {
       const { name, lowerBound, upperBound } = ppar;
       const val = await r.retrieve('/p/:proj/results/d/:dHash/P/:name', { name }).number();
-      if ((lowerBound && lowerBound > val) || (upperBound && upperBound < val)) {
-        logger.warn(`P ${name} out of bound`, r.param);
+      if ((!_.isNil(lowerBound) && lowerBound > val)
+        || (!_.isNil(upperBound) && upperBound < val)) {
+        r.logger.warn(`P ${name} out of bound`, r.param);
         await r.incr({ '/P0': 1 });
         return;
       }
       xVars[name] = val;
     }
-    logger.debug('P pars done', xVars);
+    r.logger.debug('P pars done', xVars);
     await r.store('/p/:proj/results/d/:dHash/var', xVars);
-    const p0 = expression.run(r.cfg.P0.code, xVars);
+    const p0 = expression.exec(r.cfg.P0.code, xVars);
     await r.store('/p/:proj/results/d/:dHash/P0', p0);
     await r.incr({ '/P0': 1 });
   });
@@ -180,13 +213,14 @@ module.exports = (petri) => {
     const p0 = await r.retrieve('/p/:proj/results/d/:dHash/P0').number();
     const dpars = await r.retrieve('/hashs/dHash/:dHash').json();
     const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
-    logger.info(`Eval done (P0=${p0})`, dpars);
+    r.logger.info(`Eval done (P0=${p0})`, dpars);
     const item = { D: dpars, P0: p0 };
     history.push(item);
     await r.store('/p/:proj/results/cat/:cHash/history', history);
     const ongoing = await r.retrieve('/p/:proj/results/cat/:cHash/ongoing').json();
     delete ongoing[r.param.dHash];
     await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
+    await r.store('/p/:proj/results/d/:dHash/endTime', new Date().toISOString());
     await r.decr({ '../#': 1 });
     await r.incr({ '../@': 1, '../../iter/req': 1 });
   });
@@ -219,11 +253,11 @@ module.exports = (petri) => {
   const eGepDone = async (r, payload) => {
     const rst = parse(payload);
     if (!rst) {
-      logger.error(`${r.param.gep} ${r.param.name} failed`, payload);
+      r.logger.error(`${r.param.gep} ${r.param.name} failed`, payload);
       await r.incr({ '../../error': 1 });
       return;
     }
-    logger.debug(`${r.param.gep} ${r.param.name} succeed`, rst);
+    r.logger.debug(`${r.param.gep} ${r.param.name} succeed`, rst);
     await r.store('/p/:proj/results/d/:dHash/:gep/:name', rst);
     const affected = _.chain(r.cfg[r.param.gep])
       .filter((par) => par.dependsOn && par.dependsOn.includes(r.param.name))

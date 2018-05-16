@@ -128,6 +128,9 @@ class PetriRuntime {
   }
 
   async dyn(p) {
+    if (!await this.lte({ [p]: 0 })) {
+      throw new Error(`re-enter dynamic fork ${p}`);
+    }
     await this.incr({ [p]: 1 });
     this.dyns.push(p);
   }

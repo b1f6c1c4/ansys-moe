@@ -74,16 +74,18 @@ if (process.env.LOG_HOST) {
   const host = process.env.LOG_HOST;
   const udp = dgram.createSocket('udp4');
   sendUdp = (msg) => {
-    const { data, ...rest } = msg;
+    const { data, extra, ...rest } = msg;
     if (data instanceof Error) {
       udp.send(Buffer.from(stringify({
         ...rest,
+        ...extra,
         data: data.stack,
         meta,
       })), port, host);
     } else {
       udp.send(Buffer.from(stringify({
         ...rest,
+        ...extra,
         data,
         meta,
       })), port, host);
@@ -92,7 +94,7 @@ if (process.env.LOG_HOST) {
 }
 
 module.exports = (lbl) => {
-  const regularize = (k, f) => (msg, data) => {
+  const regularize = (k, f) => (msg, data, extra) => {
     let message = msg;
     if (message === undefined) {
       message = 'undefined';
@@ -102,6 +104,7 @@ module.exports = (lbl) => {
       label: lbl || 'default',
       message,
       data,
+      extra,
     });
   };
   const customApi = {};

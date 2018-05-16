@@ -5,10 +5,19 @@
 - /mHash/:mHash
   - file - sha1 of ansys file content
   - vars - dict of used variables
+  - output - dict of:
+    - design
+    - table
+    - column
 - /cHash/:cHash
   - dict of active categorical variables
 - /dHash/:dHash
   - dict of active design variables
+
+# /results
+
+- /M/:mHash
+   - dict of M variables
 
 # /p/:proj
 
@@ -29,6 +38,7 @@
       - /init
       - /prep
     - /M/solve
+    - /M/done
     - /E/:name
       - /error
       - /init
@@ -37,17 +47,22 @@
       - /error
       - /init
       - /prep
+    - /P0
   - /iter
     - /hint
     - /req
     - /calc
+  - /conv
 - /done
 
 ## /results
 
 - /d/:dHash
+  - /startTime
+  - /endTime
   - /var
   - /Mid
+  - /mHash
   - /G/:name
   - /E/:name
   - /P/:name
@@ -57,5 +72,6 @@
   - /history
   - /ongoing
   - /iterate
+- /finals
 - /final
 

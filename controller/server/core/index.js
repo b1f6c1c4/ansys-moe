@@ -2,7 +2,6 @@ const _ = require('lodash');
 const etcd = require('../etcd');
 const { PetriNet, CompiledPath } = require('../petri');
 const EtcdAdapter = require('../adapter');
-const { virtualQueue } = require('../integration');
 const logicGlobal = require('./global');
 const logicCategory = require('./category');
 const logicEval = require('./eval');
@@ -18,74 +17,90 @@ logicCategory(petri);
 logicEval(petri);
 logicIter(petri);
 
-const customizer = (obj) => (proxy) => new Proxy(proxy, {
-  get(target, prop, receiver) {
-    switch (prop) {
-      case 'retrieve':
-        return (key, ...pars) => {
-          const compiled = new CompiledPath(key);
-          const p = compiled.build(target.context, target.param, ...pars);
-          return etcd.get(p);
-        };
-      case 'store':
-        return (key, ...args) => {
-          const compiled = new CompiledPath(key);
-          const value = args[args.length - 1];
-          const pars = args.splice(0, args.length - 1);
-          const p = compiled.build(target.context, target.param, ...pars);
-          if (_.isObject(value) || _.isArray(value)) {
-            return etcd.put(p).json(value).exec();
-          }
-          return etcd.put(p).value(value).exec();
-        };
-      case 'action':
-        return (name, root, ...pars) => {
-          if (root === undefined) {
-            return {
-              proj: obj.proj,
-              name,
-              root: target.root,
-              cfgHash: receiver.cfgHash(name),
-            };
-          }
-          if (root === null) {
-            return {
-              proj: obj.proj,
-              name,
-              cfgHash: receiver.cfgHash(name),
-            };
-          }
-          const compiled = new CompiledPath(root);
-          const p = compiled.build(target.context, target.param, ...pars);
-          return {
-            proj: obj.proj,
-            name,
-            root: p,
-            cfgHash: receiver.cfgHash(name),
+const customizer = (obj) => (r) => {
+  const rLogger = new Proxy(logger, {
+    get(target, prop) {
+      return (msg, data = undefined) => {
+        logger[prop](msg, data, {
+          name: r.option.name,
+          root: r.root,
+          proj: obj.proj,
+          ...r.param,
+        });
+      };
+    },
+  });
+  return new Proxy(r, {
+    get(target, prop, receiver) {
+      switch (prop) {
+        case 'logger':
+          return rLogger;
+        case 'retrieve':
+          return (key, ...pars) => {
+            const compiled = new CompiledPath(key);
+            const p = compiled.build(target.context, target.param, ...pars);
+            return etcd.get(p);
           };
-        };
-      case 'cfgHash':
-        return (name) => {
-          const reg = target.petri.retrieve(name);
-          if (!reg) {
-            logger.warn('Name for cfg not found', name);
+        case 'store':
+          return (key, ...args) => {
+            const compiled = new CompiledPath(key);
+            const value = args[args.length - 1];
+            const pars = args.splice(0, args.length - 1);
+            const p = compiled.build(target.context, target.param, ...pars);
+            if (_.isObject(value) || _.isArray(value)) {
+              return etcd.put(p).json(value).exec();
+            }
+            return etcd.put(p).value(value).exec();
+          };
+        case 'action':
+          return (name, root, ...pars) => {
+            if (root === undefined) {
+              return {
+                proj: obj.proj,
+                name,
+                root: target.root,
+                cfgHash: receiver.cfgHash(name),
+              };
+            }
+            if (root === null) {
+              return {
+                proj: obj.proj,
+                name,
+                cfgHash: receiver.cfgHash(name),
+              };
+            }
+            const compiled = new CompiledPath(root);
+            const p = compiled.build(target.context, target.param, ...pars);
+            return {
+              proj: obj.proj,
+              name,
+              root: p,
+              cfgHash: receiver.cfgHash(name),
+            };
+          };
+        case 'cfgHash':
+          return (name) => {
+            const reg = target.petri.retrieve(name);
+            if (!reg) {
+              logger.warn('Name for cfg not found', name);
+              return undefined;
+            }
+            if (reg.option.cfg) {
+              const cfgx = reg.option.cfg(obj.cfg);
+              logger.silly('Excerpted cfg', cfgx);
+              return hash(cfgx, true);
+            }
             return undefined;
+          };
+        default:
+          if (prop in obj) {
+            return obj[prop];
           }
-          if (reg.option.cfg) {
-            const cfgx = reg.option.cfg(obj.cfg);
-            logger.silly('Excerpted cfg', cfgx);
-            return hash(cfgx, true);
-          }
-          return undefined;
-        };
-      default:
-        if (prop in obj) {
-          return obj[prop];
-        }
-        return Reflect.get(target, prop, receiver);
-    }
-  },
-});
+          return Reflect.get(target, prop, receiver);
+      }
+    },
+  });
+};
 
 const dispatch = async (payload, context, cust) => {
   const obj = petri.retrieve(payload.name);
@@ -107,14 +122,6 @@ const dispatch = async (payload, context, cust) => {
   return true;
 };
 
-const purgeVirtualQueue = async (context, cust) => {
-  while (virtualQueue.length !== 0) {
-    const evpld = virtualQueue.shift();
-    logger.debug('Dispatching virtual payload', evpld);
-    await dispatch(evpld, context, cust);
-  }
-};
-
 module.exports.run = async (msg) => {
   if (msg.headers.kind === 'core') {
     const res = await processCore(msg.body);
@@ -125,7 +132,7 @@ module.exports.run = async (msg) => {
     const cfg = await etcd.get(`/p/${proj}/config`).json();
     const context = { proj, cfg };
     const cust = customizer(context);
-    await purgeVirtualQueue(context, cust);
+    await dispatch(res, context, cust);
     return;
   }
   const id = msg.correlationId;
@@ -154,5 +161,4 @@ module.exports.run = async (msg) => {
   logger.debug('Dispatching payload', payload);
   logger.silly('With config', cfg);
   await dispatch(payload, context, cust);
-  await purgeVirtualQueue(context, cust);
 };

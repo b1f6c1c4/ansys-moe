@@ -1,7 +1,7 @@
 const { Parser } = require('expr-eval');
 const logger = require('../logger')('integration/expression');
 
-module.exports.run = (code, variables) => {
+module.exports.exec = (code, variables) => {
   try {
     const parser = new Parser();
     const expr = parser.parse(code);
@@ -11,7 +11,7 @@ module.exports.run = (code, variables) => {
   }
 };
 
-module.exports.wrapped = (code, variables, info) => {
+module.exports.wrapped = (code, variables) => {
   let action;
   try {
     const parser = new Parser();
@@ -27,13 +27,6 @@ module.exports.wrapped = (code, variables, info) => {
       result: e.stack,
     };
   }
-  const { cfg: cfgHash, ...restInfo } = info;
-  const result = {
-    ...restInfo,
-    cfgHash,
-    kind: 'expression',
-    action,
-  };
-  logger.silly('Expr result', { code, result });
-  return result;
+  logger.silly('Expr result', { code, action });
+  return action;
 };
