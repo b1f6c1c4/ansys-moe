@@ -10,6 +10,11 @@
 - /dHash/:dHash
   - dict of active design variables
 
+# /results
+
+- /M/:mHash
+   - dict of M variables
+
 # /p/:proj
 
 ## /config
@@ -49,10 +54,12 @@
 ## /results
 
 - /d/:dHash
+  - /startTime
+  - /endTime
   - /var
   - /Mid
+  - /mHash
   - /G/:name
-  - /M/:name
   - /E/:name
   - /P/:name
   - /P0
