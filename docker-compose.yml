@@ -276,6 +276,17 @@ services:
       - data
       - ctrl
 
+  elastalert:
+    build: ./elastalert
+    restart: always
+    volumes:
+      - /root/ansys-moe/rules:/opt/elastalert/rules
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - ctrl
+
 volumes:
   nginx-log:
     driver: local
