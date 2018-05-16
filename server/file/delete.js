@@ -1,7 +1,7 @@
 const fs = require('fs');
 const rimraf = require('rimraf');
 const path = require('path');
-const { dataPath, getRealFilePath } = require('./common');
+const { dataPath, getRealFilePath, trim } = require('./common');
 const logger = require('../logger')('file/delete');
 
 module.exports = (router) => {
@@ -18,7 +18,7 @@ module.exports = (router) => {
   });
 
   router.delete(/^\/.*\/$/, (req, res) => {
-    const fn = path.normalize(req.path.substr(1, req.path.length - 2));
+    const fn = path.normalize(trim(req.path));
     const fullPath = getRealFilePath(fn);
     if (!fullPath) {
       logger.warn('Decline delete', req.path);
@@ -55,7 +55,7 @@ module.exports = (router) => {
   });
 
   router.delete(/^\/.*[^/]$/, (req, res) => {
-    const fn = path.normalize(req.path.substr(1));
+    const fn = path.normalize(trim(req.path));
     const fullPath = getRealFilePath(fn);
     if (!fullPath) {
       logger.warn('Decline delete', req.path);

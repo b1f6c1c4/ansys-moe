@@ -3,12 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const async = require('async');
 const archiver = require('archiver');
-const { getRealFilePath } = require('./common');
+const { getRealFilePath, trim } = require('./common');
 const logger = require('../logger')('file/get');
 
 module.exports = (router) => {
   router.get(/\/$/, (req, res) => {
-    const fn = path.normalize(req.path.substr(1, req.path.length - 2));
+    const fn = path.normalize(trim(req.path));
     logger.silly('Will list or download directory', fn);
     const fullPath = getRealFilePath(fn);
     if (!fullPath) {

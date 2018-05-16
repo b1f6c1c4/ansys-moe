@@ -1,11 +1,15 @@
 const express = require('express');
+const shell = require('shelljs');
 const { dataPath } = require('./common');
 const httpGet = require('./get');
 const httpPost = require('./post');
 const httpPut = require('./put');
 const httpDelete = require('./delete');
+const httpMove = require('./move');
 
 const router = express.Router();
+
+shell.config.fatal = true;
 
 router.use((req, res, next) => {
   res.header('Cache-Control', 'public');
@@ -20,12 +24,9 @@ httpGet(router);
 httpPost(router);
 httpPut(router);
 httpDelete(router);
+httpMove(router);
 
-router.post('*', (req, res) => {
-  res.status(405).send();
-});
-
-router.patch('*', (req, res) => {
+router.all('*', (req, res) => {
   res.status(405).send();
 });
 

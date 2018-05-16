@@ -10,7 +10,8 @@ const invalidSuffix = /[. ]+$/;
 const getRealFilePath = (fn) => {
   if (fn !== '.') {
     if (fn.length > 1000) return null;
-    const sp = fn.split('/');
+    const sp = fn.split(path.sep);
+    logger.silly('split', sp);
     if (sp.length > 12) return null;
     // eslint-disable-next-line no-restricted-syntax
     for (const s of sp) {
@@ -20,7 +21,9 @@ const getRealFilePath = (fn) => {
     }
   }
   const fullPath = path.normalize(path.join(dataPath, fn));
+  logger.silly('fullPath', fullPath);
   const rootPath = path.normalize(dataPath);
+  logger.silly('rootPath', rootPath);
   if (fullPath.substr(0, rootPath.length) === rootPath) {
     logger.trace('Valid fullPath', fullPath);
     return fullPath;
@@ -29,4 +32,5 @@ const getRealFilePath = (fn) => {
 };
 
 module.exports.dataPath = dataPath;
+module.exports.trim = (s) => s.replace(/^\/+|\/+$/g, '');
 module.exports.getRealFilePath = getRealFilePath;

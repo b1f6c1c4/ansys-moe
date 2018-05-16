@@ -1,13 +1,13 @@
 const path = require('path');
 const shell = require('shelljs');
 const fs = require('fs');
-const { getRealFilePath } = require('./common');
+const { getRealFilePath, trim } = require('./common');
 const contentstream = require('../utils/contentstream');
 const logger = require('../logger')('file/put');
 
 module.exports = (router) => {
   router.put(/^\/.*[^/]$/, (req, res) => {
-    const fn = path.normalize(req.path.substr(1));
+    const fn = path.normalize(trim(req.path));
     const fullPath = getRealFilePath(fn);
     if (!fullPath) {
       logger.warn('Declined file', req.path);
