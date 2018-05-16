@@ -5,7 +5,7 @@ import { HttpLink } from 'apollo-link-http';
 import { WebSocketLink } from 'apollo-link-ws';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { getMainDefinition } from 'apollo-utilities';
-import { InMemoryCache, IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
+import { InMemoryCache } from 'apollo-cache-inmemory';
 
 export default (makeApi) => {
   const httpLink = new HttpLink({

@@ -18,9 +18,11 @@ const compiled = _.mapValues({
   gepPrep: '/p/:proj/state/cat/:cHash/eval/:dHash/:gep=G|E|P/:name/prep',
   evalGep: '/p/:proj/state/cat/:cHash/eval/:dHash/:gep=G|E|P',
   evalM: '/p/:proj/state/cat/:cHash/eval/:dHash/M/solve',
-  gmepResult: '/p/:proj/results/d/:dHash/:gmep=G|M|E|P/:name',
+  gepResult: '/p/:proj/results/d/:dHash/:gep=G|E|P/:name',
   mIdResult: '/p/:proj/results/d/:dHash/Mid',
+  mHashResult: '/p/:proj/results/d/:dHash/mHash',
   varResult: '/p/:proj/results/d/:dHash/var',
+  mResult: '/results/M/:mHash',
   startResult: '/p/:proj/results/d/:dHash/startTime',
   endResult: '/p/:proj/results/d/:dHash/endTime',
   evalP0Result: '/p/:proj/results/d/:dHash/P0',
@@ -59,6 +61,7 @@ export const ListProj = () => createSelector(
   (etcd) => {
     if (!etcd) return null;
     const projects = {};
+    const mResults = {};
     etcd.forEach((value, key) => {
       run([[
         'projConfig',
@@ -132,9 +135,9 @@ export const ListProj = () => createSelector(
           _.set(projects, [m.proj, 'cat', m.cHash, 'eval', m.dHash, 'Mrun'], +value);
         },
       ], [
-        'gmepResult',
+        'gepResult',
         (m) => {
-          _.set(projects, [m.proj, 'results', 'd', m.dHash, m.gmep, m.name], +value);
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, m.gep, m.name], +value);
         },
       ], [
         'mIdResult',
@@ -142,9 +145,19 @@ export const ListProj = () => createSelector(
           _.set(projects, [m.proj, 'results', 'd', m.dHash, 'Mid'], +value);
         },
       ], [
+        'mHashResult',
+        (m) => {
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'mHash'], value);
+        },
+      ], [
         'varResult',
         (m) => {
           _.set(projects, [m.proj, 'results', 'd', m.dHash, 'var'], JSON.parse(value));
+        },
+      ], [
+        'mResult',
+        (m) => {
+          _.set(mResults, [m.mHash], JSON.parse(value));
         },
       ], [
         'startResult',
@@ -227,9 +240,15 @@ export const ListProj = () => createSelector(
           }));
           _.update(e, 'G', gepFunc('G'));
           const mId = _.get(p, ['results', 'd', dHash, 'Mid']);
+          const mHash = _.get(p, ['results', 'd', dHash, 'mHash']);
+          _.set(e, 'mId', mId);
+          _.set(e, 'mHash', mHash);
           if (mId !== undefined) {
-            _.set(e, 'M', _.fromPairs(p.config.ansys.rules[mId].outputs.map((rule) => {
-              const v = _.get(p, ['results', 'd', dHash, 'M', rule.name]);
+            const config = p.config.ansys.rules[mId];
+            _.set(e, 'config', config);
+            _.set(e, 'Mdown', !!_.get(mResults, [mHash]));
+            _.set(e, 'M', _.fromPairs(config.outputs.map((rule) => {
+              const v = _.get(mResults, [mHash, rule.name]);
               let status;
               if (v === undefined) {
                 status = 'running';

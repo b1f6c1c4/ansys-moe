@@ -2,6 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
+import { makeApi } from 'utils/request';
 import { EvalCanStop } from 'utils/permission';
 
 import {
@@ -14,7 +15,7 @@ import {
   TableRow,
   Typography,
 } from 'material-ui';
-import { Stop } from '@material-ui/icons';
+import { CloudDownload, Stop } from '@material-ui/icons';
 import { Link } from 'react-router-dom';
 import Button from 'components/Button';
 import ConfirmDialog from 'components/ConfirmDialog';
@@ -78,6 +79,15 @@ class ViewEvalPage extends React.PureComponent {
 
   handleClick = (dHash) => () => this.props.onPush(`/app/p/${this.props.proj}/cat/${this.props.cHash}/d/${dHash}`);
 
+  handleDownload = () => {
+    const { listProj, proj, dHash } = this.props;
+    const mHash = _.get(listProj, [proj, 'results', 'd', dHash, 'mHash']);
+    if (mHash) {
+      const url = makeApi(`/storage/results/${mHash}/`);
+      window.open(url);
+    }
+  };
+
   render() {
     const {
       // eslint-disable-next-line no-unused-vars
@@ -96,8 +106,7 @@ class ViewEvalPage extends React.PureComponent {
     if (!cat) return null;
     const e = cat.eval[dHash];
     if (!e) return null;
-    const mId = _.get(p, ['results', 'd', dHash, 'Mid']);
-    const m = mId !== undefined && p.config.ansys.rules[mId];
+    const m = e.config;
 
     return (
       <div className={classes.container}>
@@ -135,6 +144,16 @@ class ViewEvalPage extends React.PureComponent {
             >
               终止执行
               <Stop className={classes.rightIcon} />
+            </Button>
+          )}
+          {!isLoading && e.Mdown && (
+            <Button
+              color="primary"
+              variant="raised"
+              onClick={this.handleDownload}
+            >
+              下载仿真结果
+              <CloudDownload className={classes.rightIcon} />
             </Button>
           )}
         </div>
@@ -195,9 +214,7 @@ class ViewEvalPage extends React.PureComponent {
                 <TableHead>
                   <TableRow>
                     <TableCell>名称</TableCell>
-                    <TableCell>设计名称</TableCell>
-                    <TableCell>表格名称</TableCell>
-                    <TableCell>列编号</TableCell>
+                    <TableCell>来源</TableCell>
                     <TableCell>最小值</TableCell>
                     <TableCell>最大值</TableCell>
                     <TableCell>实际值</TableCell>
@@ -208,9 +225,7 @@ class ViewEvalPage extends React.PureComponent {
                   {_.sortBy(_.toPairs(e.M), 0).map(([name, mm]) => (
                     <TableRow key={name} hover >
                       <TableCell>{name}</TableCell>
-                      <TableCell>{mm.rule.design}</TableCell>
-                      <TableCell>{mm.rule.table}</TableCell>
-                      <TableCell>{mm.rule.column}</TableCell>
+                      <TableCell>{mm.rule.design}.{mm.rule.table}[{mm.rule.column}]</TableCell>
                       <TableCell>{mm.rule.lowerBound}</TableCell>
                       <TableCell>{mm.rule.upperBound}</TableCell>
                       <TableCell>{mm.value}</TableCell>
