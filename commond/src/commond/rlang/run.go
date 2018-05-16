@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/teris-io/shortid"
 )
 
 func (m Module) run(cmd *rlangCommand, cancel <-chan struct{}) (string, error) {
-	id := cmd.Raw.CommandID
+	id := cmd.Raw.CommandID + "." + shortid.MustGenerate()
 	common.RL.Info(cmd.Raw, "rlang/run", "Command started")
 
 	if !cmd.Script.Valid {
@@ -19,7 +21,7 @@ func (m Module) run(cmd *rlangCommand, cancel <-chan struct{}) (string, error) {
 	}
 	script := cmd.Script.String
 
-	// Save `script` to `data/{cId}.R`
+	// Save `script` to `data/{xId}.R`
 	scriptFile := filepath.Join(common.DataPath, id+".R")
 	err := ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
 	if err != nil {
@@ -27,7 +29,7 @@ func (m Module) run(cmd *rlangCommand, cancel <-chan struct{}) (string, error) {
 		return "", err
 	}
 
-	// Run `data/{cId}.R`
+	// Run `data/{xId}.R`
 	r, err := m.execRLang(cmd.Raw, []string{
 		"--vanilla",
 		scriptFile,
@@ -36,7 +38,7 @@ func (m Module) run(cmd *rlangCommand, cancel <-chan struct{}) (string, error) {
 		return "", err
 	}
 
-	// Drop file `data/{cId}.R`
+	// Drop file `data/{xId}.R`
 	err = os.Remove(scriptFile)
 	if err != nil {
 		return "", err

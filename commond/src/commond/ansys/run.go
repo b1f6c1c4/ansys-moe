@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/teris-io/shortid"
 )
 
 func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
-	id := cmd.Raw.CommandID
+	id := cmd.Raw.CommandID + "." + shortid.MustGenerate()
 	common.RL.Info(cmd.Raw, "ansys/run", "Command started")
 
 	if !cmd.Source.Valid {
@@ -33,24 +35,24 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	}
 	script := cmd.Script.String
 
-	// Create `data/{cId}/output`
+	// Create `data/{xId}/output`
 	err := common.EmptyPath(cmd.Raw, id, "output")
 	if err != nil {
 		return err
 	}
 
-	// Download `storage/{source}` to `data/{cId}/{destination}`
+	// Download `storage/{source}` to `data/{xId}/{destination}`
 	err = common.Download(cmd.Raw, source, filepath.Join(id, destination))
 	if err != nil {
 		return err
 	}
 
-	// Replace `$OUT_DIR` in `script` to `data/{cId}/output`
+	// Replace `$OUT_DIR` in `script` to `data/{xId}/output`
 	// In VBScript, only '"' needs to be escaped.
 	outputPath := filepath.Join(common.DataPath, id, "output")
 	scriptX := strings.Replace(script, "$OUT_DIR", strings.Replace(outputPath, "\"", "\"\"", -1), -1)
 
-	// Save `script` to `data/{cId}/script.vbs`
+	// Save `script` to `data/{xId}/script.vbs`
 	scriptFile := filepath.Join(common.DataPath, id, "script.vbs")
 	err = ioutil.WriteFile(scriptFile, []byte(scriptX), os.ModePerm)
 	if err != nil {
@@ -60,11 +62,11 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 
 	logCancel := make(chan struct{})
 
-	// Log to `data/{cId}/solve.log`
+	// Log to `data/{xId}/solve.log`
 	logFile := filepath.Join(common.DataPath, id, "solve.log")
 	go common.WatchLog(cmd.Raw, logFile, logCancel)
 
-	// Run `batchsave` over `data/{cId}/{destination}`
+	// Run `batchsave` over `data/{xId}/{destination}`
 	jobFile := filepath.Join(common.DataPath, id, destination)
 	err = m.execAnsys(cmd.Raw, []string{
 		"-ng",
@@ -80,15 +82,15 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 		return err
 	}
 
-	// Upload `data/{cId}/` to `storage/{cId}/`
-	err = common.UploadDir(cmd.Raw, id, id)
+	// Upload `data/{xId}/` to `storage/{cId}/`
+	err = common.UploadDir(cmd.Raw, id, cmd.Raw.CommandID)
 	if err != nil {
 		return err
 	}
 
 	<-time.After(2 * time.Second)
 
-	// Drop directory `data/{cId}/`
+	// Drop directory `data/{xId}/`
 	err = common.DropDir(cmd.Raw, id)
 	if err != nil {
 		return err
