@@ -1,10 +1,58 @@
-\documentclass[a4paper]{article}
-\usepackage{ctex}
+\documentclass[degree=bachelor]{thuthesis}
+\usepackage{thuthesis}
+\graphicspath{{../dist/figures/}}
 \usepackage{subfiles}
-\title{标题}
-\author{作者}
+\thusetup{%
+  ctitle={中文题目},
+  etitle={English Title},
+  cauthor={涂金正},
+  eauthor={Tu, Jinzheng},
+  cdegree={工学学士},
+  edegree={Bachelor of Engineering},
+  cdepartment={电机工程与应用电子技术系},
+  edepartment={Department of Electrical Engineering},
+  cmajor={电气工程及其自动化},
+  emajor={Electrical Engineering},
+  csupervisor={陈凯楠~助理研究员},
+  esupervisor={Chen, Kainan Assistant Professor},
+}
 \begin{document}
-\maketitle
+\frontmatter
+
+\begin{cabstract}
+  摘要
+\end{cabstract}
+\ckeywords{关键词}
+
+\begin{eabstract}
+  Abstract
+\end{eabstract}
+\ekeywords{Keyword}
+
+\makecover
+
+\tableofcontents
+
+\begin{denotation}
+  \item[K] 矩阵
+\end{denotation}
+
+\mainmatter
+
 \subfile{sub1}
-\subfile{sub2}
+
+\backmatter
+
+\listoffigures
+\listoftables
+\listofequations
+
+\begin{acknowledgement}
+  致谢
+\end{acknowledgement}
+
+\begin{appendix}
+  \subfile{sub2}
+\end{appendix}
+
 \end{document}
