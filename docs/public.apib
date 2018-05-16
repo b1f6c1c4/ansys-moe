@@ -74,6 +74,15 @@ This API uses HTTP status codes to communicate with the API consumer.
 
 + Response 204
 
+### Move [MOVE]
+
++ Request
+
+    + Header
+            Destination (string)
+
++ Response 204
+
 ## Directory [/storage/{fn}/]
 
 + Parameters
@@ -105,6 +114,15 @@ This API uses HTTP status codes to communicate with the API consumer.
 + Response 200 (application/zip)
 
 ### Delete [DELETE]
+
++ Response 204
+
+### Move [MOVE]
+
++ Request
+
+    + Header
+            Destination (string)
 
 + Response 204
 
