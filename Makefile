@@ -1,7 +1,17 @@
+MK=latexmk -silent -use-make
+
 .DEFAULT_GOAL: all
 
-all:
-	cd src && latexmk -pvc- -r ../.latexmkrc index.tex & exit
+figures/dist/%.pdf: figures/%.xml
+	!mkdir figures\dist
+	node builder $< -o $@
 
-%: src/%.tex
-	cd src && latexmk -pvc -r ../.latexmkrc $*.tex & exit
+figures/dist/%.png: figures/%.xml
+	!mkdir figures\dist
+	node builder $< -o $@
+
+all: index.tex
+	$(MK) -pvc- $< & exit
+
+%: %.tex
+	$(MK) -pvc $< & exit
