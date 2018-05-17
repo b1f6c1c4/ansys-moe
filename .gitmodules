@@ -1,0 +1,4 @@
+[submodule "thuthesis"]
+	path = thuthesis
+	url = https://github.com/xueruini/thuthesis
+  shallow = true
