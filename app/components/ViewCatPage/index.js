@@ -1,3 +1,4 @@
+import 'react-vis/es/styles/plot.scss';
 import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -15,6 +16,14 @@ import {
   Typography,
 } from 'material-ui';
 import { CloudDownload, Stop } from '@material-ui/icons';
+import {
+  FlexibleXYPlot,
+  XAxis,
+  YAxis,
+  HorizontalGridLines,
+  VerticalGridLines,
+  LineSeries,
+} from 'react-vis';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import downloadCsv from 'download-csv';
@@ -63,6 +72,8 @@ const styles = (theme) => ({
 class ViewCatPage extends React.PureComponent {
   state = {
     isOpenStop: false,
+    xScale: null,
+    xScaleBrush: null,
   };
 
   componentWillReceiveProps(nextProps) {
@@ -116,6 +127,58 @@ class ViewCatPage extends React.PureComponent {
     const cat = p.cat[cHash];
     if (!cat) return null;
 
+    const ub = [];
+    const lb = [];
+    const events = [];
+    _.values(cat.eval).forEach((e) => {
+      if (e.startTime && e.ei !== undefined) {
+        events.push({ time: e.startTime, ei: e.ei });
+      }
+      if (e.endTime) {
+        events.push({ time: e.endTime, p0: e.P0 });
+      }
+    });
+    let opt = Infinity;
+    const sorted = _.sortBy(events, 'time');
+    // eslint-disable-next-line no-restricted-syntax
+    for (const e of sorted) {
+      if (e.p0 !== undefined) {
+        if (e.p0 < opt) {
+          if (_.isFinite(opt)) {
+            ub.push({ x: new Date(e.time - 1), y: opt });
+          }
+          opt = e.p0;
+          ub.push({ x: e.time, y: opt });
+        }
+      } else {
+        lb.push({ x: e.time, y: opt - e.ei });
+      }
+    }
+    if (events.length && _.isFinite(opt)) {
+      ub.push({ x: sorted[sorted.length - 1].time, y: opt });
+    }
+    const ubs = _.map(ub, 'y').sort((a, b) => a - b);
+    const lbs = _.map(lb, 'y').sort((a, b) => a - b);
+    let yDomain;
+    if (ub.length) {
+      if (lb.length) {
+        yDomain = [
+          /* eslint-disable no-mixed-operators */
+          Math.min(ubs[0], Math.max(lbs[lbs.length / 2] * 2 - lbs[lbs.length - 1], lbs[0])),
+          Math.min(ubs[ubs.length / 2] * 2 - ubs[0], ubs[ubs.length - 1]),
+          /* eslint-enable no-mixed-operators */
+        ];
+      } else {
+        yDomain = [
+          ubs[0],
+          Math.min(ubs[ubs.length / 2] * 2, ubs[ubs.length - 1]),
+        ];
+      }
+      const d = yDomain[1] - yDomain[0];
+      yDomain[0] -= 0.1 * d;
+      yDomain[1] += 0.1 * d;
+    }
+
     return (
       <div className={classes.container}>
         <DocumentTitle title={`${proj}/${cHash}`} />
@@ -167,6 +230,30 @@ class ViewCatPage extends React.PureComponent {
           onAction={this.handleConfirm(this.props.onStop)}
         />
         <ResultIndicator error={this.props.error} />
+        <Paper className={classes.root}>
+          <Typography variant="title" className={classes.title}>
+            收敛情况
+          </Typography>
+          <FlexibleXYPlot
+            height={300}
+            yDomain={yDomain}
+            xType="time"
+          >
+            <HorizontalGridLines />
+            <VerticalGridLines />
+            <LineSeries
+              data={ub}
+            />
+            <LineSeries
+              data={lb}
+            />
+            <XAxis
+              tickTotal={3}
+              tickFormat={(v) => format(v, 'YYYY-MM-DD HH:mm:ss')}
+            />
+            <YAxis />
+          </FlexibleXYPlot>
+        </Paper>
         <Paper className={classes.root}>
           <Typography variant="title" className={classes.title}>
             迭代

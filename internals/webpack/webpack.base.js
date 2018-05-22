@@ -69,9 +69,26 @@ module.exports = ({
           use: cssLoaderVender || ['style-loader', 'css-loader'],
         },
         {
+          test: /\.scss$/,
+          include: /node_modules/,
+          exclude: /outdatedbrowser/,
+          use: [
+            ...(cssLoaderVender || ['style-loader', 'css-loader']),
+            'sass-loader',
+          ],
+        },
+        {
           test: /\.css$/,
           exclude: /node_modules/,
           use: cssLoaderApp || ['style-loader', 'css-loader'],
+        },
+        {
+          test: /\.scss$/,
+          exclude: /node_modules/,
+          use: [
+            ...(cssLoaderApp || ['style-loader', 'css-loader']),
+            'sass-loader',
+          ],
         },
         {
           test: /\.(svg)$/,
