@@ -2,10 +2,11 @@
 
 # Queues
 
+- action - trigger state change
 - ansys (AnsysCommand) - every single ansys execution
+- python (PythonCommand) - python as a calculator
 - rlang (RLangCommand) - rlang as a calculator
 - mathematica (MmaCommand) - mathematica as a calculator
-- action - trigger state change
 
 # Exchanges
 
@@ -20,7 +21,9 @@
   - cfg - config hash
   - kind - required for action
     - core (CoreAction)
+    - expression (ExpAction)
     - ansys (AnsysAction)
+    - python (PythonAction)
     - rlang (RLangAction)
     - mathematica (MmaAction)
 
@@ -32,6 +35,13 @@
   - `run` - run a new project or modify an existing project
 - name (string, required)
 - config (object, required)
+
+## ExpAction (object)
+
+- type (enum, required)
+  - `failure`
+  - `done`
+- result (number)
 
 ## AnsysCommand (object)
 
@@ -55,6 +65,19 @@ Drop directory `data/{cId}/`
   - `failure`
   - `cancel`
   - `done`
+
+## PythonCommand (object)
+
+- script (string, required)
+
+## PythonAction (object)
+
+- type (enum, required)
+  - `failure`
+  - `cancel`
+  - `done`
+
+- result (string)
 
 ## RLangCommand (object)
 

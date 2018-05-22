@@ -23,6 +23,9 @@ type Mutation {
   # Start controller docker container
   startController: Boolean
 
+  # Purge all queues
+  purgeQueues: Boolean
+
   stopProj(proj: ID!): Boolean
 
   stopCat(proj: ID!, cHash: ID!): Boolean
@@ -54,8 +57,9 @@ type EtcdEntry {
 type RabbitStatus {
   action: QueueStatus
   ansys: QueueStatus
-  mathematica: QueueStatus
+  python: QueueStatus
   rlang: QueueStatus
+  mathematica: QueueStatus
 }
 
 type QueueStatus {

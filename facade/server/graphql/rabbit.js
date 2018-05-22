@@ -35,6 +35,29 @@ module.exports = {
         }
       },
     },
+    Mutation: {
+      async purgeQueues() {
+        logger.trace('Query.purgeQueues');
+
+        try {
+          const queues = [
+            'action',
+            'ansys',
+            'python',
+            'rlang',
+            'mathematica',
+          ];
+          await Promise.all(queues.map((q) => {
+            logger.warn(`Purge ${q} as required`);
+            return rabbit.delete(`/api/queues/%2f/${q}/contents`);
+          }));
+          return true;
+        } catch (e) {
+          logger.error('Query rabbit', e);
+          return e;
+        }
+      },
+    },
     QueueStatus: {
       ready: (parent) => _.get(parent, ['messages_ready']),
       unacked: (parent) => _.get(parent, ['messages_unacknowledged']),
