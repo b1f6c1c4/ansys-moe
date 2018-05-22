@@ -15,8 +15,8 @@ import {
 } from 'material-ui';
 import {
   Add,
-  Delete,
   CloudUpload,
+  Delete,
   PlayArrow,
 } from '@material-ui/icons';
 import Button from 'components/Button';
