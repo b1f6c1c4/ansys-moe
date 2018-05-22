@@ -179,6 +179,7 @@ class ViewCatPage extends React.PureComponent {
                 <TableCell padding="none">结束时间</TableCell>
                 <TableCell padding="none">迭代参数</TableCell>
                 <TableCell padding="none">目标函数</TableCell>
+                <TableCell padding="none">EI</TableCell>
                 <TableCell padding="none">迭代状态</TableCell>
               </TableRow>
             </TableHead>
@@ -199,6 +200,7 @@ class ViewCatPage extends React.PureComponent {
                   <TableCell className={e.isOptimal && classes.optimal} padding="none">
                     {e.P0}
                   </TableCell>
+                  <TableCell padding="none">{e.ei}</TableCell>
                   <TableCell padding="none"><StatusBadge status={e.status} /></TableCell>
                 </TableRow>
               ))}
