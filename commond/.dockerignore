@@ -1,6 +1,7 @@
 *
-!R
 !src/commond
 !src/commond-std
 *~
 *.swp
+**/*~
+**/*.swp

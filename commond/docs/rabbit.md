@@ -4,6 +4,7 @@
 
 - action - trigger state change
 - ansys (AnsysCommand) - every single ansys execution
+- python (PythonCommand) - python as a calculator
 - rlang (RLangCommand) - rlang as a calculator
 - mathematica (MmaCommand) - mathematica as a calculator
 
@@ -22,6 +23,7 @@
     - core (CoreAction)
     - expression (ExpAction)
     - ansys (AnsysAction)
+    - python (PythonAction)
     - rlang (RLangAction)
     - mathematica (MmaAction)
 
@@ -63,6 +65,19 @@ Drop directory `data/{cId}/`
   - `failure`
   - `cancel`
   - `done`
+
+## PythonCommand (object)
+
+- script (string, required)
+
+## PythonAction (object)
+
+- type (enum, required)
+  - `failure`
+  - `cancel`
+  - `done`
+
+- result (string)
 
 ## RLangCommand (object)
 
