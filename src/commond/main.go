@@ -4,6 +4,7 @@ import (
 	"commond/ansys"
 	"commond/common"
 	"commond/mma"
+	"commond/python"
 	"commond/rlang"
 	"time"
 )
@@ -85,6 +86,10 @@ func Loop(stop <-chan struct{}) {
 	if common.C.PrefetchAnsys > 0 {
 		wait()
 		addModule(ansys.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchAnsys, stop)
+	}
+	if common.C.PrefetchPython > 0 {
+		wait()
+		addModule(python.NewModule(act, subscribeCancel, unsubscribeCancel), common.C.PrefetchPython, stop)
 	}
 	if common.C.PrefetchMma > 0 {
 		wait()
