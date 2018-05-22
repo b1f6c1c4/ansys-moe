@@ -47,7 +47,7 @@ services:
       LOG_HOST: logstash
       LOG_PORT: 5044
     volumes:
-      - /root/ansys-moe/storage:/ansys
+      - /mnt/ansys-moe/storage:/ansys
     depends_on:
       logstash:
         condition: service_healthy
@@ -133,7 +133,7 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd1:2379
     volumes:
-      - /root/ansys-moe/etcd1:/etcd_data
+      - /mnt/ansys-moe/etcd1:/etcd_data
     logging:
       driver: gelf
       options:
@@ -160,7 +160,7 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd2:2379
     volumes:
-      - /root/ansys-moe/etcd2:/etcd_data
+      - /mnt/ansys-moe/etcd2:/etcd_data
     logging:
       driver: gelf
       options:
@@ -187,7 +187,7 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd3:2379
     volumes:
-      - /root/ansys-moe/etcd3:/etcd_data
+      - /mnt/ansys-moe/etcd3:/etcd_data
     logging:
       driver: gelf
       options:
@@ -211,7 +211,7 @@ services:
       RABBITMQ_DEFAULT_PASS: "${RABBIT_PASS}"
     volumes:
       - rabbit-log:/var/log/rabbitmq
-      - /root/ansys-moe/rabbit:/var/lib/rabbitmq/mnesia
+      - /mnt/ansys-moe/rabbit:/var/lib/rabbitmq/mnesia
     healthcheck:
       test: ["CMD", "rabbitmqctl", "node_health_check"]
       interval: 15s
@@ -253,7 +253,7 @@ services:
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
     volumes:
-      - /root/ansys-moe/es:/usr/share/elasticsearch/data
+      - /mnt/ansys-moe/es:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "wget", "-O-", "http://localhost:9200"]
       interval: 15s
@@ -300,7 +300,7 @@ services:
     build: ./elastalert
     restart: always
     volumes:
-      - /root/ansys-moe/rules:/opt/elastalert/rules
+      - /mnt/ansys-moe/rules:/opt/elastalert/rules
     depends_on:
       elasticsearch:
         condition: service_healthy
