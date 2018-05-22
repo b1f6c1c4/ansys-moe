@@ -91,7 +91,7 @@ module.exports = (petri) => {
       <% } %>
       rst <- eiopt(rngs, sampled, values, being_sampled);
       sink();
-      print(toJSON(rst));
+      print(toJSON(rst, digits=NA));
     `)({
       rngs,
       values: _.map(history, 'P0').map((v) => v === null ? defaultValue : v),
@@ -192,6 +192,7 @@ module.exports = (petri) => {
     r.logger.info(`Will create eval ${dHash}`, dpars);
     await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
     await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
+    await r.store('/p/:proj/results/d/:dHash/ei', { dHash }, nextEI);
     await r.incr({
       '../../../iter/hint': 1,
       '../../../eval/#': 1,
