@@ -21,8 +21,8 @@ func (m Module) run(cmd *pythonCommand, cancel <-chan struct{}) (string, error) 
 	}
 	script := cmd.Script.String
 
-	// Save `script` to `data/{xId}.R`
-	scriptFile := filepath.Join(common.DataPath, id+".R")
+	// Save `script` to `data/{xId}.py`
+	scriptFile := filepath.Join(common.DataPath, id+".py")
 	err := ioutil.WriteFile(scriptFile, []byte(script), os.ModePerm)
 	if err != nil {
 		common.RL.Error(cmd.Raw, "python/run", "Save script: "+err.Error())
@@ -31,14 +31,13 @@ func (m Module) run(cmd *pythonCommand, cancel <-chan struct{}) (string, error) 
 
 	// Run `data/{xId}.R`
 	r, err := m.execPython(cmd.Raw, []string{
-		"--vanilla",
 		scriptFile,
 	}, cancel)
 	if err != nil {
 		return "", err
 	}
 
-	// Drop file `data/{xId}.R`
+	// Drop file `data/{xId}.py`
 	err = os.Remove(scriptFile)
 	if err != nil {
 		return "", err

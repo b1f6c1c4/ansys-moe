@@ -12,6 +12,9 @@ func findPythonExecutable() string {
 	if _, err := os.Stat(common.C.PathPython); err == nil {
 		return common.C.PathPython
 	}
+	if _, err := os.Stat("/usr/local/bin/python"); err == nil {
+		return "/usr/local/bin/python"
+	}
 	if _, err := os.Stat("/usr/bin/python"); err == nil {
 		return "/usr/bin/python"
 	}

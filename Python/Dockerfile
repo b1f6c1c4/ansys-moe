@@ -1,7 +1,9 @@
 FROM ansys-commond as built
 
-FROM alectolytic/scipy:latest
-RUN apk --update add git
+FROM python:3.6-jessie
+
+RUN pip install numpy scipy json-tricks
+
 RUN \
         mkdir -p /opt \
         && cd /opt \
@@ -9,9 +11,8 @@ RUN \
         && cd lhsmdu \
         && python setup.py install
 
-RUN pip install json-tricks
-
 WORKDIR /root/
 COPY --from=built /go/bin/commond-std .
 COPY . ./Python
+ENV PYTHONPATH=/root/Python
 CMD ["./commond-std"]
