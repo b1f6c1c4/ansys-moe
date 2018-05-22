@@ -25,6 +25,10 @@ mutation Start {
   startController
 }
 
+mutation Purge {
+  purgeQueues
+}
+
 fragment Queue on QueueStatus {
   ready
   unacked
