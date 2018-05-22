@@ -192,6 +192,7 @@ module.exports = (petri) => {
     r.logger.info(`Will create eval ${dHash}`, dpars);
     await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
     await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
+    await r.store('/p/:proj/results/d/:dHash/ei', { dHash }, nextEI);
     await r.incr({
       '../../../iter/hint': 1,
       '../../../eval/#': 1,
