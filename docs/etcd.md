@@ -58,6 +58,7 @@
 ## /results
 
 - /d/:dHash
+  - /ei
   - /startTime
   - /endTime
   - /var
