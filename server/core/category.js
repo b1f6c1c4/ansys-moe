@@ -19,28 +19,30 @@ module.exports = (petri) => {
       .value();
     r.logger.debug('Category D vars', dVars);
     await r.store('/p/:proj/results/cat/:cHash/D', dVars);
-    // TODO: Use Design of Experiments algorithms
-    // r.cfg.initEvals
+    if (!dVars.length) {
+      const ongoing = {};
+      await r.dyn('/eval');
+      const dHash = hash(cVars);
+      ongoing[dHash] = cVars;
+      r.logger.info(`Will create eval ${dHash}`, _.assign({}, cVars));
+      await r.store('/hashs/dHash/:dHash', { dHash }, cVars);
+      await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
+      await r.store('/p/:proj/results/cat/:cHash/history', []);
+      await r.store('/p/:proj/results/cat/:cHash/ongoing', ongoing);
+      return;
+    }
+    const rngs = dVars.map((d) => {
+      if (d.kind === 'discrete') {
+        return d.steps;
+      }
+      return Math.ceil((d.upperBound - d.lowerBound) / d.precision);
+    });
     const script = _.template(dedent`
-      <% _.forEach(D, (d) => { %>
-        <%= d.name %> <- seq(
-          <%= d.lowerBound %>,
-          <%= d.upperBound %>,
-          <% if (d.kind === 'discrete') { %>
-            length.out=<%= (d.steps - 1) / 5 %>
-          <% } else { %>
-            <%= d.precision * 5 %>
-          <% } %>
-          );
-      <% }); %>
-      rst <- expand.grid(
-        <% _.forEach(D, (d) => { %>
-          <%= d.name %>=<%= d.name %>
-        <% }); %>
-      )
-      toJSON(rst)
-    `)({ D: dVars });
-    run('rlang', script, {}, r.action('c-inited'));
+      import doe
+      rngs = [<%= rngs.join(', ') %>]
+      print(dumps(doe.run(rngs, <%= n %>), primitives=True))
+    `)({ rngs, n: r.cfg.initEvals });
+    run('python', script, {}, r.action('c-inited'));
     await r.incr({ '/initing': 1 });
   });
 
@@ -62,22 +64,26 @@ module.exports = (petri) => {
       return;
     }
     r.logger.debug('Init succeed', rst);
+    const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
+    const initPoints = rst[0];
+    r.logger.silly('initPoints', initPoints);
+    const getPars = (p) => _.fromPairs(dVars.map((d, i) => {
+      r.logger.silly('in getPars', { d, i, p: p[i] });
+      if (d.kind === 'discrete') {
+        return [d.name, ((p[i] / (d.steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+      }
+      return [d.name, ((p[i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+    }));
     const ongoing = {};
     await r.dyn('/eval');
-    if (rst[0].length) {
-      for (const pars of rst[0]) {
-        const dpars = _.assign({}, cVars, pars);
-        const dHash = hash(dpars);
-        ongoing[dHash] = dpars;
-        r.logger.info(`Will create eval ${dHash}`, dpars);
-        await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
-        await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
-      }
-    } else {
-      const dHash = hash(cVars);
-      ongoing[dHash] = cVars;
-      r.logger.info(`Will create eval ${dHash}`, _.assign({}, cVars));
-      await r.store('/hashs/dHash/:dHash', { dHash }, cVars);
+    for (const pt of initPoints) {
+      const pars = getPars(pt);
+      r.logger.silly('in for of', { pt, pars });
+      const dpars = _.assign({}, cVars, pars);
+      const dHash = hash(dpars);
+      ongoing[dHash] = dpars;
+      r.logger.info(`Will create eval ${dHash}`, dpars);
+      await r.store('/hashs/dHash/:dHash', { dHash }, dpars);
       await r.incr({ '/eval/:dHash/init': 1 }, { dHash });
     }
     await r.store('/p/:proj/results/cat/:cHash/history', []);

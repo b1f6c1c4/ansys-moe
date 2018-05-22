@@ -1,5 +1,6 @@
 const amqp = require('../amqp');
 const expression = require('./expression');
+const python = require('./python');
 const rlang = require('./rlang');
 const mma = require('./mma');
 const { cIdGen } = require('../util');
@@ -12,6 +13,11 @@ module.exports.run = (kind, code, variables, info) => {
     case 'expression':
       amqp.publish('action', expression.wrapped(code, variables), id, {
         kind: 'expression',
+        cfg: info.cfgHash,
+      });
+      break;
+    case 'python':
+      amqp.publish(kind, python.run(code, variables), id, {
         cfg: info.cfgHash,
       });
       break;
@@ -43,6 +49,8 @@ module.exports.parse = ({ kind, action }, ...args) => {
   switch (kind) {
     case 'expression':
       return action.type === 'done' ? action.result : null;
+    case 'python':
+      return python.parse(action, ...args);
     case 'rlang':
       return rlang.parse(action, ...args);
     case 'mathematica':
