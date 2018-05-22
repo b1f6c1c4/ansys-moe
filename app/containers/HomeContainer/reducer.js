@@ -17,8 +17,7 @@ function homeContainerReducer(state = initialState, action) {
       return state;
     // Sagas
     case HOME_CONTAINER.STATUS_REQUEST:
-      return state.set('isLoading', true)
-        .set('error', null);
+      return state.set('error', null);
     case HOME_CONTAINER.STATUS_SUCCESS:
       return state.set('isLoading', false)
         .set('controller', action.result.controller)

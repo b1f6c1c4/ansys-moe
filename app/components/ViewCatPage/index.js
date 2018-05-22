@@ -199,7 +199,7 @@ class ViewCatPage extends React.PureComponent {
           onAction={this.handleConfirm(this.props.onStop)}
         />
         <ResultIndicator error={this.props.error} />
-        {ub.length && (
+        {!!ub.length && (
           <IterMonitor
             lb={lb}
             ub={ub}

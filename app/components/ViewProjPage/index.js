@@ -135,7 +135,6 @@ class ViewProjPage extends React.PureComponent {
           )}
           <Button
             color="primary"
-            variant="raised"
             onClick={this.handleEdit}
           >
             编辑配置

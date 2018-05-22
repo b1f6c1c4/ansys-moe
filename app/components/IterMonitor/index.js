@@ -1,5 +1,6 @@
-import _ from 'lodash';
 import 'react-vis/es/styles/plot.scss';
+
+import _ from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'redux';
@@ -9,6 +10,7 @@ import {
   Paper,
   Typography,
 } from 'material-ui';
+import { format } from 'date-fns';
 import {
   FlexibleXYPlot,
   AreaSeries,
@@ -18,7 +20,6 @@ import {
   VerticalGridLines,
   LineSeries,
 } from 'react-vis';
-import { format } from 'date-fns';
 
 // eslint-disable-next-line no-unused-vars
 const styles = (theme) => ({
@@ -42,12 +43,13 @@ class IterMonitor extends React.PureComponent {
 
     const ubs = _.map(ub, 'y').sort((a, b) => a - b);
     const lbs = _.map(lb, 'y').sort((a, b) => a - b);
+    const mid = (arr) => arr[Math.floor(arr.length / 2)];
     let yDomain;
     if (lb.length) {
       yDomain = [
         /* eslint-disable no-mixed-operators */
-        Math.min(ubs[0], Math.max(lbs[lbs.length / 2] * 2 - lbs[lbs.length - 1], lbs[0])),
-        Math.min(ubs[ubs.length / 2] * 2 - ubs[0], ubs[ubs.length - 1]),
+        Math.min(ubs[0], Math.max(mid(lbs) * 2 - lbs[lbs.length - 1], lbs[0])),
+        Math.min(mid(ubs) * 2 - ubs[0], ubs[ubs.length - 1]),
         /* eslint-enable no-mixed-operators */
       ];
     } else {

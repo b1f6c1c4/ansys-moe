@@ -73,7 +73,7 @@ const style = (file) => (styleApi) => {
     { match: moduleNameIs('babel-polyfill') },
     {
       match: and(
-        moduleNameIs(/\.css$/),
+        moduleNameIs(/\.s?css$/),
         isAbsoluteModule,
       ),
       sort: moduleName(unicode),
