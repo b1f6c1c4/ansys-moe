@@ -16,16 +16,14 @@ VENDOR_IMAGE=b1f6c1c4/ansys-moe:commond
 CFG_VENDOR=$(shell docker-machine config $(VENDOR_BUILD_MACHINE))
 CFG_SRC=$(shell docker-machine config $(SRC_BUILD_MACHINE))
 
-.PHONY: vendor src local
+.PHONY: vendor src python rlang local
 .DEFAULT_GOAL := all
 
 vendor:
-	$(CP) .dockerignore.vendor .dockerignore
 	docker $(CFG_VENDOR) build \
 		--tag $(VENDOR_IMAGE) \
 		--file Dockerfile.vendor \
-        .
-	$(RM) .dockerignore
+        - < Dockerfile.vendor
 	docker $(CFG_VENDOR) login \
 		-u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
 	docker $(CFG_VENDOR) push \
@@ -34,14 +32,17 @@ vendor:
 		$(VENDOR_IMAGE)
 
 src:
-	$(CP) .dockerignore.src .dockerignore
 	docker $(CFG_SRC) build \
 		--tag ansys-commond \
-		--file Dockerfile \
         --build-arg VERSION=$(VERSION) \
         --build-arg COMMITHASH=$(COMMITHASH) \
         .
-	$(RM) .dockerignore
+
+python: src
+	docker $(CFG_SRC) build --tag ansys-commond-$@ Python
+
+rlang: src
+	docker $(CFG_SRC) build --tag ansys-commond-$@ R
 
 std svc:
 	$(RM) $(call FixPath, bin/commond-$@)
@@ -51,7 +52,7 @@ std svc:
 
 local: std svc
 
-all: src local
+all: python rlang local
 
 run: std
 	$(call FixPath, bin/commond-std)
