@@ -91,7 +91,7 @@ module.exports = (petri) => {
       <% } %>
       rst <- eiopt(rngs, sampled, values, being_sampled);
       sink();
-      print(toJSON(rst));
+      print(toJSON(rst, digits=NA));
     `)({
       rngs,
       values: _.map(history, 'P0').map((v) => v === null ? defaultValue : v),
