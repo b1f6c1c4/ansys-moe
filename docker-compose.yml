@@ -77,8 +77,28 @@ services:
     networks:
       - data
 
+  pythond:
+    image: ansys-commond-python
+    restart: always
+    environment:
+      REMOTE_URL: http://nginx
+      RABBIT_HOST: rabbit
+      RABBIT_PORT: 5672
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASS: "${RABBIT_PASS}"
+      LOG_HOST: logstash
+      LOG_PORT: 5044
+      PYTHON: 2
+    depends_on:
+      rabbit:
+        condition: service_healthy
+      logstash:
+        condition: service_healthy
+    networks:
+      - data
+
   rlangd:
-    image: ansys-commond
+    image: ansys-commond-rlang
     restart: always
     environment:
       REMOTE_URL: http://nginx
