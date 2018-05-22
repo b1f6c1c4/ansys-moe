@@ -18,7 +18,6 @@ const styles = (theme) => ({
     marginTop: 70,
     marginLeft: 'auto',
     marginRight: 'auto',
-    maxWidth: 1024,
   },
 });
 

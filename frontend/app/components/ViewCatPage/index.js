@@ -22,6 +22,7 @@ import Button from 'components/Button';
 import ConfirmDialog from 'components/ConfirmDialog';
 import DocumentTitle from 'components/DocumentTitle';
 import EmptyIndicator from 'components/EmptyIndicator';
+import IterMonitor from 'components/IterMonitor';
 import RefreshButton from 'components/RefreshButton';
 import ResultIndicator from 'components/ResultIndicator';
 import StatusBadge from 'components/StatusBadge';
@@ -116,6 +117,37 @@ class ViewCatPage extends React.PureComponent {
     const cat = p.cat[cHash];
     if (!cat) return null;
 
+    const ub = [];
+    const lb = [];
+    const events = [];
+    _.values(cat.eval).forEach((e) => {
+      if (e.startTime && e.ei !== undefined) {
+        events.push({ time: +e.startTime, ei: e.ei });
+      }
+      if (e.endTime) {
+        events.push({ time: +e.endTime, p0: e.P0 });
+      }
+    });
+    let opt = Infinity;
+    const sorted = _.sortBy(events, 'time');
+    // eslint-disable-next-line no-restricted-syntax
+    for (const e of sorted) {
+      if (e.p0 !== undefined) {
+        if (e.p0 < opt) {
+          if (_.isFinite(opt)) {
+            ub.push({ x: e.time - 1, y: opt });
+          }
+          opt = e.p0;
+          ub.push({ x: e.time, y: opt });
+        }
+      } else {
+        lb.push({ x: e.time, y: opt - e.ei });
+      }
+    }
+    if (events.length && _.isFinite(opt)) {
+      ub.push({ x: sorted[sorted.length - 1].time, y: opt });
+    }
+
     return (
       <div className={classes.container}>
         <DocumentTitle title={`${proj}/${cHash}`} />
@@ -167,6 +199,13 @@ class ViewCatPage extends React.PureComponent {
           onAction={this.handleConfirm(this.props.onStop)}
         />
         <ResultIndicator error={this.props.error} />
+        {!!ub.length && (
+          <IterMonitor
+            lb={lb}
+            ub={ub}
+            minEI={p.config.minEI || 0}
+          />
+        )}
         <Paper className={classes.root}>
           <Typography variant="title" className={classes.title}>
             迭代
@@ -179,6 +218,7 @@ class ViewCatPage extends React.PureComponent {
                 <TableCell padding="none">结束时间</TableCell>
                 <TableCell padding="none">迭代参数</TableCell>
                 <TableCell padding="none">目标函数</TableCell>
+                <TableCell padding="none">EI</TableCell>
                 <TableCell padding="none">迭代状态</TableCell>
               </TableRow>
             </TableHead>
@@ -199,6 +239,7 @@ class ViewCatPage extends React.PureComponent {
                   <TableCell className={e.isOptimal && classes.optimal} padding="none">
                     {e.P0}
                   </TableCell>
+                  <TableCell padding="none">{e.ei}</TableCell>
                   <TableCell padding="none"><StatusBadge status={e.status} /></TableCell>
                 </TableRow>
               ))}

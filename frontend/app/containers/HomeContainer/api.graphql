@@ -4,32 +4,34 @@ query Status {
 
   rabbit {
     action {
-      ready
-      unacked
-      consumers
-      prefetches
+      ...Queue
     }
     ansys {
-      ready
-      unacked
-      consumers
-      prefetches
+      ...Queue
     }
-    mathematica {
-      ready
-      unacked
-      consumers
-      prefetches
+    python {
+      ...Queue
     }
     rlang {
-      ready
-      unacked
-      consumers
-      prefetches
+      ...Queue
+    }
+    mathematica {
+      ...Queue
     }
   }
 }
 
 mutation Start {
   startController
+}
+
+mutation Purge {
+  purgeQueues
+}
+
+fragment Queue on QueueStatus {
+  ready
+  unacked
+  consumers
+  prefetches
 }

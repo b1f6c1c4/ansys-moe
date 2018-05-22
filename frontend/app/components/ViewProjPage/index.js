@@ -135,7 +135,6 @@ class ViewProjPage extends React.PureComponent {
           )}
           <Button
             color="primary"
-            variant="raised"
             onClick={this.handleEdit}
           >
             编辑配置
@@ -212,7 +211,7 @@ class ViewProjPage extends React.PureComponent {
                     {JSON.stringify(listHash.cHash[cHash])}
                   </TableCell>
                   <TableCell padding="none">{_.keys(cat.ongoing).length}</TableCell>
-                  <TableCell padding="none">{cat.history.length}</TableCell>
+                  <TableCell padding="none">{cat.history && cat.history.length}</TableCell>
                   <TableCell className={cat.isOptimal && classes.optimal} padding="none">
                     {cat.optimal}
                   </TableCell>

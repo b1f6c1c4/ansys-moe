@@ -41,3 +41,23 @@ export function startFailure(error) {
     error,
   };
 }
+
+export function purgeRequest() {
+  return {
+    type: HOME_CONTAINER.PURGE_REQUEST,
+  };
+}
+
+export function purgeSuccess(result) {
+  return {
+    type: HOME_CONTAINER.PURGE_SUCCESS,
+    result,
+  };
+}
+
+export function purgeFailure(error) {
+  return {
+    type: HOME_CONTAINER.PURGE_FAILURE,
+    error,
+  };
+}

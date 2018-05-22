@@ -16,6 +16,7 @@ import {
 import {
   Add,
   CloudUpload,
+  Delete,
   PlayArrow,
 } from '@material-ui/icons';
 import Button from 'components/Button';
@@ -135,6 +136,15 @@ class HomePage extends React.PureComponent {
               <PlayArrow className={classes.rightIcon} />
             </Button>
           )}
+          {!isLoading && (
+            <Button
+              color="secondary"
+              onClick={this.props.onPurge}
+            >
+              清空队列
+              <Delete className={classes.rightIcon} />
+            </Button>
+          )}
         </div>
         <ResultIndicator error={this.props.error} />
         <Paper className={classes.root}>
@@ -217,6 +227,7 @@ HomePage.propTypes = {
   error: PropTypes.object,
   onStatus: PropTypes.func.isRequired,
   onStart: PropTypes.func.isRequired,
+  onPurge: PropTypes.func.isRequired,
   onCreateAction: PropTypes.func.isRequired,
 };
 

@@ -23,6 +23,7 @@ const compiled = _.mapValues({
   mHashResult: '/p/:proj/results/d/:dHash/mHash',
   varResult: '/p/:proj/results/d/:dHash/var',
   mResult: '/results/M/:mHash',
+  eiResult: '/p/:proj/results/d/:dHash/ei',
   startResult: '/p/:proj/results/d/:dHash/startTime',
   endResult: '/p/:proj/results/d/:dHash/endTime',
   evalP0Result: '/p/:proj/results/d/:dHash/P0',
@@ -160,6 +161,11 @@ export const ListProj = () => createSelector(
           _.set(mResults, [m.mHash], JSON.parse(value));
         },
       ], [
+        'eiResult',
+        (m) => {
+          _.set(projects, [m.proj, 'results', 'd', m.dHash, 'ei'], +value);
+        },
+      ], [
         'startResult',
         (m) => {
           _.set(projects, [m.proj, 'results', 'd', m.dHash, 'startTime'], new Date(value));
@@ -203,6 +209,7 @@ export const ListProj = () => createSelector(
         _.mapValues(cat.eval, (e, dHash) => {
           _.set(e, 'P0', _.get(p, ['results', 'd', dHash, 'P0']));
           _.set(e, 'var', _.get(p, ['results', 'd', dHash, 'var']));
+          _.set(e, 'ei', _.get(p, ['results', 'd', dHash, 'ei']));
           _.set(e, 'startTime', _.get(p, ['results', 'd', dHash, 'startTime']));
           _.set(e, 'endTime', _.get(p, ['results', 'd', dHash, 'endTime']));
           if (e.error) {

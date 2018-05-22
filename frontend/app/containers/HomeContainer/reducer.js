@@ -17,8 +17,7 @@ function homeContainerReducer(state = initialState, action) {
       return state;
     // Sagas
     case HOME_CONTAINER.STATUS_REQUEST:
-      return state.set('isLoading', true)
-        .set('error', null);
+      return state.set('error', null);
     case HOME_CONTAINER.STATUS_SUCCESS:
       return state.set('isLoading', false)
         .set('controller', action.result.controller)
@@ -30,6 +29,14 @@ function homeContainerReducer(state = initialState, action) {
       return state.set('isLoading', true)
         .set('error', null);
     case HOME_CONTAINER.START_FAILURE:
+      return state.set('isLoading', false)
+        .set('error', fromJS(_.toPlainObject(action.error)));
+    case HOME_CONTAINER.PURGE_REQUEST:
+      return state.set('isLoading', true)
+        .set('error', null);
+    case HOME_CONTAINER.PURGE_SUCCESS:
+      return state.set('isLoading', false);
+    case HOME_CONTAINER.PURGE_FAILURE:
       return state.set('isLoading', false)
         .set('error', fromJS(_.toPlainObject(action.error)));
     // Default
