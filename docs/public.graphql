@@ -54,8 +54,9 @@ type EtcdEntry {
 type RabbitStatus {
   action: QueueStatus
   ansys: QueueStatus
-  mathematica: QueueStatus
+  python: QueueStatus
   rlang: QueueStatus
+  mathematica: QueueStatus
 }
 
 type QueueStatus {
