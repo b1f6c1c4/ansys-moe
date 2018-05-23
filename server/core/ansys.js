@@ -98,15 +98,22 @@ module.exports.parse = async (payload, { outputs }) => {
   }
 };
 
+let dest = new URL(process.env.STORAGE_URL).pathname;
+if (!dest.startsWith('/storage')) {
+  dest = `/storage${dest}`;
+}
+
 module.exports.store = async (payload, mHash) => {
   try {
-    await axios({
+    const cfg = {
       method: 'move',
       url: `${process.env.STORAGE_URL}/${payload.id}`,
       headers: {
-        Destination: `${new URL(process.env.STORAGE_URL).pathname}/results/${mHash}`,
+        Destination: `${dest}/results/${mHash}`,
       },
-    });
+    };
+    logger.trace('Will move ansys', cfg);
+    await axios(cfg);
     return true;
   } catch (e) {
     logger.error('Store ansys result', e);
