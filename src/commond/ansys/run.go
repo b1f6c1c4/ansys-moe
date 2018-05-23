@@ -83,7 +83,7 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	}
 
 	// Upload `data/{xId}/` to `storage/{cId}/`
-	err = common.UploadDir(cmd.Raw, id, cmd.Raw.CommandID)
+	err = common.UploadDir(cmd.Raw, cmd.Raw.CommandID, id)
 	if err != nil {
 		return err
 	}
