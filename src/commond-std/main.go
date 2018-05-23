@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	commond.Entry(func(s string) {
+	commond.Entry(func(l, s string) {
 		fmt.Println(s)
 	})
 

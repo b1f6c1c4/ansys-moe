@@ -26,8 +26,21 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
 	color.NoColor = true
-	commond.Entry(func(s string) {
-		elog.Info(1, s)
+	commond.Entry(func(l, s string) {
+		switch l {
+		case "info":
+			elog.Info(1, s)
+			break
+		case "warn":
+			elog.Warning(1, s)
+			break
+		case "error":
+			elog.Error(1, s)
+			break
+		default:
+			elog.Error(1, s)
+			break
+		}
 	})
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 	stop := make(chan struct{})

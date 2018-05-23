@@ -12,7 +12,7 @@ var Core ExeContext
 var DataPath string
 
 // SL writes to console or Windows events
-var SL func(string)
+var SL func(string, string)
 
 // RL writes to remote logger
 var RL RemoteLoggerT
@@ -24,7 +24,7 @@ var C GlobalConfigT
 var M MetaInfo
 
 // Entry setup commond
-func Entry(theLogger func(string), log chan<- *LogReport) {
+func Entry(theLogger func(string, string), log chan<- *LogReport) {
 	Core = &RawCommand{"", "core", "", nil, nil}
 	SL = theLogger
 	RL = RemoteLoggerT{log}

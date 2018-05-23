@@ -13,7 +13,7 @@ type RemoteLoggerT struct {
 
 func writeLog(level string, p string, m string, colorize func(...interface{}) string) {
 	ts := color.New(color.FgHiBlack).SprintFunc()
-	SL(fmt.Sprintf(
+	SL(level, fmt.Sprintf(
 		"%s [%s] %s: %s",
 		ts(time.Now().UTC().Format(time.RFC3339)),
 		p,
