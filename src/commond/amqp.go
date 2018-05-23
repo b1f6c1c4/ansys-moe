@@ -3,9 +3,11 @@ package commond
 import (
 	"commond/common"
 	"encoding/json"
+	"errors"
 	"github.com/assembla/cony"
 	"github.com/streadway/amqp"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -50,13 +52,26 @@ func setupAmqp(stop <-chan struct{}) error {
 	cancels = make(map[string]func())
 
 	go func() {
+		count := 0
 		prev := ""
 		ticker := time.NewTicker(20 * time.Second)
 		for cli.Loop() {
 			select {
 			case <-ticker.C:
+				if count >= 100 {
+					common.RL.Fatal(common.Core, "amqp", "Too many errors ("+strconv.Itoa(count)+"), die")
+					<-time.After(2 * time.Second)
+					panic(errors.New("Too many errors"))
+				}
+				count = 0
 				prev = ""
 			case err := <-cli.Errors():
+				count++
+				if count >= 20000 {
+					common.RL.Fatal(common.Core, "amqp", "Too many errors ("+strconv.Itoa(count)+"), die")
+					<-time.After(2 * time.Second)
+					panic(errors.New("Too many errors"))
+				}
 				if err.Error() == prev {
 					break
 				}
@@ -66,6 +81,7 @@ func setupAmqp(stop <-chan struct{}) error {
 				cli.Close()
 			}
 		}
+		common.RL.Warn(common.Core, "amqp", "Normal exit")
 	}()
 	return nil
 }
