@@ -49,7 +49,25 @@ function TextWidget(props) {
   return (
     <TextField
       fullWidth
-      multiline={_.get(props, 'uiSchema.multiline')}
+      disabled={props.disabled}
+      required={props.required}
+      error={_.some(props.rawErrors, _.isString)}
+      id={props.id}
+      value={regularize(props.value)}
+      label={props.label}
+      helperText={props.schema.description}
+      margin="dense"
+      InputProps={{ style: { lineHeight: 'unset' } }}
+      onChange={(e) => props.onChange(e.target.value)}
+    />
+  );
+}
+
+function MultilineTextWidget(props) {
+  return (
+    <TextField
+      fullWidth
+      multiline
       disabled={props.disabled}
       required={props.required}
       error={_.some(props.rawErrors, _.isString)}
@@ -193,6 +211,7 @@ class RunPage extends React.PureComponent {
 
     const widgets = {
       TextWidget,
+      MultilineTextWidget,
       SelectWidget,
     };
 
