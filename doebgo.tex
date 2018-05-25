@@ -1,7 +1,7 @@
 \documentclass[index]{subfiles}
 \begin{document}
 \chapter{从计算机实验设计到贝叶斯优化}
-计算机实验设计\footnote{需要注意的是，本文中术语“计算机实验设计”指的是Design of Computer Experiments，与“计算机辅助的实验设计”（Computer-Aided Design of Experiments）有明显的不同——前者的实验对象仅限计算机程序，后者对实验对象没有限制。}是20世纪末随着电子计算机的蓬勃发展而产生的新兴学科\cite{mckay1979}。
+计算机实验设计\footnote{需要注意的是，本文中术语“计算机实验设计”指的是Design of Computer Experiments，即“计算机实验”的设计，并非利用计算机进行传统实验设计。}是20世纪末随着电子计算机的蓬勃发展而产生的新兴学科\cite{mckay1979}。
 计算机实验设计方法和思想的进展扩展了全局最优化问题的求解思路。
 本章将先分别回顾计算机实验设计和全局最优化两个学科独立发展的历史，
 再着重介绍两者的有机结合——贝叶斯优化算法的思想和实现细节。
@@ -101,8 +101,15 @@ Maximin方法（简称Mm）计算所有实验点两两之间的距离，并尝�
 关于无模型的计算机实验设计方法还有很多，如基于信息论的熵方法、基于分布密度函数的核方法等等\cite{pronzato2012}。由于篇幅有限，本文将不再赘述这类方法。
 
 \subsection{统计模型的引入}\label{ssec:doe-gp}
-\inlinecite{sacks1989}在总结了具体实际计算机实验设计问题
+文献~\inlinecite{sacks1989}在详细分析总结了实际计算机模型和实验的基础上，创造性地提出了使用随机过程来对计算机模型二次建模的思路，并将其用在实验设计上。
+本小节将先详细介绍该方法所使用的随机过程模型——Kriging模型，再介绍如何利用该模型进行实验设计。
 
+\subsubsection{随机过程与Kriging模型}
+
+
+\subsubsection{基于Kriging模型的最优设计}
+
+\subsection{小结}
 % TODO
 \section{全局最优化}
 % TODO
@@ -111,6 +118,8 @@ Maximin方法（简称Mm）计算所有实验点两两之间的距离，并尝�
 \subsection{非启发式全局优化算法}
 % TODO
 \subsection{统计模型的引入}
+% TODO
+\subsection{小结}
 % TODO
 \section{贝叶斯优化算法的实现细节}
 % TODO
@@ -127,6 +136,6 @@ Maximin方法（简称Mm）计算所有实验点两两之间的距离，并尝�
 % TODO
 \subsection{子优化问题的求解}
 % TODO
-\subsection{结论}
+\subsection{小结}
 % TODO
 \end{document}
