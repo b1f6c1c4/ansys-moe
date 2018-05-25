@@ -18,6 +18,16 @@
   esupervisor={Chen, Kainan Assistant Professor},
 }
 \sisetup{list-separator={, },list-final-separator={, },list-pair-separator={, },separate-uncertainty,range-phrase={\ensuremath{\sim}}}
+% For subfiles
+\makeatletter%
+\@ifclassloaded{subfiles}%
+  {\AtEndDocument{%
+    \bibliographystyle{thuthesis-author-year}
+    \bibliography{index}
+  }}%
+  {\relax}%
+\makeatother%
+
 \begin{document}
 \frontmatter
 
@@ -55,6 +65,9 @@
 \listoffigures
 \listoftables
 \listofequations
+
+\bibliographystyle{thuthesis-numeric}
+\bibliography{index}
 
 \begin{acknowledgement}
   致谢
