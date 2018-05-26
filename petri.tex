@@ -10,8 +10,8 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
 
 虽然两类工具都能对简单的工作流进行建模，但它们的各自的固有缺陷却任何一种工具在建模工作流时都比较麻烦。
 更为致命的是，优化设计的工作流非常为复杂，而上述两种工具的表达能力尚且不足以表达这样的工作流（详见\cref{sec:des-wf}）。
-为此，本章将先分别介绍这两种建模工具的基础，再在Petri网的基础之上，结合两者的优点，提出流程Petri网的概念，使其模型更为易用、可读。
-最后，本文提出了分层Petri网的概念，扩展了Petri网的建模能力，使其能够建模复杂的并行优化问题。
+为此，本章将先分别介绍这两种建模工具的基础，再在Petri网的基础之上，结合两者的优点，提出F-Petri网的概念，使其模型更为易用、可读。
+最后，本文提出了L-Petri网的概念，扩展了Petri网的建模能力，使其能够建模复杂的并行优化问题。
 
 \section{UML活动图}
 \subsection{定义}
@@ -134,15 +134,17 @@ Petri网的一个重要的特点在于其擅长对多组件并发系统进行建
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/petri-flow-example.pdf}
-  \caption{流程Petri网示例\label{fig:petri-flow}}
+  \caption{F-Petri网示例\label{fig:petri-flow}}
 \end{figure}
 
-\Cref{fig:petri-flow}给出了将流程图嵌入Petri网的方法——将跳变的输入弧和输出弧分成多组，并在中间嵌入简化版的UML活动图。
+\Cref{fig:petri-flow}给出了将流程图嵌入Petri网的方法——每个跳变设多个输入组和输出组，并在中间嵌入简化版的UML活动图。
+输入弧不再直接连接到跳变，而是连接到某一个输入组或者某一个输出组；
+输出弧也不再直接连接到跳变，而是连接到某一个输出弧。
 活动图不单设初始和终止节点，而把跳变的输入组视作初始节点、把输出组视作终止节点。
 为了保证跳变的原子性，活动图中只能包括条件节点和汇合节点，而不能包括动作节点。
 在执行时，一旦某个输入组的前置条件满足（组内输入位置标记数足够），则从此处进入活动图，判断各种条件，直到找到某一输出组
 （由于活动图内部没有分支节点，不可能同时到达两个或或者更多的输出组）。
-找到输出组后，扣减原输入组的标记数，增加该组输出位置的标记数。
+找到输出组后，扣减原输入组的标记数，扣减连在该输出组上的输入（用来建模条件输入），增加该组输出位置的标记数。
 本文将这类Petri网的扩展称为F-Petri网，其中F表示流程图（Flowchart）。
 不难证明，F-Petri网的表达能力不弱于带零输入弧的Petri网（只需在活动图中写明条件“某某位置标记数$=0$”即可）。
 
@@ -152,5 +154,76 @@ Petri网的一个重要的特点在于其擅长对多组件并发系统进行建
 因此，F-Petri网难以建立严谨的数学模型，也不易从数学角度对其进行可达性（Reachability）、可决性（Decidability）等等分析。
 
 \section{分支结构与L-Petri网}
-% TODO
+不论是严谨的Petri网还是便利的F-Petri网，其位置和跳变的数量都是固定的，对含有动态分支结构（根据外部输出产生若干组工作流）的系统的建模束手无策。
+同样的，UML活动图也对这种问题没有简单的解决方案。
+实际上，这种系统在实际业务中相当常见。
+以本文研究的优化问题为例，用户指定同时进行的仿真数量，系统计算出若干（并不能在设计时确定）个初始位置，并行地在这些位置对目标函数进行求值。
+为此，本文尝试将层次结构引入Petri网，提出L-Petri网（其中的L表示分层，Layered），进一步加强Petri网的建模与表达能力。
+
+\subsection{定义}
+L-Petri网包括若干位置、跳变、层、普通弧、跨层弧；层包括若干位置、跳变、其他层、普通弧、跨层弧。
+输入弧不得跨层；跨层的输出弧从某一$k$次嵌套（每含在一层内算作一次嵌套，不含在任何层内为0层嵌套，下同）的跳变开始，
+先向外跨越$p$层（$p\geq 0$），再向内跨越$q$层（$p\geq 0$），最终到达某一$k-p+q$次嵌套的位置。
+
+L-Petri网可以翻译成Petri网。翻译过程需要用到指标集$\mathbb{X}$，其基数可以是有限的、可数甚至不可数。
+常见的指标集为字符串，即$\mathbb{X}=\Sigma^*$，其中有限集合$\Sigma$为字母表，${}^*$为形式语言与自动机理论中的Klenne闭包。
+L-Petri网翻译成传统Petri网的过程如下：
+\begin{itemize}
+  \item 对L-Petri网中$k$次嵌套的元素（位置、跳变、普通弧），
+    遍历$\left(n_1,\ldots,n_k\right)\in\mathbb{X}^k$，为每个$\left(n_1,\ldots,n_k\right)$创造一个传统Petri网的元素。
+    称$\left(n_1,\ldots,n_k\right)$为该元素的层参数。
+  \item 对L-Petri网中的跨层弧，设其从属于$k$次嵌套的跳变，且其向外跨越$p$层、向内跨越$q$层，
+    则遍历$\left(n_1,\ldots,n_{k+q}\right)\in\mathbb{X}^{k+q}$，为每个$\left(n_1,\ldots,n_{k+q}\right)$创造一个传统Petri网的弧，
+    连接层参数为$\left(n_1,\ldots,n_k\right)$的跳变和层参数为$\left(n_1,\ldots,n_{k-p},n_{k+1},n_{k+q}\right)$的位置。
+    需要注意的是，实际执行时这些弧并非所有都要执行，具体执行规则参见下方对于L-Petri网执行的说明。
+\end{itemize}
+
+L-Petri网的执行即为传统Petri网的执行，不过对于跨层弧翻译而来输出弧的处理略有不同：
+设当前执行的跳变的层参数为$\left(n_1,\ldots,n_k\right)$，再设原跨层弧向外跨越了$p$层，向内跨越了$q$层，
+则在执行时需要（一般是通过外部渠道）产生有限集合$M\subseteq\mathbb{X}^{q}$，然后对于所有$\left(m_1,\ldots,m_q\right)\in{}M$，
+激活当前跳变到位置$\left(n_1,\ldots,n_{k-p},m_1,\ldots,m_q\right)$的弧；对于所有$\left(m'_1,\ldots,m'_q\right)\in{}\mathbb{X}^{q}\setminus{}M$，
+禁用当前跳变到位置$\left(n_1,\ldots,n_{k-p},m'_1,\ldots,m'_q\right)$的弧。
+
+\subsection{例子}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-layer-example.pdf}
+  \caption{L-Petri网示例\label{fig:petri-layer}}
+\end{figure}
+
+\Cref{fig:petri-layer}给出了一个比较复杂的L-Petri网的例子。
+根据定义，不难证明其翻译出来的传统Petri网的位置包括
+$\left\|\mathbb{X}^{2}\|\right)$个a，
+$\left\|\mathbb{X}\|\right)$个b，
+$\left\|\mathbb{X}^{3}\|\right)$个c，
+以及一个d和一个e。
+在执行时，输出位置与执行的跳变的具体关系如下：
+\begin{itemize}
+  \item 当弧1对应的跳变（没有层参数）执行时，该跳变每给出一组$(m_1,m_2)\in\mathbb{X}^{2}$，就会增加一个输出到层参数为$(m_1,m_2)$的位置a。
+  \item 当弧2对应的跳变（设层参数为$(n_1,n_2)$）执行时，该跳变无需给出参数，自动输出到层参数为$(n_1)$的位置b。
+  \item 当弧3对应的跳变（设层参数为$(n_1)$）执行时，该跳变每给出一组$(m_1,m_2,m_3)\in\mathbb{X}^{3}$，就会增加一个输出到层参数为$(m_1,m_2,m_3)$的位置c。
+    需要注意的是，弧3先向外穿出了1层，再向内穿回了3层，这与直接向内穿越2层是不一样的。
+  \item 当弧4对应的跳变（设层参数为$(n_1,n_2,n_3)$）执行时，该跳变无需给出参数，自动输出到没有层参数的位置d。
+  \item 当弧5对应的跳变（没有层参数）执行时，该跳变无需给出参数，自动输出到同样没有层参数的位置e。
+\end{itemize}
+
+\subsection{常见结构}
+不难看出，F-Petri网和L-Petri网对传统Petri网的扩展是互相独立的。
+因此本小节将二者融合，引入FL-Petri网的概念，并用它来建模传统Petri网和UML活动图都无法建模的系统，
+以彰显其强大的建模能力，并为后续建模实际系统打下基础。
+
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{简单“逐项”系统\label{fig:petri-layer-each}}
+    {\includegraphics{./figures/dist/petri-layer-each.pdf}}
+  \hspace{1em}
+  \subcaptionbox{带依赖的“逐项”系统（层外内容与左侧一致）\label{fig:petri-layer-dep}}
+    {\includegraphics{./figures/dist/petri-layer-dep.pdf}}
+  \caption{使用FL-Petri网建模含有动态分支结构的“逐项”系统}
+\end{figure}
+
+\Cref{fig:petri-layer-each}给出了含有动态分支结构的系统的“逐项”系统——根据外部输入，动态产生若干组几乎完全一致的工作流，并发执行，全部执行完毕之后结束——的Petri网模型。
+其核心思想是，将子工作流封装在层内，并在层外维护元信息——是否已启动（“启”）、子工作流总数（“总”）、已经执行完毕的子工作流数目（“毕”）。
+当确已启动且子工作流总数等于已经执行完毕的子工作流数时，即可清除所有元信息并继续执行后续的工作流。
+
 \end{document}
