@@ -1,7 +1,35 @@
 \documentclass[index]{subfiles}
 \begin{document}
 \chapter{并发工作流的建模：UML活动图与Petri网}
+统一建模语言（Unified Modeling Language, UML）为架构师、软件工程师和软件开发者提供了一套分析、设计、实现
+软件系统的工具，这套工具也能建模商业流程和其他类似的流程\cite{omg}。
+
+Petri网理论（Petri net throey）最早可以追溯到1962年\cite{petri1962}。该领域的著名教材~\inlinecite{peterson1981}指出，
+Petri网可以对包含多个组件的复杂系统进行建模，还可以建模组件之间的并发/并行和同步等等场景。
+当然，它也可以用来建模商业流程等工作流\cite{ellis1993}。
+
+虽然两类工具都能对简单的工作流进行建模，但它们的各自的固有缺陷却任何一种工具在建模工作流时都比较麻烦。
+更为致命的是，优化设计的工作流非常为复杂，而上述两种工具的表达能力尚且不足以表达这样的工作流（详见\cref{sec:des-wf}）。
+为此，本章将先分别介绍这两种建模工具的基础，再在Petri网的基础之上，结合两者的优点，提出流程Petri网的概念，使其模型更为易用、可读。
+最后，本文提出了分层Petri网的概念，扩展了Petri网的建模能力，使其能够建模复杂的并行优化问题。
+
 \section{UML活动图}
+根据统一建模语言标准文档~\inlinecite{omg}，活动图（Activity Diagram）中主要包括以下几种元素（限于篇幅，本文后续建模过程中没有用到的元素恕不一一列出）：
+\begin{description}
+  \item[活动（Activity）] 建模系统的复杂行为，包括一系列用控制流互相连接的节点
+  \item[节点（Node）] 建模系统行为中的某一步操作，具体分为以下几种：
+  \begin{description}
+    \item[初始（Initial）] 标识工作流开始位置
+    \item[终止（Final）] 标识工作流结束位置
+    \item[分支（Fork）] 同时开始多个并发的工作流
+    \item[同步（Join）] 多个工作流全部完成之后再继续后面的工作流
+    \item[汇合（Merge）] 任意一个工作流完成之后都会执行一次后面的工作流
+    \item[条件（Decision）] 判断一组条件是否满足，根据结果执行不同的工作流
+    \item[动作（Action）] 一项具体行为——接受输入产生输出
+  \end{description}
+  \item[控制流（Control Flow）] 建模各项操作之间的执行次序
+\end{description}
+\includegraphics{./figures/dist/petri-act-example.pdf}
 % TODO
 \section{Petri网}
 % TODO
