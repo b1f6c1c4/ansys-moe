@@ -95,10 +95,62 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
 跳变发生时，从输入位置删除固定数量的标记，并在输出位置添加固定数量的标记。
 如果有不止一个跳变满足发生条件，那么哪个跳变会发生是任意的（见\cref{fig:petri-raw}中状态$(3,1,1)$或$(1,2,2)$的例子）。
 需要注意的是，虽然位置和跳变只有有限个，但Petri网却有无限种状态（包含零个位置的平凡Petri网不在考虑范围之内），
-这意味着Petri网相比有限状态机拥有强大的建模能力。
-% TODO
-\section{条件结构与流程Petri网}
-% TODO
-\section{分支结构与分层Petri网}
+这意味着Petri网相比有限状态机拥有更为强大的建模能力。
+
+\subsection{常见结构}
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{顺序结构\label{fig:petri-raw-seq}}
+    {\includegraphics{./figures/dist/petri-raw-seq.pdf}}
+  \hspace{1em}
+  \subcaptionbox{分支结构\label{fig:petri-raw-fork}}
+    {\includegraphics{./figures/dist/petri-raw-fork.pdf}}\par
+  \subcaptionbox{消息队列（省略了UML活动图模型）\label{fig:petri-raw-queue}}
+    {\includegraphics{./figures/dist/petri-raw-queue.pdf}}
+  \caption{使用UML活动图和Petri网对常见系统结构进行建模}
+\end{figure}
+Petri网的一个重要的特点在于其擅长对多组件并发系统进行建模。
+本小节将给出一些常见的并发结构的Petri网模型，并对其中部分结构附以UML活动图的等价模型，以为后续大型系统的建模进行铺垫。
+
+\Cref{fig:petri-raw-seq}给出了Petri网对顺序结构的建模：动作1执行结束之后执行动作2。
+需要注意的是，最上方的跳变没有输入，意味着任何时候都有可能发生，这正好标志着用户可能在任何时候输入数据。
+
+\Cref{fig:petri-raw-fork}给出了Petri网对分支-同步结构的建模：动作1和动作2可以以任何顺序执行。
+
+\Cref{fig:petri-raw-queue}则使用Petri网对消息队列的建模。
+由于UML活动图对这种结构的建模需要使用更复杂的节点（Send Signal Action，详见UML标准~\inlinecite{omg}），本文此处忽略UML活动图模型。
+用方框标出的部分代表工作者，可以同时存在任意多个；工作者的数目正好等于系统最多能够处理消息的数量。
+注意到每个工作者实际上是一个有限状态机，因此\cref{fig:petri-raw-queue}还提示了如何用Petri网对有限状态机进行建模。
+
+除了以上三种，常见的并发结构还包括异步（Asynchronous）、竞争（Race）、冲突（Conflict）、条件（Decision/Condition）等等。
+下一小节将会详细讲解条件结构，而其他结构由于在本文后续建模过程中并没有用到，故不再赘述。感兴趣的读者可以参阅文献~\inlinecite{peterson1981}。
+
+\section{条件结构与F-Petri网}
+虽然Petri网用异常简单的规则就获得了对并发性的非常强大的表达与建模能力，但其对条件结构的支持实在差强人意\cite{peterson1981}。
+零输入弧（Inhibitor Arc）的引入\cite{keller1972}在保证了Petri网良定义的数学性质的情况下，从本质上提高了Petri网的建模能力。
+然而，作为工作流建模工具，带零输入弧的Petri网对一些稍复杂的条件结构表示起来相当复杂，为了严谨性而失去了直观性。
+本文尝试将建模条件结构最常见、最方便、最直观的工具——流程图\cite{gilbreth1921}嵌入Petri网。
+
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-flow-example.pdf}
+  \caption{流程Petri网示例\label{fig:petri-flow}}
+\end{figure}
+
+\Cref{fig:petri-flow}给出了将流程图嵌入Petri网的方法——将跳变的输入弧和输出弧分成多组，并在中间嵌入简化版的UML活动图。
+活动图不单设初始和终止节点，而把跳变的输入组视作初始节点、把输出组视作终止节点。
+为了保证跳变的原子性，活动图中只能包括条件节点和汇合节点，而不能包括动作节点。
+在执行时，一旦某个输入组的前置条件满足（组内输入位置标记数足够），则从此处进入活动图，判断各种条件，直到找到某一输出组
+（由于活动图内部没有分支节点，不可能同时到达两个或或者更多的输出组）。
+找到输出组后，扣减原输入组的标记数，增加该组输出位置的标记数。
+本文将这类Petri网的扩展称为F-Petri网，其中F表示流程图（Flowchart）。
+不难证明，F-Petri网的表达能力不弱于带零输入弧的Petri网（只需在活动图中写明条件“某某位置标记数$=0$”即可）。
+
+需要特别注意的是，灵活性与严谨性是互相制约的，F-Petri网牺牲了严谨性，以换取在建模时的便利和灵活。
+不论是Petri网还是带零输入弧的Petri网，都是不依赖于外部任何信息的——给定某一状态，下一步可能的状态是严格固定的。
+但F-Petri网并没有这种性质——其内嵌的活动图可以任意使用外部条件。
+因此，F-Petri网难以建立严谨的数学模型，也不易从数学角度对其进行可达性（Reachability）、可决性（Decidability）等等分析。
+
+\section{分支结构与L-Petri网}
 % TODO
 \end{document}
