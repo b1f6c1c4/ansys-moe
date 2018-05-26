@@ -4,8 +4,8 @@
 统一建模语言（Unified Modeling Language, UML）为架构师、软件工程师和软件开发者提供了一套分析、设计、实现
 软件系统的工具，这套工具也能建模商业流程和其他类似的流程\cite{omg}。
 
-Petri网理论（Petri net throey）最早可以追溯到1962年\cite{petri1962}。该领域的著名教材~\inlinecite{peterson1981}指出，
-Petri网可以对包含多个组件的复杂系统进行建模，还可以建模组件之间的并发/并行和同步等等场景。
+Petri网理论（Petri net throey）最早可以追溯到1962年\cite{petri1962}。
+Petri网可以对包含多个组件的复杂系统进行建模，还可以建模组件之间的并发/并行和同步等等场景\cite{peterson1981}。
 当然，它也可以用来建模商业流程等工作流\cite{ellis1993}。
 
 虽然两类工具都能对简单的工作流进行建模，但它们的各自的固有缺陷却任何一种工具在建模工作流时都比较麻烦。
@@ -14,6 +14,7 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
 最后，本文提出了分层Petri网的概念，扩展了Petri网的建模能力，使其能够建模复杂的并行优化问题。
 
 \section{UML活动图}
+\subsection{定义}
 根据统一建模语言标准文档~\inlinecite{omg}，活动图（Activity Diagram）中主要包括以下几种元素（限于篇幅，本文后续建模过程中没有用到的元素恕不一一列出）：
 \begin{description}
   \item[活动（Activity）] 建模系统的复杂行为，包括一系列用控制流互相连接的节点
@@ -29,9 +30,72 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
   \end{description}
   \item[控制流（Control Flow）] 建模各项操作之间的执行次序
 \end{description}
-\includegraphics{./figures/dist/petri-act-example.pdf}
-% TODO
+
+\subsection{例子}
+为了便于理解，尤其是分清同步节点和汇合节点，本节给出一个UML活动图的示例，如\cref{fig:petri-act}所示。
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{UML活动图\label{fig:petri-act-example}}
+    {\includegraphics{./figures/dist/petri-act-example.pdf}}\par
+  \subcaptionbox{分支与同步\label{fig:petri-act-seq1}}
+    {\includegraphics{./figures/dist/petri-act-seq1.pdf}}
+  \hspace{10em}
+  \subcaptionbox{分支与汇合\label{fig:petri-act-seq2}}
+    {\includegraphics{./figures/dist/petri-act-seq2.pdf}}
+  \caption{UML活动图示例\label{fig:petri-act}}
+\end{figure}
+
+\Cref{fig:petri-act-example}使用UML语言描述了一个活动的内部结构：由若干控制流连接的7个动作节点和若干控制节点。
+该活动用自然语言表示如下：
+\begin{itemize}
+  \item 活动开始后，执行动作0；
+  \item 动作0执行完毕后，判断条件1是否满足：
+  \item 如果条件1满足，执行如下操作（参见\cref{fig:petri-act-seq1}）：
+  \begin{itemize}
+    \item 同时执行动作1和动作2；
+    \item 当动作1和动作2都执行完毕后，执行动作3；
+    \item 动作3执行完毕后，活动立即终止，不论是否还有未完成的动作。
+  \end{itemize}
+  \item 如果条件1不满足，执行如下操作（参见\cref{fig:petri-act-seq2}）：
+  \begin{itemize}
+    \item 同时执行动作4和动作5；
+    \item 动作4执行完毕后，执行动作6（不论其是否执行过）；
+    \item 动作5执行完毕后，执行动作6（不论其是否执行过）；
+    \item 动作6执行完毕后，活动立即终止，不论是否还有未完成的动作。
+  \end{itemize}
+\end{itemize}
+
+可见，同步节点保证了后续动作只会执行一次，适用于等待所有计算结果齐全的情况；
+而汇合节点会立即执行后续的动作，配合条件节点使用时非常合适。
+需要注意的是，如果条件节点配和同步节点使用，那么活动会永远卡在同步节点处，因为只有一个分支会被执行，同步节点永远不会等到所有分支全部执行完毕的情况。
+另外，汇合节点并非竞争结构（任意一个动作执行结束以后开始执行后续动作，但后续动作只会执行一次）。
+
 \section{Petri网}
+\subsection{定义}
+由于本文的目的是利用Petri网对工作流进行建模，故这里不再用数学语言赘述Petri网的形式化定义。
+遵照Petri网领域的重要专著~\inlinecite{peterson1981}，Petri网为有限个互相连接的以下几类元素：
+\begin{description}
+  \item[标记（Token）] 没有任何属性的、不可区分的对象
+  \item[位置（Place）] 包含若干个标记，建模系统的状态
+  \item[跳变（Transition）] 建模系统的原子动作
+  \item[输入弧（Input Arc）] 连接一个位置和一个跳变：跳变发生时，这个位置的标记数目减$n$（若该位置标记数$<n$，跳变不能发生）
+  \item[输出弧（Output Arc）] 连接一个位置和一个跳变：跳变发生时，这个位置的标记数目加$n$
+\end{description}
+其中每一个输入弧和输出弧都可以具有自己的重数$n\in\mathbb{N}, n\geq1$。如未特别说明，重数默认为1。
+
+\subsection{例子}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-raw-example.pdf}
+  \caption{Petri网示例。图中描绘了同一个Petri网的6中不同的状态（更多状态并未画出），并标出了（在跳变发生时）这6种状态之间的互相转换关系。\label{fig:petri-raw}}
+\end{figure}
+\Cref{fig:petri-raw}给出了一个Petri网的6种状态及其跳转关系。
+对于传统的Petri网，位置、跳变、弧是固定的，而每个位置的标记数决定了该Petri网所处的状态。
+每个输入弧所连接的位置都有标记时，跳变即可发生。
+跳变发生时，从输入位置删除固定数量的标记，并在输出位置添加固定数量的标记。
+如果有不止一个跳变满足发生条件，那么哪个跳变会发生是任意的（见\cref{fig:petri-raw}中状态$(3,1,1)$或$(1,2,2)$的例子）。
+需要注意的是，虽然位置和跳变只有有限个，但Petri网却有无限种状态（包含零个位置的平凡Petri网不在考虑范围之内），
+这意味着Petri网相比有限状态机拥有强大的建模能力。
 % TODO
 \section{条件结构与流程Petri网}
 % TODO
