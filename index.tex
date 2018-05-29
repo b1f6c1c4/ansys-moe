@@ -35,6 +35,12 @@
   }}%
   {\relax}%
 \makeatother%
+\newcommand{\one}{{1}}
+\newcommand{\E}[1]{\operatorname{E}\!\left[#1\right]}
+\newcommand{\Var}[1]{\operatorname{Var}\!\left[#1\right]}
+\newcommand{\Cov}[2]{\operatorname{Cov}\!\left[#1,#2\right]}
+\newcommand{\Corr}[2]{\operatorname{Corr}\!\left[#1,#2\right]}
+\newcommand{\Normal}[2]{\operatorname{N}\!\left(#1,#2\right)}
 
 \begin{document}
 \frontmatter
@@ -54,7 +60,19 @@
 \tableofcontents
 
 \begin{denotation}
-  \item[K] 矩阵
+  \item[$\one_n$] $n\times{}1$的全1列向量
+  \item[$\E{\cdot}$] 随机变量的期望
+  \item[$\Var{\cdot}$] 随机变量的方差
+  \item[$\Cov{\cdot}{\cdot}$] 两个随机变量的协方差
+  \item[$\Corr{\cdot}{\cdot}$] 两个随机变量的相关系数
+  \item[$\beta$] 随机过程的均值
+  \item[$\sigma^2$] 随机过程的方差
+  \item[$\Normal{\mu}{\Sigma}$] （多元）正态分布
+  \item[$y(x)$] $x$处的实验结果的真实值
+  \item[$Y(x)$] $x$处的实验结果对应的随机变量
+  \item[$K$] 已完成实验处对已完成实验处随机变量的归一化协方差矩阵
+  \item[$K_s$] 未完成实验处对已完成实验处随机变量的归一化协方差矩阵
+  \item[$K_{ss}$] 未完成实验处对未完成实验处随机变量的归一化协方差矩阵
 \end{denotation}
 
 \mainmatter

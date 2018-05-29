@@ -22,7 +22,7 @@
 本小节将先介绍设计基本原则，再分别讨论方差分析和回归分析所对应的设计手段。
 
 \subsubsection{设计基本原则}
-实验设计领域经典教材~\cite{montgomery}指出，为了对抗未知因素、提高实验结果的精度，（传统的）实验设计在进行设计时普遍遵循以下三大原则：
+实验设计领域经典教材~\inlinecite{montgomery}指出，为了对抗未知因素、提高实验结果的精度，（传统的）实验设计在进行设计时普遍遵循以下三大原则：
 \begin{description}
   \item[随机化（Randomization）] 随机化可以将未知因素的影响控制在最小，以提高实验结果的可靠性。
   \item[重复实验（Replication）] 重复实验可以可以提高实验结果的精度，还可以得到实验误差的估计。
@@ -104,26 +104,112 @@ Maximin方法（简称Mm）计算所有实验点两两之间的距离，并尝�
 文献~\inlinecite{sacks1989}在详细分析总结了实际计算机模型和实验的基础上，创造性地提出了使用随机过程来对计算机模型二次建模的思路，并将其用在实验设计上。
 本小节将先详细介绍该方法所使用的随机过程模型——Kriging模型，再介绍如何利用该模型进行实验设计。
 
-\subsubsection{随机过程与Kriging模型}
+\subsubsection{随机过程与Kriging模型}\label{sssec:doe-kriging}
+Kriging模型的基本假设是将关于自变量$x$的确定性实值函数$y(x)$视作关于$x$的随机过程$Y(x)$的一个实现。
+在计算机实验设计领域，最常用的随机过程是（带偏置的）平稳高斯随机过程，即：
+\begin{equation}\label{equ:doe-kriging}
+  Y(x) = \beta_0 + Z(x)
+\end{equation}
+其中$\beta_0$是参数（需要估计），$Z(x)$是高斯随机过程：
+\begin{align}\label{equ:doe-stationary}
+  \E{Z(x)} &= 0 \\
+  \Cov{Z(w)}{Z(x)} &= \sigma^2 R(w, x) = \sigma^2 R(x, w)
+\end{align}
+在实际情况下，一般还会把假设加强到$\sigma^2 R(w, x) = \sigma^2 R(w - x)$，也即$Z(x)$是平稳高斯随机过程。
+在\cref{sssec:doe-k-o}中将会用到这一假设，而在此处先按一般情况进行考虑。
 
+\paragraph{$R$已知，对待估计参数进行估计}
+假使$R(\cdot, \cdot)$已知，且在$x_1,\ldots,x_n$处已经完成了$n$组实验，得到实验结果$y_i=y(x_i)$。
+记$x_s=(x_1,\ldots,x_n)^T$，$y_s=(y_1,\ldots,y_n)^{T}$，其中s表示样本（Sample）。
 
-\subsubsection{基于Kriging模型的最优设计}
+从高斯随机过程的定义出发，极易验证$Y(x_i)$的联合先验分布如下：
+\begin{equation}\label{equ:doe-kss-d}
+  \begin{bmatrix} Y(x_1) \\ \vdots \\ Y(x_n) \end{bmatrix}
+  \sim \Normal{
+    \begin{bmatrix} \beta_0 \\ \vdots \\ \beta_0 \end{bmatrix}
+  }{\sigma^2 K }
+\end{equation}
+式中
+\begin{equation}\label{equ:doe-kss}
+  K = \begin{bmatrix}
+    R(x_1, x_1) & \ldots & R(x_1, x_n) \\
+    \vdots & \ddots & \vdots \\
+    R(x_n, x_1) & \ldots & R(x_n, x_n)
+  \end{bmatrix}
+\end{equation}
+。注意到$K$每个位置的数值只与实验位置$x_s$和$R(\cdot, \cdot)$有关，与待估计参数$\beta_0,\sigma^2$、实验结果$y_s$均无关。
+
+由于$Y(x_i)$的先验分布已知，分布中待估计参数的先验分布未知，故采用极大似然法对分布参数进行估计。限于篇幅，此处直接给出估计结果\cite{sacks1989}：
+\begin{align}\label{equ:doe-par-est}
+  \hat{\beta_0} &= \frac{1}{n} \sum_{i=1}^{n} y_i \\
+  \hat{\sigma}^2 &= \frac{1}{n} (y_s - \beta_0)^T K_{ss}^{-1} (y_s - \beta_0)
+\end{align}
+
+\paragraph{$R$已知，对未实验位置的实验结果进行估计}
+Kriging模型最关键的部分在于，对没有做实验的位置，也能通过对其他位置的实验而获得信息。
+对于尚未进行实验的$x_\star$处，其所有的信息都反映在$Y(x_\star)$的后验（条件）分布上，只要求得分布便可对$y(x_\star)$进行估计。
+
+首先，计算$Y(x_\star),Y(x_1),\ldots,Y(x_n)$的联合先验分布：
+\begin{equation}\label{equ:doe-ks-d}
+  \begin{bmatrix} Y(x_\star) \\ Y(x_1) \\ \vdots \\ Y(x_n) \end{bmatrix}
+  \sim \Normal{
+    \begin{bmatrix} \beta_0 \\ \beta_0 \\ \vdots \\ \beta_0 \end{bmatrix}
+  }{\sigma^2
+    \begin{bmatrix}
+      1 & K_s^T \\
+      K_s & K
+    \end{bmatrix}
+  }
+\end{equation}
+式中
+\begin{equation}\label{equ:doe-ks}
+  K_s = \left(R(x_\star, x_1), \ldots, R(x_\star, x_n)\right)^T
+\end{equation}
+。
+通过对\cref{equ:doe-ks-d}中的协方差矩阵进行相合变换\cite{sacks1989}，就可以得到$Y(x_\star)$的后验分布：
+\begin{equation}\label{equ:doe-y}
+  Y(x_\star) \sim \Normal{\beta_0 + K_s^T K^{-1} (y_s - \beta_0 \one_n)}{\sigma^2 \left(1 - K_s^T K^{-1} K_s\right)}
+\end{equation}
+
+\paragraph{$R$未知情况的处理} 将在\cref{ssec:bgo-mdl}中介绍。
+
+\subsubsection{基于Kriging模型的最优设计}\label{sssec:doe-k-o}
+\Cref{sssec:doe-kriging}介绍了如何在给定$x_s$的情况下对整个样本空间中任意一点处的目标函数进行估计。
+为了更好地进行估计，调节$x_s$的过程也就是基于Kriging模型的实验设计\cite{pronzato2012}。
+不同的对估计有效性的衡量标准也就导出不同的最优实验设计：
+\begin{description}
+  \item[IMSE最优（Integrated Mean Squared Error-Optimal）]\cite{sacks1989} 最小化全样本空间内平方误差（也即后验分布的方差）的积分
+  \item[MMSE最优（Maximum Mean Squared Error-Optimal）]\cite{sacks1989} 最小化全样本空间内平方误差（也即后验分布的方差）的最大值
+\end{description}
 
 \subsection{小结}
-% TODO
+在三大类计算机实验设计方法中，基于Kriging模型的方法的理论基础和背景最为深厚、坚实。
+不幸的是，这一类方法都无法避开对随机过程自相关函数$R$的已知假设。
+克服这一难题的办法顺序实验设计（Sequential Design of Experiments）：
+先用空间填充或者无模型方法设计实验，获得数据后建立Kriging模型，
+再在Kriging模型基础上再次设计实验。
+
+然而，顺序实验设计的方法与本文的根本目的——优化——格格不入：
+对于优化工作流，在获得第一批实验数据以后，应该考虑的是在关键区域多做采样以获得性能提升，而不是在全样本空间内部署实验点。
+为此，本文空间填充实验设计中的最新方法之一——LHSMDU方法来初始化第一批实验点。
+
+需要特别指出的是，基于Kriging模型的实验设计并非一无是处。
+一方面，Kriging模型的提出和在计算机实验上的应用对全局优化算法的发展起到了关键性的作用（\cref{ssec:go-mdl}讨论优化算法时Kriging模型会再次出现），
+另一方面，对于波动较大、非常不规则的目标函数，在优化初始阶段利用Kriging模型进行顺序实验设计，可能会对避开局部最小值、提高可靠性有一定正面作用。
+
 \section{全局最优化}
 % TODO
 \subsection{启发式全局优化算法}
 % TODO
 \subsection{非启发式全局优化算法}
 % TODO
-\subsection{统计模型的引入}
+\subsection{统计模型的引入}\label{ssec:go-mdl}
 % TODO
 \subsection{小结}
 % TODO
 \section{贝叶斯优化算法的实现细节}
 % TODO
-\subsection{统计模型}
+\subsection{统计模型}\label{ssec:bgo-mdl}
 % TODO
 \subsection{收获函数}
 % TODO
