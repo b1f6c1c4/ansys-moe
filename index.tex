@@ -29,18 +29,45 @@
 % For subfiles
 \makeatletter%
 \@ifclassloaded{subfiles}%
-  {\AtEndDocument{%
+  {\AtBeginDocument{\Denotation}
+  \AtEndDocument{%
     \bibliographystyle{thuthesis-author-year}
     \bibliography{index}
   }}%
   {\relax}%
 \makeatother%
 \newcommand{\one}{{1}}
+\let\oldPr\Pr
+\renewcommand{\Pr}[1]{\oldPr\!\left[#1\right]}
 \newcommand{\E}[1]{\operatorname{E}\!\left[#1\right]}
 \newcommand{\Var}[1]{\operatorname{Var}\!\left[#1\right]}
 \newcommand{\Cov}[2]{\operatorname{Cov}\!\left[#1,#2\right]}
 \newcommand{\Corr}[2]{\operatorname{Corr}\!\left[#1,#2\right]}
 \newcommand{\Normal}[2]{\operatorname{N}\!\left(#1,#2\right)}
+\newcommand{\Denotation}[0]{%
+\begin{denotation}
+  \item[$\one_n$] $n\times{}1$的全1列向量
+  \item[$\Pr{\cdot}$] 某事件发生的概率
+  \item[$\E{\cdot}$] 随机变量的期望
+  \item[$\Var{\cdot}$] 随机变量的方差
+  \item[$\Cov{\cdot}{\cdot}$] 两个随机变量的协方差
+  \item[$\Corr{\cdot}{\cdot}$] 两个随机变量的相关系数
+  \item[$\beta$] 随机过程的均值
+  \item[$\sigma^2$] 随机过程的方差
+  \item[$\Normal{\mu}{\Sigma}$] （多元）正态分布
+  \item[$n$] 已完成实验的数目
+  \item[$x_s\quad x_i$] 已完成实验的位置（集合和元素）
+  \item[$y_s\quad y_i$] 已完成实验的结果（集合和元素）
+  \item[$p$] 进行中实验的数目
+  \item[$x_\ast\quad x_{\ast i}$] 进行中实验的位置（集合和元素）
+  \item[$x_\star$] 下一步应该进行的实验的位置
+  \item[$Y(x)$] $x$处的实验结果对应的随机变量（先验）
+  \item[$Y(x)|y_s$] $x$处的实验结果对应的随机变量（后验）
+  \item[$K$] 已完成实验处对已完成实验处随机变量的归一化协方差矩阵
+  \item[$K_s$] 未完成实验处\footnote{包括进行中实验和下一步应该进行的实验，下同}对已完成实验处随机变量的归一化协方差矩阵
+  \item[$K_{ss}$] 未完成实验处对未完成实验处随机变量的归一化协方差矩阵
+\end{denotation}
+}
 
 \begin{document}
 \frontmatter
@@ -59,21 +86,7 @@
 
 \tableofcontents
 
-\begin{denotation}
-  \item[$\one_n$] $n\times{}1$的全1列向量
-  \item[$\E{\cdot}$] 随机变量的期望
-  \item[$\Var{\cdot}$] 随机变量的方差
-  \item[$\Cov{\cdot}{\cdot}$] 两个随机变量的协方差
-  \item[$\Corr{\cdot}{\cdot}$] 两个随机变量的相关系数
-  \item[$\beta$] 随机过程的均值
-  \item[$\sigma^2$] 随机过程的方差
-  \item[$\Normal{\mu}{\Sigma}$] （多元）正态分布
-  \item[$y(x)$] $x$处的实验结果的真实值
-  \item[$Y(x)$] $x$处的实验结果对应的随机变量
-  \item[$K$] 已完成实验处对已完成实验处随机变量的归一化协方差矩阵
-  \item[$K_s$] 未完成实验处对已完成实验处随机变量的归一化协方差矩阵
-  \item[$K_{ss}$] 未完成实验处对未完成实验处随机变量的归一化协方差矩阵
-\end{denotation}
+\Denotation
 
 \mainmatter
 
