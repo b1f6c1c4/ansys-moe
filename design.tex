@@ -1,10 +1,43 @@
 \documentclass[index]{subfiles}
 \begin{document}
 \chapter{自动化设计系统的设计}\label{sec:design}
-\section{用户用例}
+在\cref{sec:doebgo}中已经对贝叶斯优化算法的诸多方面的细节问题进行了讨论。
+然而，从算法本身到软件系统的过程又是一个相当不平凡的过程。
+本章和下一章将紧扣软件实现这一主题，对自动化设计系统进行全方位的建模与设计。
+
+经过上个世纪80至90年代软件工程领域的蓬勃发展，“4+1”视图模型\cite{kruchten1995}是在上个世纪90年代中叶被提出。
+其主张通过以下5个视图（View）来对复杂软件系统进行建模：
+\begin{description}
+  \item[逻辑（Logical）视图] 描述系统给用户提供何种功能
+  \item[流程（Process）视图] 描述工作流中的并发和同步
+  \item[开发（Development）视图] 描述开发过程中软件的静态组织关系
+  \item[物理（Physical）视图] 描述软件与硬件的映射关系
+  \item[场景（Scenario）视图] 基于某个用户用例（场景），展示以上四个视图如何配合
+\end{description}
+
+在该理论提出之初，各个视图普遍采用当时最为流行的Booch记号进行绘制，且一切基于当时非常看好的面向对象编程范式。
+虽然软件工程领域在其后二十年内沧海桑田，Booch记号早已淘汰，UML语言以其强大的表现力和规范化成为了软件模型的绝对标准，面向函数范式渐渐取代面向对象，
+但“4+1”视图的基本原理依然沿用至今，只不过普遍采用UML语言进行表达。
+
+本文考虑到自动化设计系统软件的特殊性——交互较少（提交任务以后基本无需干预），但工作流却异常复杂（执行非常复杂的算法），
+在“4+1”视图的基本思想指导下，选取其中部分视图对系统进行建模：
+\begin{description}
+  \item[逻辑视图] 采用UML用户用例图来描述系统给用户提供何种功能（\cref{sec:design-usecase}）
+  \item[（优化场景下的）流程视图] 采用UML活动图和FL-Petri网描述优化工作流中的并发和同步（\cref{sec:design-wf}）
+  \item[开发视图] 采用UML组件图描述开发过程中软件的静态组织关系（\cref{sec:design-comp}；\cref{sec:impl}中会对其进行细化）
+  \item[物理视图] 采用UML部署图描述软件与硬件的映射关系（将在\cref{sec:impl}中讨论）
+\end{description}
+
+\section{逻辑视图：用户用例}\label{sec:design-usecase}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-usecase.pdf}
+  \caption{系统逻辑视图：UML用户用例图\label{fig:design-usecase}}
+\end{figure}
+自动化设计系统只有设计者一类用户。\Cref{fig:design-usecase}具体描述了系统可以给设计者提供的功能（用户用例）。
+
+\section{流程视图：贝叶斯优化算法的工作流建模}\label{sec:design-wf}
 % TODO
-\section{贝叶斯优化算法的工作流建模}\label{sec:design-wf}
-% TODO
-\section{系统核心组件划分}
+\section{开发视图：系统核心组件划分}\label{sec:design-comp}
 % TODO
 \end{document}
