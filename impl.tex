@@ -1,14 +1,49 @@
 \documentclass[index]{subfiles}
 \begin{document}
 \chapter{自动化设计系统的实现}\label{sec:impl}
+本章将在\cref{sec:design}对系统的顶层设计的基础上，重点讨论每个组件的具体设计与实现细节，并介绍具体软件实现中所采用的技术栈。
+
+对于较为大型的软件系统，除了开发系统本身以外，还需要单独开发另一套系统，用以对实际系统进行时时刻刻的监控，以方便运维人员应对可能出现的异常情况。
+本章将先介绍自动化设计系统的本身（应用面，面向用户）的实现细节，再简要介绍内部监控系统（控制面，并不面向用户）的架构，
+最后采用UML部署图画出整个系统的物理视图，讨论各个组件之间的通信方法，并描述整个系统的最终实现成果。
+
 \section{应用面}
-% TODO
-\subsection{状态存储}
-% TODO
-\subsection{消息队列}
-% TODO
+本节将就\cref{fig:design-comp}中的每个组件分别讨论技术栈选型和设计实现的全部细节。
+
+在\cref{fig:design-comp}中，状态存储和消息队列两个组件和其他组件存在显著不同——它们都已经有了非常成熟的开源软件实现。
+对于状态存储，本文选用开源分布式强一致性键值数据库etcd作为实现，其对外提供了读取、写入、擦除、监控修改等等一系列功能，
+可以满足\cref{fig:design-comp}中对状态存储组件的要求。
+
+对于消息队列，本文选用基于Erlang语言的开源分布式消息队列RabbitMQ作为实现，其遵守AMQP协议，且对外提供了队列运行监控功能。
+通过将其内部结构配置成\cref{fig:design-comp-mq}所示的样子，就可以满足\cref{fig:design-comp}中对消息队列组件的要求。
+
 \subsection{文件存储}
-% TODO
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-storage-usecase.pdf}
+  \caption{文件存储组件的行为：UML用户用例图\label{fig:impl-storage-usecase}}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-storage-package.pdf}
+  \caption{文件存储组件的结构：UML包图\label{fig:impl-storage-package}}
+\end{figure}
+通过将\cref{fig:design-comp}中对文件存储组件的要求细化，可以得到\cref{fig:impl-storage-usecase}。
+具体来说，文件存储组件对外提供一套HTTP API，根据HTTP动词和URL来对硬盘上的指定资源进行指定操作，如上传、下载、移动等等。
+之所以要区分两种不同的上传，是因为需要对用户上传的仿真源文件进行重命名，使得文件名相同的文件内容相同，文件名不同的文件文件内容不同，
+以保证\cref{sec:design-wf}中提到的对Ansys结果的缓存可以正确工作。
+
+本文选取JavaScript语言进行程序编写，文件结构如\cref{fig:impl-storage-package}所示，其中主要文件的功能如下：
+\begin{description}
+  \item[logger.js] 将日志信息汇总至Logstash（见\cref{sec:impl-elk}）
+  \item[file/common.js] 判断文件名是否合法
+  \item[file/get.js] 响应GET请求，实现文件下载、列出文件夹内容、打包下载文件夹
+  \item[file/post.js] 响应POST请求，实现源文件上传、仿真结果上传
+  \item[file/put.js] 响应PUT请求，方便调试时上传文件
+  \item[utils/contentstream.js] 对HTTP PUT请求的内容进行解析
+  \item[utils/disk.js] 对用户上传的仿真源文件进行重命名
+\end{description}
+
 \subsection{工作流内核}
 % TODO
 \subsection{计算服务}
@@ -19,8 +54,14 @@
 % TODO
 \subsection{前置代理}
 % TODO
-\section{控制面}
+
+\section{控制面}\label{sec:impl-elk}
 % TODO
 \section{物理视图}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-deploy.pdf}
+  \caption{系统物理视图：UML部署图\label{fig:impl-deploy}}
+\end{figure}
 % TODO
 \end{document}
