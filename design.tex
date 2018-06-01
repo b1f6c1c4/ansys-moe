@@ -74,9 +74,21 @@
   \includegraphics{./figures/dist/design-petri1.pdf}
   \caption{系统流程视图：FL-Petri网（全局）\label{fig:design-petri1}}
 \end{figure}
-
-
-\Cref{ssec:bgo}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-petri2.pdf}
+  \caption{系统流程视图：FL-Petri网（求值过程）\label{fig:design-petri2}}
+\end{figure}
+虽然UML活动图较为直观，但在后期软件实现时异常繁琐，容易出错。
+本小节利用FL-Petri网的手段，将\cref{fig:design-activity}中的工作流重新建模，以方便\cref{sec:impl}中的具体实现。
+重新建模后的工作流模型如\cref{fig:design-petri1,fig:design-petri2}所示。
+该模型在建模过程重点参考了\cref{fig:petri-layer-each,fig:petri-layer-dep,fig:petri-layer-iter}所表示的常见工作流结构的FL-Petri网模型：
+\begin{itemize}
+  \item 不同分类同时开始，没有依赖关系，适用无依赖的“逐项”模型（见\cref{fig:petri-layer-each}）；
+  \item 同一分类中的贝叶斯优化过程互相之间没有依赖关系，但是一个完成之后会动态产生更多的，适用“迭代”模型（见\cref{fig:petri-layer-iter}）；
+  \item 每个数据点的求值过程中，几何参数、电参数、性能参数三个阶段的计算流程完全相同，采用L-Petri网中的“层”来简化模型表达（见\cref{fig:petri-layer}）；
+  \item 同一阶段中不同参数的计算中会有动态依赖关系，适用带有依赖的“逐项”模型（见\cref{fig:petri-layer-dep}）。
+\end{itemize}
 
 \section{开发视图：系统核心组件划分}\label{sec:design-comp}
 % TODO
