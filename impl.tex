@@ -117,7 +117,30 @@
 \end{description}
 
 \subsection{网站后端}
-% TODO
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-facade-usecase.pdf}
+  \caption{网站后端组件的行为：UML用户用例图\label{fig:impl-facade-usecase}}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-facade-package.pdf}
+  \caption{网站后端组件的结构：UML包图\label{fig:impl-facade-package}}
+\end{figure}
+
+通过将\cref{fig:design-comp}中对文件存储组件的要求细化，可以得到\cref{fig:impl-facade-usecase}。
+具体来说，网站后端组件对外提供一套基于GraphQL的API，以对系统进行管理和监控。
+
+本文选取JavaScript语言进行程序编写，目录结构如\cref{fig:impl-facade-package}所示，其中主要文件的功能如下：
+\begin{description}
+  \item[graphql/etcd.js] 读取当前状态
+  \item[graphql/subscription.js] 监控状态改变
+  \item[graphql/rabbit.js] 检查消息队列、清空消息队列
+  \item[graphql/control.js] 中止任务、彻底删除任务
+  \item[graphql/controller.js] 检查内核、重启内核
+  \item[graphql/core.js] 发布/修改任务
+\end{description}
+
 \subsection{网站前端}
 % TODO
 \subsection{前置代理}
