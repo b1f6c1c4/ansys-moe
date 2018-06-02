@@ -33,7 +33,7 @@
 之所以要区分两种不同的上传，是因为需要对用户上传的仿真源文件进行重命名，使得文件名相同的文件内容相同，文件名不同的文件文件内容不同，
 以保证\cref{sec:design-wf}中提到的对Ansys结果的缓存可以正确工作。
 
-本文选取JavaScript语言进行程序编写，文件结构如\cref{fig:impl-storage-package}所示，其中主要文件的功能如下：
+本文选取JavaScript语言进行程序编写，目录结构如\cref{fig:impl-storage-package}所示，其中主要文件的功能如下：
 \begin{description}
   \item[logger.js] 将日志信息汇总至Logstash（见\cref{sec:impl-elk}）
   \item[file/common.js] 判断文件名是否合法
@@ -45,7 +45,52 @@
 \end{description}
 
 \subsection{工作流内核}
-% TODO
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-controller-seq.pdf}
+  \caption{工作流内核组件的行为：UML序列图\label{fig:impl-controller-seq}}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-controller-package.pdf}
+  \caption{工作流内核组件的结构：UML包图\label{fig:impl-controller-package}}
+\end{figure}
+根据\cref{ssec:design-wf}中对工作流内核组件的描述，该组件虽然不对外提供服务，但内部却存在较为复杂的流程。
+为此，采用UML序列图而非UML用户用例图来对该组件的行为进行建模。
+\Cref{fig:impl-controller-seq}详细描述了工作流内核如何实现FL-Petri网的运行，其中的跳变表示FL-Petri网中的跳变，而非其翻译之后的L-Petri网的跳变。
+解释器在收到消息队列中的外部事件（其中注明了应尝试启功哪个外部跳变）以后，首先会为本次消息处理创建一个运行环境。
+运行环境中最重要的属性是Petri网名称（因为状态存储中不仅仅存储了一张Petri网）和当前跳变的层参数。
+随后，解释器通过运行环境检查当前跳变的输入是否满足（正常情况下由外部事件直接触发的外部跳变的输入应该满足，否则多是因为网络抖动等原因导致同一任务有多个应答）。
+若满足，则执行该外部跳变。在执行过程中，
+可以对数据库中不涉及状态的字段进行读写，以保存中间结果以供后续使用；
+可以向消息队列发布计算任务（对于简单的表达式计算，甚至可以直接发布计算结果）；
+还可以调用运行环境中相应的方法来设置跳变的输出（位置和层参数）。
+在跳变执行完毕以后，解释器检查运行环境中发生变化的F-Petri网位置，并尝试检查以之为输入的内部跳变的输入是否满足；
+若满足，则执行那些内部跳变。重复以上过程，直至所有F-Petri网中的跳变均不满足输入条件。
+最后，通知运行环境将上述所有修改批量写入数据库，并通知消息队列该事件已经妥善处理完毕。
+
+需要注意的是，该工作流内核并不是一个完整的FL-Petri网的模拟器（甚至也不是完整的Petri网模拟器）：
+\begin{itemize}
+  \item 无法处理对于没有输入弧的内部跳变
+  \item 无法处理多个内部跳变无限循环的情况
+  \item 无法正确处理多个跳变完全竞争的情形（在实现中为了简单起见，名字靠前的跳变会被执行）
+\end{itemize}
+然而，这些缺陷并不影响其作为工作流引擎——在本文所述系统的工作流\cref{fig:design-petri1,fig:design-petri2}中，以上三种情况根本不存在。
+
+本文选取JavaScript语言进行程序编写，目录结构如\cref{fig:impl-controller-package}所示，其中主要文件的功能如下：
+\begin{description}
+  \item[amqp.js] 消息队列驱动
+  \item[etcd.js, adapter.js] 数据库驱动
+  \item[core/global.js] 最外层的FL-Petri网跳变
+  \item[core/category.js] 分类层的FL-Petri网跳变中的初始化和收尾部分
+  \item[core/iter.js] 分类层的FL-Petri网跳变中的迭代部分
+  \item[core/eval.js] 求值层和参数层的FL-Petri网跳变中的参数计算部分
+  \item[core/ansys.js] 求值层的FL-Petri网跳变中的Ansys仿真部分
+  \item[petri/index.js] FL-Petri网解释器
+  \item[petri/path.js] 负责层参数的序列化和反序列化
+  \item[petri/runtime.js] 运行环境
+\end{description}
+
 \subsection{计算服务}
 % TODO
 \subsection{网站后端}
