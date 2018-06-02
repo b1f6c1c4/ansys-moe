@@ -142,9 +142,18 @@
 \end{description}
 
 \subsection{网站前端}
-% TODO
-\subsection{前置代理}
-% TODO
+由于前端组件的功能异常简单（从网站后端获取数据并显示，将用户的指令传送到后端），故无需对其行为进行建模。
+本文采用非常流行的React作为基础框架，采用Redux作为前端状态管理（保存用户当前访问的页面路径和填写中的表单），对网站前端进行程序编写。
+网站虚拟（并非在部署时的文件结构，而是从用户角度来看的URL结构）结构如下：
+\begin{description}
+  \item[/] 网站首页，包括项目简介
+  \item[/app] 控制面板，包括检查内核状态、检查消息队列、清空消息队列等功能
+  \item[/app/run] 发布/修改任务
+  \item[/app/upload] 上传仿真文件
+  \item[/app/p/:proj] 项目监控，包括中止任务、彻底删除任务等功能
+  \item[/app/p/:proj/cat/:cHash] 分类监控
+  \item[/app/p/:proj/cat/:cHash/d/:dHash] 求值监控，包括仿真结果下载等功能
+\end{description}
 
 \section{控制面}\label{sec:impl-elk}
 % TODO
