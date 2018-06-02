@@ -4,10 +4,10 @@
 本章将在\cref{sec:design}对系统的顶层设计的基础上，重点讨论每个组件的具体设计与实现细节，并介绍具体软件实现中所采用的技术栈。
 
 对于较为大型的软件系统，除了开发系统本身以外，还需要单独开发另一套系统，用以对实际系统进行时时刻刻的监控，以方便运维人员应对可能出现的异常情况。
-本章将先介绍自动化设计系统的本身（应用面，面向用户）的实现细节，再简要介绍内部监控系统（控制面，并不面向用户）的架构，
+本章将先介绍自动化设计系统的本身（应用面子系统，面向用户）的实现细节，再简要介绍内部监控系统（控制面子系统，并不面向用户）的架构，
 最后采用UML部署图画出整个系统的物理视图，讨论各个组件之间的通信方法，并描述整个系统的最终实现成果。
 
-\section{应用面}
+\section{应用面子系统的实现}
 本节将就\cref{fig:design-comp}中的每个组件分别讨论技术栈选型和设计实现的全部细节。
 
 在\cref{fig:design-comp}中，状态存储和消息队列两个组件和其他组件存在显著不同——它们都已经有了非常成熟的开源软件实现。
@@ -155,9 +155,20 @@
   \item[/app/p/:proj/cat/:cHash/d/:dHash] 求值监控，包括仿真结果下载等功能
 \end{description}
 
-\section{控制面}\label{sec:impl-elk}
-% TODO
-\section{物理视图}
+\section{控制面子系统的实现}\label{sec:impl-elk}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/impl-elk-comp.pdf}
+  \caption{控制面子系统的结构：UML组件图\label{fig:impl-elk-comp}}
+\end{figure}
+本文选取业界常用的ELK（Elasticsearch、Logstash、Kibana）作为系统监控、日志分析的解决方案，其结构如\cref{fig:impl-elk-comp}所示。
+ELK架构中的核心是分布式搜索和数据分析引擎Elasticsearch，对外提供数据存储和搜索功能。
+由于Elasticsearch只能处理结构化数据，故引入组件Logstash，将非结构化的日志信息进行预处理，再写入Elasticsearch中。
+对于RabbitMQ、nginx等不支持将日志输送到Logstash的程序，需要先将日志写入文件，再将文件实时上传至Logstash进行分析；这一工作可以由Filebeat组件完成。
+最后，Kibana组件提供了一套方便的基于Web的数据可视化控制面板，可以用图形界面非常直观地进行数据查询，以方便在系统出现问题后（尤其是横跨多个组件的疑难问题）进行调试诊断；
+Elastalert组件（不属于ELK架构）则会定时对一些关键系统运行指标进行检索，一旦发现异常，会及时通知系统运维人员，以实现异常报警的功能。
+
+\section{物理视图：最终方案}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-deploy.pdf}
