@@ -4,11 +4,11 @@ MK=latexmk -silent -use-make
 
 figures/dist/%.pdf: figures/%.xml
 	-mkdir figures\dist
-	node builder $< -o $@
+	drawio $< -o $@
 
 figures/dist/%.png: figures/%.xml
 	-mkdir figures\dist
-	node builder $< -o $@
+	drawio $< -o $@
 
 all: index.tex
 	$(MK) -pvc- $< & exit
