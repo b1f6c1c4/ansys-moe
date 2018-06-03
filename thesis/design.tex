@@ -1,0 +1,141 @@
+\documentclass[index]{subfiles}
+\begin{document}
+\chapter{自动化设计系统的设计}\label{sec:design}
+在\cref{sec:doebgo}中已经对贝叶斯优化算法的诸多方面的细节问题进行了讨论。
+然而，从算法本身到软件系统的过程又是一个相当不平凡的过程。
+本章和下一章将紧扣软件实现这一主题，对自动化设计系统进行全方位的建模与设计。
+
+经过上个世纪80至90年代软件工程领域的蓬勃发展，“4+1”视图模型\cite{kruchten1995}是在上个世纪90年代中叶被提出。
+其主张通过以下5个视图（View）来对复杂软件系统进行建模：
+\begin{description}
+  \item[逻辑（Logical）视图] 描述系统给用户提供何种功能
+  \item[流程（Process）视图] 描述工作流中的并发和同步
+  \item[开发（Development）视图] 描述开发过程中软件的静态组织关系
+  \item[物理（Physical）视图] 描述软件与硬件的映射关系
+  \item[场景（Scenario）视图] 基于某个用户用例（场景），展示以上四个视图如何配合
+\end{description}
+
+在该理论提出之初，各个视图普遍采用当时最为流行的Booch记号进行绘制，且一切基于当时非常看好的面向对象编程范式。
+虽然软件工程领域在其后二十年内沧海桑田，Booch记号早已淘汰，UML语言以其强大的表现力和规范化成为了软件模型的绝对标准，面向函数范式渐渐取代面向对象，
+但“4+1”视图的基本原理依然沿用至今，只不过普遍采用UML语言进行表达。
+
+本文考虑到自动化设计系统软件的特殊性——交互较少（提交任务以后基本无需干预），但工作流却异常复杂（执行非常复杂的算法），
+在“4+1”视图的基本思想指导下，选取其中部分视图对系统进行建模：
+\begin{description}
+  \item[逻辑视图] 采用UML用户用例图来描述系统给用户提供何种功能（\cref{sec:design-usecase}）
+  \item[（优化场景下的）流程视图] 采用UML活动图和FL-Petri网描述优化工作流中的并发和同步（\cref{sec:design-wf}）
+  \item[开发视图] 采用UML组件图描述开发过程中软件的静态组织关系（\cref{sec:design-comp}）
+  \item[物理视图] 采用UML部署图描述软件与硬件的映射关系（将在\cref{sec:impl}中讨论）
+\end{description}
+
+\section{逻辑视图：用户用例}\label{sec:design-usecase}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-usecase.pdf}
+  \caption{系统逻辑视图：UML用户用例图\label{fig:design-usecase}}
+\end{figure}
+自动化设计系统只有设计者一类用户。\Cref{fig:design-usecase}具体描述了系统可以给设计者提供的功能（用户用例）。
+
+\section{流程视图：贝叶斯优化算法的工作流建模}\label{sec:design-wf}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-activity.pdf}
+  \caption{系统流程视图：UML活动图\label{fig:design-activity}}
+\end{figure}
+本节将会仔细讨论\cref{fig:design-usecase}中的发布、中止、修改任务的工作流。
+
+\subsection{利用UML活动图初步建模工作流}
+在\cref{sec:fea}中指出，待优化的设计变量可能包括分类变量、离散变量和连续变量三种类型。
+对于分类变量，由于不同分类之间的结果没有任何可比性，故在工作流一开始应该先枚举所有分类变量的可能组合，为每种组合创建一个分类，并行执行各分类的工作流。
+
+每个分类对应着一个完整的贝叶斯优化算法。首先，根据\cref{ssec:bgo-init}的讨论结果，采用LHSMDU算法计算出$N_\mathrm{init}$组初始实验位置。
+随后同时开始各个位置的求值——依次计算几何参数、Ansys仿真、电参数、性能参数、目标函数，
+而在可以同一级参数中尽量并发执行。
+需要注意的是，若同一级参数中有互相依赖的情况（比如一个电参数依赖另外几个电参数），需要妥善进行处理。
+另外，如果同样参数的Ansys仿真已经执行过了一遍，那么可以直接利用上次的数据，避免重新计算。
+
+在任何一组实验求值完毕之后，根据\cref{ssec:bgo-acq}的讨论，应该计算下一步最佳求值位置。
+然而，在实际设计过程中，应该考察是否已经完成了$N_\mathrm{min}$组实验；若已经完成的实验太少，则不应该盲目开展新的迭代，以免浪费。
+需要注意的是，$N_\mathrm{min}$应该满足$N_\mathrm{min} \leq N_\mathrm{init}$的条件，否则永远无法开始迭代。
+
+本文采用的收敛条件有两个，任一满足即视作收敛：
+\begin{description}
+  \item[主动收敛] 若最佳收获函数（EPI的最大值）小于某个给定常数，表明无论在哪里选点都无法获得很高的目标函数性能提升，此时可以认为算法已经收敛。
+  \item[被动收敛] 若最佳实验位置处已经进行过实验，则表明样本空间已经探索殆尽，此时可以认为算法收敛。
+\end{description}
+
+在所有分类均收敛后，只需比较各分类的结果，找到全局最优即可。
+
+\Cref{fig:design-activity}利用UML活动图对发布任务的工作流进行了建模。
+需要注意的是，由于UML活动图并不能正确地表示动态分支结构（见\cref{sec:petri}中的讨论），
+\cref{fig:design-activity}中只画出了部分工作流。
+
+\subsection{利用FL-Petri网详细建模工作流}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-petri1.pdf}
+  \caption{系统流程视图：FL-Petri网（全局）\label{fig:design-petri1}}
+\end{figure}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-petri2.pdf}
+  \caption{系统流程视图：FL-Petri网（求值过程）\label{fig:design-petri2}}
+\end{figure}
+虽然UML活动图较为直观，但在后期软件实现时异常繁琐，容易出错。
+本小节利用FL-Petri网的手段，将\cref{fig:design-activity}中的工作流重新建模，以方便\cref{sec:impl}中的具体实现。
+重新建模后的工作流模型如\cref{fig:design-petri1,fig:design-petri2}所示。
+该模型在建模过程重点参考了\cref{fig:petri-layer-each,fig:petri-layer-dep,fig:petri-layer-iter}所表示的常见工作流结构的FL-Petri网模型：
+\begin{itemize}
+  \item 不同分类同时开始，没有依赖关系，适用无依赖的“逐项”模型（见\cref{fig:petri-layer-each}）；
+  \item 同一分类中的贝叶斯优化过程互相之间没有依赖关系，但是一个完成之后会动态产生更多的，适用“迭代”模型（见\cref{fig:petri-layer-iter}）；
+  \item 每个数据点的求值过程中，几何参数、电参数、性能参数三个阶段的计算流程完全相同，采用L-Petri网中的“层”来简化模型表达（见\cref{fig:petri-layer}）；
+  \item 同一阶段中不同参数的计算中会有动态依赖关系，适用带有依赖的“逐项”模型（见\cref{fig:petri-layer-dep}）。
+\end{itemize}
+
+至此，系统行为全部建模完毕，下一节开始设计系统结构。
+
+\section{开发视图：系统核心组件划分}\label{sec:design-comp}
+本节首先解决最复杂的工作流——发布设计任务——的组件划分，再讨论其他用户用例需要的组件，
+最后采用UML组件图的方式对上述划分建模。
+
+\subsection{优化工作流涉及的组件}\label{ssec:design-wf}
+由于优化设计工作流可能需要持续运行数天，故将工作流的执行状态单独保存在独立的组件——状态存储——中。
+该组件应该维护多个FL-Petri网（只包括位置的标记计数即可，无需保存跳变的信息），每个网对应一个设计任务的工作流FL-Petri网模型。
+
+调用Ansys程序执行仿真和其他语言的集成应交由独立的组件——计算服务——完成。
+该组件只负责启动其他程序、监控该程序运行、（在收到取消命令后）取消程序执行、返回程序运行结果，而无需参与具体应该执行什么代码。
+
+负责将上述两个组件协调起来的就是最重要也最为核心的组件——工作流内核。
+它根据外部发生的事件（如收到新任务、某个外部计算计算完毕），按照FL-Petri网跳变规则，修改状态存储中的状态，并调用计算服务开始下一批计算。
+需要注意的是，为了保证一个组件不至于过度复杂，它并不保证计算服务持续运行直到返回结果，而仅仅是启动计算。
+
+由于计算服务可能意外终止（如蓝屏、与其他组件断开网络连接等），直接由工作流内核启动计算服务会非常危险，极易使整个进入死锁（等待某个永远不会返回的计算任务的结果）。
+为此，添加消息队列组件作为两者的中介：
+工作流内核向消息队列发布计算任务/发布取消命令，并从中接收外部事件（新任务/计算结果）；
+计算服务从工作流内核中获取计算任务和任务取消命令。
+一旦某一个计算服务出现问题，那么消息队列将会把运行到了一半但尚未确认执行完毕的任务交给另一个计算服务执行。
+为了方便实现，在设计时本文遵循AMQP协议中对消息队列结构的规定，如\cref{fig:design-comp-mq}所示。
+
+\subsection{其他用户用例涉及的组件}
+本小节从\cref{fig:design-usecase}出发，为每个用户用例，添加相应的组件或复用之前的组件。
+\begin{description}
+  \item[监控系统状态] 考虑到系统的通用性，采用客户端/服务器（Client/Server）架构，添加网站前端、网站后端两个组件，
+    并允许网站后端监控消息队列的运行情况。
+  \item[上传仿真文件] 添加文件存储组件，并允许网站前端向文件存储中写入文件。
+  \item[中止任务、修改任务] 允许网站后端向消息队列中写入控制事件。
+  \item[监控任务进度] 允许网站后端读取状态存储中的数据。
+  \item[下载仿真结果] 计算服务应该将Ansys仿真结果上传至文件存储而非消息队列，以供工作流内核和网站前端从中读取文件。
+\end{description}
+
+\subsection{小结}
+综合上述组件划分，\cref{fig:design-comp}完整地描述了整个系统的结构，作为系统的开发视图。
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{整体结构\label{fig:design-comp}}
+    {\includegraphics{./figures/dist/design-comp.pdf}}\par
+  \subcaptionbox{消息队列组件内部结构\label{fig:design-comp-mq}}
+    {\includegraphics{./figures/dist/design-comp-mq.pdf}}
+  \caption{系统开发视图：UML组件图}
+\end{figure}
+
+\end{document}

@@ -1,0 +1,425 @@
+\documentclass[index]{subfiles}
+\begin{document}
+\chapter{从计算机实验设计到贝叶斯优化}\label{sec:doebgo}
+计算机实验设计\footnote{需要注意的是，本文中术语“计算机实验设计”指的是Design of Computer Experiments，即“计算机实验”的设计，并非利用计算机进行传统实验设计。}是20世纪末随着电子计算机的蓬勃发展而产生的新兴学科\cite{mckay1979}。
+计算机实验设计方法和思想的进展扩展了全局最优化问题的求解思路。
+本章将先分别回顾计算机实验设计和全局最优化两个学科独立发展的历史，
+再着重介绍两者的有机结合——贝叶斯优化算法的思想和实现细节。
+
+\section{计算机实验设计}
+虽然计算机实验设计与传统实验设计有着明显的差异，但两者还是有一些相似之处值得研究。
+为了引入计算机实验设计的概念，本节将会先介绍传统实验设计的基本方法，
+再介绍无模型的计算机实验设计方法，最后介绍统计模型计算机实验设计方法及其与全局最优化问题的联系。
+
+\subsection{传统实验设计方法的演进}
+实验设计（Design of Experiment）学科有着相当悠久的历史。
+为了研究不同因素对系统的影响，科学界和工业界人士通常都会对其进行实验：
+人为设置这些因素为特定的值，观察系统的输出结果，再对结果进行分析。
+如何选定这些值以方便分析、如何进行分析以减弱不可控因素造成的影响的学问也就构成了实验设计学科\cite{davies1954}。
+进行实验的目的一般有两类：判断某些因素的影响有无/强弱，和调整因素以提高系统性能。
+前者意味着实验完毕进行数据分析时会采用线性回归分析和方差分析，
+而后者意味着将会采用非线性回归分析或者更为复杂的手段，并经常意味着需要迭代多次实验。
+本小节将先介绍设计基本原则，再分别讨论方差分析和回归分析所对应的设计手段。
+
+\subsubsection{设计基本原则}
+实验设计领域经典教材~\inlinecite{montgomery}指出，为了对抗未知因素、提高实验结果的精度，（传统的）实验设计在进行设计时普遍遵循以下三大原则：
+\begin{description}
+  \item[随机化（Randomization）] 随机化可以将未知因素的影响控制在最小，以提高实验结果的可靠性。
+  \item[重复实验（Replication）] 重复实验可以可以提高实验结果的精度，还可以得到实验误差的估计。
+  \item[分块（Blocking）] 分块可以把不感兴趣的因素的影响和感兴趣的因素的影响抽离开，以得到正确的分析结果。
+\end{description}
+
+\subsubsection{方差分析对应的设计手段}
+由于方差分析不对变量做任何距离上的假设（所有变量都是分类变量），所以枚举变量所有可能的取值，也即阶乘设计（Factorial Design）方法，得到了最为广泛的应用。
+这种方法又叫正交表\cite{刘瑞江2010}：在保证平衡性（每个设计组合的观测数量相同）和正交性（任意两个设计组合在内积空间中正交）的基础上，
+展开感兴趣的变量（主要作用和低阶次要作用），折叠不感兴趣的变量（高阶次要作用），得到最终的设计方案。
+这种方法对于每个变量只有两个水平的情况非常合适，但在水平数量$\geq3$的情况下，正交表的计算异常困难。
+
+\subsubsection{回归分析对应的设计手段}\label{ssec:doe-reg}
+回归分析的基本假设是系统的输出$y$关于输入$x$满足这样的线性关系\cite{montgomery}：
+\begin{equation}\label{equ:doe-reg}
+  y = \beta_0 + \sum_{i=1}^{k} \beta_i x_i + \varepsilon
+\end{equation}
+特别需要注意的是，回归分析模型\cref{equ:doe-reg}中对误差项$\varepsilon$进行的假设是独立同分布假设。这种统计模型的计算非常简单，但建模能力较弱。
+\Cref{ssec:doe-gp}讨论的随机过程模型\cref{equ:doe-gp}中对误差项的假设是平稳高斯假设，比本节中的独立同分布要弱得多得多，因此\cref{equ:doe-gp}可以用来建模更为复杂的响应。
+
+\paragraph{最优设计（*-Optimal Design）}
+\Cref{equ:doe-reg}中有$k+1$个待估计参数：$\beta_0,\ldots,\beta_k$。由于对这些参数没有任何先验信息，我们此时只能采用最小二乘原则对其进行估计\cite{aguiar1995}：
+\begin{equation}\label{equ:doe-reg-sol}
+  \hat{\beta} = \left(X^T X\right)^{-1} X^T y
+\end{equation}
+其中$N\times k$矩阵$X$的每一行表示一组实验设计。
+
+为了提高估计精度，正定矩阵$X^T X$应越“大”越好\cite{triefenbach2008}。
+对于矩阵的“大小”没有一个绝对的标准，不同的标准会推导出不同的设计。最常用的标准包括：
+\begin{description}
+  \item[D最优] $X^T X$的行列式越大越好；
+  \item[A最优] $\left(X^T X\right)^{-1}$的迹越小越好；
+  \item[E最优] $X^T X$最小特征值越大越好；
+  \item[T最优] $X^T X$的迹越大越好；
+\end{description}
+更多标准（C、G、I、V最优等）可以参见文献\inlinecite{pukelsheim1993}。
+
+\paragraph{响应曲面方法（RSM, Response Surface Methodology）}
+迭代设计实验、进行实验、利用二次回归模型分析结果，以达到优化系统性能的方法称为RSM。
+与二次回归模型相匹配的实验设计方法包括CCD（Central Composite Design）和BBD（Box-Behnken Design）两种。
+它们都是针对二次回归模型特殊设计的方案：在中心位置进行多次重复采样，而在边沿位置只进行一次采样，用来提高回归精度\cite{montgomery}。
+虽然RSM是一个可行的优化算法，但它对于全局优化问题无能为力，只能解决局部优化问题。
+
+\subsection{计算机实验设计的诞生}
+计算机模型和实验源于对复杂自然现象的简化和模拟：通过建立计算机模型并求解，科学家可以避免进行复杂昂贵并且费时间的物理实验。
+由于计算机模型具有确定性、没有噪声因素等显著特点\footnote{大部分对计算机模型的讨论都限于讨论确定性（deterministic）计算机模型，也即同一模型接受相同输入所得到的输出应该没有偏差且严格相同。本文也将遵循这一约定。}，在设计计算机实验时的考虑将会和设计传统物理实验存在显著区别\cite{sacks1989}。
+传统实验设计的原则对于计算机实验设计来说反而成了累赘：不存在未知因素，多次实验只是浪费时间，不感兴趣变量也可以控制给予完全一样输入。
+相较之下，计算机实验设计还带来了新的挑战：很多程序的输入可以连续取值，而非只有正负两个水平。
+这导致了传统实验设计方法中最常用的阶乘设计方法完全无法使用，必须寻求新的设计方法。
+本小节借鉴文献~\inlinecite{pronzato2012}将计算机实验设计分为空间填充、无模型、有模型三大类的思路，
+重点介绍使用最为广泛的空间填充方法，对有模型方法作简要介绍，而把有模型方法单独放在下一小节（\cref{ssec:doe-gp}）中介绍。
+
+值得一提的是，完全随机抽样（也即均匀分布取点）也是一种实验设计方法，虽然在计算机实验设计的文献中大多将其忽略了。
+在\cref{ssec:bgo-init}中，这种方法将会与其他更“专业”的方法一同参与比较。
+
+\subsubsection{基于空间填充的计算机实验设计}
+关于这一系列问题研究最早可以追溯到1979年。
+文献~\inlinecite{mckay1979}比较了两种传统实验设计方法——完全随机抽样和分层抽样，并提出了一种新的方法——Latin Hypercube抽样（简称LHS）。
+为了在每个输入变量维度上都服从均匀分布，LHS方法先将每个输入变量的范围等分成$N$份，再从每份中均匀抽取一点。
+最后，随机打乱$N$组$k$维数据点，实现整个样本空间上的均匀分布。
+需要注意的是，每个维度上的分布均匀性是严格的，但样本空间上的均匀分布却是随机的，有一定概率会得到比较差的结果（比如排成一列的情况\cite{pronzato2012}）。
+关于Lh的改进包括文献~\inlinecite{tang1993,leary2003}提出的利用正交表思想结构来进行的改进，可谓是将传统实验设计与计算机实验设计进行了有机结合。
+
+除此之外，从空间填充入手进行实验设计的方法还有minimax和maximin方法\cite{johnson1990}。
+Minimax方法（简称mM）计算样本空间上的每个点到最近的实验点的距离，并尝试最小化这些距离的最大值；
+Maximin方法（简称Mm）计算所有实验点两两之间的距离，并尝试最大化这些距离的最小值。
+这两种方法虽然表示起来很简单，但实际计算起来非常复杂，尤其是mM，因为其需要计算遍历整个样本空间。在样本空间连续的情况下，计算mM尤为困难。
+文献~\inlinecite{pronzato2012}指出了mM和Mm法存在的致命缺陷：这两种方法虽然在整个样本空间上分布十分均匀，但投影到任意维度上都是非常差的实验设计。
+这与LHS的特性正好相反。
+
+关于上述方法的改进还有很多，比较有代表性的包括maximinLHS\cite{vandam2007}和LHSMDU\cite{deutsch2012}。
+文献~\inlinecite{deutsch2012}详细比较了完全随机抽样、LHS、maximinLHS、LHSMDU等方法，最终证明LHSMDU相较于其他方法有一定的优越性。
+
+\subsubsection{无模型计算机实验设计方法}
+鉴于mM和Mm方法在本质上不可微，文献~\inlinecite{pronzato2012}研究了$L_q$松弛方法，利用松弛参数$q$进行调节，
+将不可微的目标函数（包含$\max$和$\min$）用一簇可微函数来逼近。
+
+关于无模型的计算机实验设计方法还有很多，如基于信息论的熵方法、基于分布密度函数的核方法等等\cite{pronzato2012}。由于篇幅有限，本文将不再赘述这类方法。
+
+\subsection{统计模型的引入}\label{ssec:doe-gp}
+文献~\inlinecite{sacks1989}在详细分析总结了实际计算机模型和实验的基础上，创造性地提出了使用随机过程来对计算机模型二次建模的思路，并将其用在实验设计上。
+本小节将先详细介绍该方法所使用的随机过程模型——Kriging模型，再介绍如何利用该模型进行实验设计。
+
+\subsubsection{随机过程与Kriging模型}\label{sssec:doe-kriging}
+Kriging模型的基本假设是将关于自变量$x$的确定性实值函数$y(x)$视作关于$x$的随机过程$Y(x)$的一个实现。
+在计算机实验设计领域，最常用的随机过程是（带偏置的）高斯随机过程（Gaussian Process），即：
+\begin{equation}\label{equ:doe-kriging}
+  Y(x) = \beta_0 + Z(x)
+\end{equation}
+其中$\beta_0$是参数（需要估计），$Z(x)$是高斯随机过程：
+\begin{align}\label{equ:doe-gp}
+  \E{Z(x)} &= 0 \\
+  \Cov{Z(w)}{Z(x)} &= \sigma^2 R(w, x) = \sigma^2 R(x, w)
+\end{align}
+在实际情况下，一般还会把假设加强到$\sigma^2 R(w, x) = \sigma^2 R(w - x)$，也即$Z(x)$是平稳高斯随机过程。
+在\cref{sssec:doe-k-o}中将会用到这一假设，而在此处先按一般情况进行考虑。
+
+\paragraph{$R$已知，对待估计参数进行估计}
+假使$R(\cdot, \cdot)$已知，且在$x_1,\ldots,x_n$处已经完成了$n$组实验，得到实验结果$y_i=y(x_i)$。
+记$x_s=(x_1,\ldots,x_n)^T$，$y_s=(y_1,\ldots,y_n)^{T}$，其中s表示样本（Sample）。
+
+从高斯随机过程的定义出发，极易验证$Y(x_i)$的联合先验分布如下：
+\begin{equation}\label{equ:doe-kss-d}
+  \begin{bmatrix} Y(x_1) \\ \vdots \\ Y(x_n) \end{bmatrix}
+  \sim \Normal{
+    \begin{bmatrix} \beta_0 \\ \vdots \\ \beta_0 \end{bmatrix}
+  }{\sigma^2 K }
+\end{equation}
+式中
+\begin{equation}\label{equ:doe-kss}
+  K = \begin{bmatrix}
+    R(x_1, x_1) & \ldots & R(x_1, x_n) \\
+    \vdots & \ddots & \vdots \\
+    R(x_n, x_1) & \ldots & R(x_n, x_n)
+  \end{bmatrix}
+\end{equation}
+。注意到$K$每个位置的数值只与实验位置$x_s$和$R(\cdot, \cdot)$有关，与待估计参数$\beta_0,\sigma^2$、实验结果$y_s$均无关。
+
+由于$Y(x_i)$的先验分布已知，分布中待估计参数的先验分布未知，故采用极大似然法对分布参数进行估计。限于篇幅，此处直接给出估计结果\cite{sacks1989}：
+\begin{align}\label{equ:doe-par-est}
+  \hat{\beta_0} &= \frac{1}{n} \sum_{i=1}^{n} y_i \\
+  \hat{\sigma}^2 &= \frac{1}{n} (y_s - \beta_0)^T K_{ss}^{-1} (y_s - \beta_0)
+\end{align}
+
+\paragraph{$R$已知，对未实验位置的实验结果进行估计}
+Kriging模型最关键的部分在于，对没有做实验的位置，也能通过对其他位置的实验而获得信息。
+对于尚未进行实验的$x_\star$处，其所有的信息都反映在$Y(x_\star)$的后验（条件）分布上，只要求得分布便可对$y(x_\star)$进行估计。
+
+首先，计算$Y(x_\star),Y(x_1),\ldots,Y(x_n)$的联合先验分布：
+\begin{equation}\label{equ:doe-ks-d}
+  \begin{bmatrix} Y(x_\star) \\ Y(x_1) \\ \vdots \\ Y(x_n) \end{bmatrix}
+  \sim \Normal{
+    \begin{bmatrix} \beta_0 \\ \beta_0 \\ \vdots \\ \beta_0 \end{bmatrix}
+  }{\sigma^2
+    \begin{bmatrix}
+      1 & K_s^T \\
+      K_s & K
+    \end{bmatrix}
+  }
+\end{equation}
+式中
+\begin{equation}\label{equ:doe-ks}
+  K_s = \left(R(x_\star, x_1), \ldots, R(x_\star, x_n)\right)^T
+\end{equation}
+。
+通过对\cref{equ:doe-ks-d}中的协方差矩阵进行相合变换\cite{rasmussen2004}，就可以得到$Y(x_\star)$的后验分布：
+\begin{equation}\label{equ:doe-y}
+  Y(x_\star)|y_s \sim \Normal{\beta_0 + K_s^T K^{-1} (y_s - \beta_0 \one_n)}{\sigma^2 \left(1 - K_s^T K^{-1} K_s\right)}
+\end{equation}
+
+\paragraph{$R$未知情况的处理} 将在\cref{ssec:bgo-mdl}中介绍。
+
+\subsubsection{基于Kriging模型的最优设计}\label{sssec:doe-k-o}
+\Cref{sssec:doe-kriging}介绍了如何在给定$x_s$的情况下对整个样本空间中任意一点处的目标函数进行估计。
+为了更好地进行估计，调节$x_s$的过程也就是基于Kriging模型的实验设计\cite{pronzato2012}。
+不同的对估计有效性的衡量标准也就导出不同的最优实验设计：
+\begin{description}
+  \item[IMSE最优（Integrated Mean Squared Error-Optimal）]\cite{sacks1989} 最小化全样本空间内平方误差（也即后验分布的方差）的积分
+  \item[MMSE最优（Maximum Mean Squared Error-Optimal）]\cite{sacks1989} 最小化全样本空间内平方误差（也即后验分布的方差）的最大值
+\end{description}
+
+\subsection{小结}
+在三大类计算机实验设计方法中，基于Kriging模型的方法的理论基础和背景最为深厚、坚实。
+不幸的是，这一类方法都无法避开对随机过程自相关函数$R$的已知假设。
+克服这一难题的办法顺序实验设计（Sequential Design of Experiments）：
+先用空间填充或者无模型方法设计实验，获得数据后建立Kriging模型，
+再在Kriging模型基础上再次设计实验。
+
+然而，顺序实验设计的方法与本文的根本目的——优化——格格不入：
+对于优化工作流，在获得第一批实验数据以后，应该考虑的是在关键区域多做采样以获得性能提升，而不是在全样本空间内部署实验点。
+为此，本文空间填充实验设计中的最新方法之一——LHSMDU方法来初始化第一批实验点。
+
+需要特别指出的是，基于Kriging模型的实验设计并非一无是处。
+一方面，Kriging模型的提出和在计算机实验上的应用对全局优化算法的发展起到了关键性的作用（\cref{ssec:go-mdl}讨论优化算法时Kriging模型会再次出现），
+另一方面，对于波动较大、非常不规则的目标函数，在优化初始阶段利用Kriging模型进行顺序实验设计，可能会对避开局部最小值、提高可靠性有一定正面作用。
+
+\section{全局最优化}
+全局最优化（Global Optimization）问题指的是，对已知的确定性目标函数$f(x)$，
+给定自变量$x$的范围（通常为$\mathbb{R}^n$中高维矩形），求$x^\ast$使得$f(x^\ast)=\min f(x)$。
+随机化全局最优化方法（Stochastic Global Optimization）是解决全局最优化问题的最常见的一类方法，
+其通过在对问题的求解过程中引入或多或少的随机性（包括算法的随机性和模型的随机性），来（在概率意义下）保证收敛到全局最优解而非局部最优解。\cite{zhigljavsky2007}
+确定性全局最优化方法（Deterministic Global Optimization）与之相反，能够保证收敛到全局最优解；
+然而，这类方法对内部结构未知的“黑盒”（Black-box）函数却无能为力，这里面当然也包括本文的优化目标函数——计算机实验的结果。
+因此，本节将会把讨论局限在随机化全局最优化方法中，在简要介绍不使用代理模型的全局优化算法以后，着重介绍使用代理模型的全局优化算法。
+
+需要注意的是，由于本文要优化的对象——计算机实验的结果——每次进行计算都需要耗费相当长的时间，
+故在本节介绍不同算法的时候会着重说明一个方法是否适合这类（目标函数求值昂贵）的情况。
+
+\subsection{不使用代理模型的全局优化算法}
+在各种不使用代理模型的全局优化方法中，应用最为广泛的一类即是启发式（Heuristic）全局优化算法，如模拟退火、粒子群、遗传算法等等。
+这类方法总是去试图模仿自然界中的物理现象（并在算法过程中引入随机性）。
+然而，这类方法虽然在一些问题上取得了较好的效果，但理论基础并不坚实，其收敛性也大多没有数学保证，实际应用时很大程度上需要根据工程经验进行调参\cite{zhigljavsky2007}。
+更重要的是，这类方法无法应用在目标函数求值十分昂贵的问题上，因为自然界中“求值”是很快的，即便“迭代”盲目一些，通过大批量地进行求值还是能找到结果；
+而对于目标函数求值十分昂贵的优化问题，盲目迭代、多次求值显然是非常不合适的。
+
+另一大类不使用代理模型的的全局优化方法是（全局）随机搜索（Random Search）。
+第$j$次迭代时，先计算一个随机变量$P_j$的分布，再从中独立抽取若干个样本作为本次迭代的实验位置。
+在计算$P_j$时，一般会考虑之前几次（零次、一次或者多次）迭代的结果，以更好地选择本次迭代的实验位置。
+在诸多随机搜索算法中，比较有代表性的方法包括随机梯度搜索（Stochastic gradient search）、交叉熵方法（Cross-Entropy）等等\cite{zabinsky2009}。
+这类方法的最突出的特点在于其收敛性有严格的数学证明，而且对于目标函数的性质几乎没有任何要求\cite{zhigljavsky2007}。
+不过，与之而来的问题就是，收敛速度可能比启发式算法更为缓慢，和启发式算法同样并不适合直接求解目标函数求值昂贵的优化问题。
+
+值得一提的是，以上两类方法对于计算机实验并非一无是处，相反还非常重要：
+使用代理模型的全局优化算法的本质是，以进一步提高目标函数复杂性的代价，将目标函数求值昂贵的全局优化问题（原问题）转化为目标函数求值不昂贵的全局优化问题（子问题）。
+在求解子问题时，依然要使用某一种全局优化算法；在这时候，不使用代理模型的全局优化算法就有了用武之地。
+\Cref{ssec:bgo-sub}中将会详细讨论优化子问题的求解。
+由于相关领域的研究已经非常丰富，且本文对相关算法并未作任何扩展和调参，限于篇幅，本文对随机搜索算法讨论将会仅仅停留在介绍的层次。
+
+\subsection{使用代理模型的全局优化算法}\label{ssec:go-mdl}
+\paragraph{代理模型的分类}
+统计模型在全局优化有着广泛的应用。代理模型（Surrogate Model）的提出是为了减少对（确定性）目标函数求值的次数，而将目标函数视作某个随机过程的某一实现。
+使用代理模型求解全局最优化问题的方法，称为贝叶斯全局最优化（Bayesian Global Optimization），亦可简称贝叶斯优化（Bayesian Optimization）。
+根据其采用的代理随机过程模型的特点，可以分为两大类：
+\begin{description}
+  \item[参数化（Parametric）贝叶斯优化] 代理模型包含未知参数，且算法考虑未知参数的不确定性
+  \item[非参数化（Nonparametric）贝叶斯优化] 代理模型不包含未知参数，或者不考虑未知参数的不确定性
+\end{description}
+
+参数化贝叶斯优化中，最简单最常见的代理模型即是贝塔-伯努利赌徒模型（Beta-Bernoulli Bandit Model）：
+每台老虎机的产出服从参数为产出率的伯努利分布，而未知参数——产出率——的先验分布为贝塔分布。
+每次抽样获取新的数据以后，重新计算未知参数的后验分布，以调整下一步的决策。\cite{shahriari2016}
+
+参数化贝叶斯优化模型虽然灵活多变，不过却有着计算复杂、模型复杂的缺点。
+相比之下，非参数化贝叶斯优化模型虽然表达能力有限，但却因为模型简单、计算方便等巨大优势而取得了广泛的应用。
+在本文中，除非特殊说明，“贝叶斯优化”仅指“非参数化贝叶斯优化”。
+
+\paragraph{基于Kriging模型的贝叶斯优化}
+\cref{sssec:doe-kriging}中已经详细介绍了Kriging模型，如\cref{equ:doe-kriging}所示。
+在自相关函数$R$、均值$\beta_0$、方差$\sigma^2$均为已知的情况下，
+可以利用\cref{equ:doe-y}计算样本空间中任意位置目标函数服从的后验分布。
+贝叶斯优化的核心思想就是，在每次迭代时，利用样本空间各个位置目标函数服从的后验分布，以此判断对样本空间中哪（些）个位置进行实验能够取得最大的性能提升。
+至于如何基于目标函数的概率分布衡量性能提升的大小，\cref{ssec:bgo-acq}中将会详细讨论。
+需要注意的是，判断下一步应该在哪（些）位置进行实验的过程（子问题）实际上也是一个全局优化问题——只不过这类问题的目标函数求值并不昂贵，可以采用很多方法解决。
+\Cref{ssec:bgo-sub}将会详细讨论如何解决该子问题。\cite{shahriari2016}
+
+值得一提的是，在实际优化工作流中，自相关函数$R$、均值$\beta_0$、方差$\sigma^2$未知，此时根本无从开展优化。
+针对这一问题，本文采用的方法是，在第一次迭代之前，使用计算机实验设计方法（而非全局最优化方法）获得若干组数据；
+后续迭代时，利用之前若干组实验数据，对所有未知参数进行估计（只进行点估计；为了简便起见，也不考虑估计的不确定度），再利用\cref{equ:doe-y}进行计算。
+\Cref{ssec:bgo-mdl}中将会详细讨论如何对上述参数进行估计。
+
+\subsection{小结}
+对于目标函数求值并不昂贵的全局优化问题，可以采用确定性全局优化算法、启发式随机化全局优化算法、全局随机搜索算法等。
+对于目标函数求值昂贵（如耗时的计算机实验甚至物理实验）的全局优化问题，普遍采用代理模型方法，将困难问题（目标函数求值昂贵）转化为简单问题（目标函数求值简单），
+再通过前述方法进行求解。
+
+\section{贝叶斯优化算法的细节}\label{ssec:bgo}
+在\Cref{ssec:go-mdl}引出了解决目标函数求值昂贵的优化问题的利器——（非参数化）贝叶斯优化算法后，
+本节将会对该算法的具体细节进行讨论，以细化描述本文所采用的算法。
+至于算法在实现方面的更为细致的考虑（如优化工作流、预处理、调参等等），将会在\cref{sec:design}中讨论。
+
+\subsection{统计模型及其参数估计}\label{ssec:bgo-mdl}
+在Kriging模型\cref{equ:doe-kriging}中，自相关函数$R(\cdot,\cdot)$可以是任意对称实值二元函数，给参数估计带来了很大困难。
+而可以用来对模型进行估计的数据又异常稀少——只有寥寥几个点处的目标函数值。
+为此，需要对其加以很强的假设，才能成功对其进行估计。
+
+首先，为了估计方便，对Kriging模型\cref{equ:doe-kriging}中的高斯随机过程$Z(x)$加以平稳假设：
+\begin{align}\label{equ:bgo-gp}
+  \E{Z(x)} &= 0 \\
+  \Cov{Z(w)}{Z(x)} &= \sigma^2 R(w, x) = \sigma^2 R(w - x)
+\end{align}
+这样，只需在所有一元实值偶函数的空间内进行估计即可。
+
+其次，前人已经提出了若干常用的核函数族（每个函数族包括有限数量个待定参数）专门用于高斯随机过程的拟合与估计。
+本文采用最为广泛应用的各向异性（Anisotropy）的指数核和马特恩核（Met\'{e}rn Kernel）两族函数对平稳高斯随机过程的自相关函数进行拟合。
+各向异性指的是不同方向上自相关函数并不相同，具体数学表达为：
+\begin{equation}\label{equ:bgo-ansi}
+  R(w - x) = C\!\left(\sqrt{\textstyle \sum_{i=1}^{k}\theta_i \left| w_i - x_i \right|^2}\right)
+\end{equation}
+其中$k$是$w$和$x$的维度，$\theta_1,\ldots,\theta_k>0$是待估计参数，$C$是核。
+指数核定义如下：
+\begin{equation}\label{equ:bgo-exp}
+  C(\delta) = \exp -\delta^2
+\end{equation}
+马特恩核定义如下：
+\begin{equation}\label{equ:bgo-matern}
+  C_\nu(\delta) = \frac{2^{1-\nu}}{\Gamma(\nu)} \left(\sqrt{2\nu} d\right)^\nu K_\nu\!\left(\sqrt{2\nu} d\right)
+\end{equation}
+其中$\nu$用来调节连续程度，一般会提前给定；$K_\nu$为第二类贝塞尔函数。
+
+为了方便起见，本文采用R语言GPfit包\cite{macdonald2015}从实验数据中估计高斯过程的三类参数：
+自相关函数的参数（$\theta_1,\ldots,\theta_k$）、均值$\beta_0$、方差$\sigma^2$。
+
+\subsection{收获函数与并行性}\label{ssec:bgo-acq}
+\paragraph{收获函数}
+在获得了$R,\beta_0,\sigma^2$以后，便可利用\cref{equ:doe-y}计算任意位置$x_\star$处目标函数（的代理模型）$Y(x_\star)|y_s$的后验分布$\mathcal{D}$。
+收获函数（Acquisition Function）是用来判断在$x_\star$处实验是否值得的函数，通常由$\mathcal{D}$计算得来，并与当前实验结果有关。
+收获函数越大表示在该处进行实验越好。
+以最小化目标函数为例，设当前目标函数的最小值为$\tau$，几种最常见的收获函数包括：
+\begin{description}
+  \item[PI] 获得提升的概率，即$\Pr{Y(x_\star) < \tau|y_s}$
+  \item[$\mathbf{EI}^n$] 提升的期望，即$\E{\max\{\tau - Y(x_\star), 0\}^{n}|y_s}$
+  \item[UCB] 置信区间的上界，即$\mathcal{D}$的\SI{97.5}{\percent}分位点
+\end{description}
+除此之外，综述~\inlinecite{shahriari2016}还介绍了若干种基于信息论的方法，如TS、ES、PES等；由于此类方法不易实现并行化，故本文对其不再赘述。
+文献~\inlinecite{morar2017}对比了$\mathrm{EI}$和$\mathrm{EI}^2$两种收获函数，发现绝大多数情况下$\mathrm{EI}$的收敛速度都比$\mathrm{EI}^2$要快；
+为此，本文在$\mathrm{EI}^{n}$函数族中将只考虑$\mathrm{EI}$。
+值得一提的是，以上三种收获函数都存在简单的闭式解，可以用正态分布的累积分布函数$\Phi$及其反函数$\Phi^{-1}$来表达。
+
+\paragraph{并行性}
+对于最传统的顺序实验设计和贝叶斯优化算法，实验之间是依次进行的，一次迭代只包含一组实验，完成之后再开始下一次迭代。
+然而，随着计算能力的提高，同时进行多组实验是完全可能的，也就意味着一次迭代包含多组实验；
+更进一步，如果这多组实验中的一部分已经完成，另一部分尚未完成，那么下一次迭代可以提前开始，以尽量少浪费实验设备的等待时间。
+本文统一以上几种情况进行，作如下规定：
+\begin{itemize}
+  \item 无论如何，最多同时进行$N_\mathrm{con}$组实验
+  \item 一次迭代正好包含一组实验
+  \item 任何一组迭代完成之后，重复以下过程直至有$N_\mathrm{con}$组实验正在进行：
+  \begin{enumerate}
+    \item 基于现有的所有实验数据，进行高斯过程的参数估计；
+    \item 考虑已完成和进行中的所有实验，计算下一步最佳实验位置$x_\star$；
+    \item 在$x_\star$处开始一个新迭代。
+  \end{enumerate}
+\end{itemize}
+
+记进行中实验位置为$x_\ast=\{x_{\ast 1},\ldots,x_{\ast p}\}$。
+关于如何处理进行中实验，有以下几种方法：
+\begin{description}
+  \item[Constant liar] 选取固定常数$L$，将正在进行的实验结果强行视作$L$，再选用前述任何一种收获函数进行计算
+  \item[Kriging believer] 将$x_{\ast i}$处的实验结果强行视作$\E{Y(x_{\ast i})}$，再选用前述任何一种收获函数进行计算
+  \item[IEI] 在$\mathbb{R}^p$中按$Y(x_{\ast i})$的概率密度函数加权，对前述任何一种收获函数（通常是EI）进行积分\cite{snoek2013}
+  \item[EPI] 用$Y(x_{\ast i})$和$Y(x_\star)$的最小值取代收获函数EI中的$Y(x_\star)$：\cite{clark2012}
+  \begin{equation}\label{equ:bgo-epi}
+    \E{\max\!\left\{\tau - \min\{Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})\}, 0\right\}{\big|}y_s}
+  \end{equation}
+\end{description}
+除此之外，还有文献~\inlinecite{desautels2014}介绍的GP-UCB系列方法等等。
+遗憾的是，罕有文献对以上所有并行收获函数进行横向对比研究。因此，本文选取其中计算最为方便（但又不像前两者那样过于简陋）的EPI方法作为收获函数。
+
+\Cref{equ:bgo-epi}中的期望虽然相比IEI在计算上更简单，但依然并不很容易求得。
+首先，我们需要计算$Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})$的联合后验分布$\mathcal{D}^\dag$。
+与\cref{sssec:doe-kriging}中的计算类似，先计算$Y(x_\star) Y(x_{\ast 1}),\ldots,Y(x_{\ast p}),Y(x_1),\ldots,Y(x_n)$的联合先验分布：
+\begin{equation}\label{equ:bgo-kss-d}
+  \begin{bmatrix} Y(x_\star) \\ Y(x_{\ast 1}) \\ \vdots \\ Y(x_{\ast p}) \\ Y(x_1) \\ \vdots \\ Y(x_n) \end{bmatrix}
+  \sim \Normal{
+    \begin{bmatrix} \beta_0 \\ \beta_0 \\ \vdots \\ \beta_0 \\ \beta_0 \\ \vdots \\ \beta_0 \end{bmatrix}
+  }{\sigma^2
+    \begin{bmatrix}
+      K_{ss} & K_s^T \\
+      K_s & K
+    \end{bmatrix}
+  }
+\end{equation}
+式中$K$与\cref{equ:doe-kss}一致，而$K_s$和$K_{ss}$如下：
+\begin{align}\label{equ:bgo-kss}
+  K_s &= \begin{bmatrix}
+    R(x_\star, x_1) & R(x_{\ast 1}, x_1) & \ldots & R(x_{\ast p}, x_1) \\
+    \vdots & \vdots & \ddots & \vdots \\
+    R(x_\star, x_n) & R(x_{\ast 1}, x_n) & \ldots & R(x_{\ast p}, x_n)
+  \end{bmatrix} \\
+  K_{ss} &= \begin{bmatrix}
+    R(x_\star, x_\star) & R(x_{\ast 1}, x_\star) & \ldots & R(x_{\ast p}, x_\star) \\
+    R(x_\star, x_{\ast 1}) & R(x_{\ast 1}, x_{\ast 1}) & \ldots & R(x_{\ast p}, x_{\ast 1}) \\
+    \vdots & \vdots & \ddots & \vdots \\
+    R(x_\star, x_{\ast p}) & R(x_{\ast 1}, x_{\ast p}) & \ldots & R(x_{\ast p}, x_{\ast p})
+  \end{bmatrix}
+\end{align}
+其中$R$应参照\cref{equ:bgo-ansi}和高斯过程参数估计的结果来计算。
+同样，对\cref{equ:bgo-kss-d}中的协方差矩阵进行相合变换\cite{clark2012}，
+就可以得到$Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})$的联合后验分布$\mathcal{D}^\dag$：
+\begin{equation}\label{equ:doe-y}
+  Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})|y_s \sim
+    \Normal{\beta_0 + K_s^T K^{-1} (y_s - \beta_0 \one_n)}{\sigma^2 \left(K_{ss} - K_s^T K^{-1} K_s\right)}
+\end{equation}
+
+然而，即便得到了联合后验分布$\mathcal{D}^\dag$，即便联合后验分布是非常常见的多元正态分布，\cref{equ:bgo-epi}中的数学期望依然没有闭式解。
+EPI方法的提出者对\cref{equ:bgo-epi}的具体计算方式给出的回答是蒙特卡洛模拟\cite{clark2012}：
+从$\mathcal{D}^\dag$中独立随机抽取若干样本$\left(y_\star^k, y_{\ast 1}^k,\ldots,y_{\ast p}^k\right), k=1,\ldots,N_\mathrm{mc}$，并计算：
+\begin{align}\label{equ:bgo-mc}
+  \alpha^k &= \max\!\left\{\tau - \min\{y_\star^k, y_{\ast 1}^k,\ldots,y_{\ast p}^k\}\right\} \\
+  \alpha &= \frac{1}{n}\sum_{k=1}^{N_\mathrm{mc}}\alpha^k
+\end{align}
+在本文中，为了避免每次模拟得到的结果不同，采用拟随机序列（Quasi-random sequence）而非随机序列来从$\mathcal{D}^\dag$中抽样。
+
+\subsection{初始化}\label{ssec:bgo-init}
+\Cref{ssec:go-mdl}中已经提到，第一次迭代时需要通过贝叶斯优化以外的方法选取实验位置，而选取的办法可以在计算机实验设计方法中自由选择。
+文献~\inlinecite{morar2017}从贝叶斯优化的角度对比了完全随机抽样和LHS两种方法，并认为LHS相比完全随机抽样更有优势。
+再结合文献~\inlinecite{deutsch2012}从实验设计角度对各种LHS方法的扩展的讨论，本文最终采用LHSMDU方法对贝叶斯优化进行初始化。
+
+\subsection{子优化问题的求解}\label{ssec:bgo-sub}
+虽然贝叶斯优化算法通过收获函数将复杂的全局优化问题转换为了简单的全局优化问题，但这个简单的问题却并不是一个平凡的问题——对子问题的求解依然有很多值得讨论的地方。
+理论上讲，任何不采用代理模型的随机化全局最优化方法都可以用来尝试解决子问题，
+不过也有文献提出了专门用于处理贝叶斯优化子问题的SOO方法\cite{munos2011}。
+
+本文考虑到算法本身的成熟度、是否有开源成熟的软件实现等因素，再加上子问题的性质（样本空间离散，见\cref{sec:fea-discrete}的讨论），
+选择了交叉熵方法的R语言实现——CEOptim包\cite{benham2015}求解贝叶斯优化子问题。
+
+\section{小结}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/doebgo-summary.pdf}
+  \caption{实验设计与全局最优化方法概览\label{fig:doebgo-summary}}
+\end{figure}
+本章讨论了实验设计和全局最优化两门学科的独立发展和部分联合——Kriging模型的提出既扩展了计算机实验设计的思路，也（作为代理模型）大大扩展了随机化全局最优化算法。
+\Cref{fig:doebgo-summary}简要描述了本章中提到的重要概念（具体方法，用圆角矩形表示，某一类方法或问题用矩形表示）
+及其联系（实线箭头表示扩展；虚线箭头表示一类问题的求解用到了另一类方法；点线表示两类方法衍生自同一模型）。
+传统实验设计中的最优设计需要使用最优化方法辅助求解，而贝叶斯优化需要使用计算机实验设计方法进行初始化；
+贝叶斯优化方法的子问题又需要采用另外的全局最优化方法求解。
+可以见到，实验设计与全局最优化两门学科有着松散却又不可忽略的联系。
+
+\end{document}

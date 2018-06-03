@@ -1,0 +1,251 @@
+\documentclass[index]{subfiles}
+\begin{document}
+\chapter{并发工作流的建模：UML活动图与Petri网}\label{sec:petri}
+统一建模语言（Unified Modeling Language, UML）为架构师、软件工程师和软件开发者提供了一套分析、设计、实现
+软件系统的工具，这套工具也能建模商业流程和其他类似的流程\cite{omg}。
+
+Petri网理论（Petri net throey）最早可以追溯到1962年\cite{petri1962}。
+Petri网可以对包含多个组件的复杂系统进行建模，还可以建模组件之间的并发/并行和同步等等场景\cite{peterson1981}。
+当然，它也可以用来建模商业流程等工作流\cite{ellis1993}。
+
+虽然两类工具都能对简单的工作流进行建模，但它们的各自的固有缺陷却任何一种工具在建模工作流时都比较麻烦。
+更为致命的是，优化设计的工作流非常为复杂，而上述两种工具的表达能力尚且不足以表达这样的工作流（详见\cref{sec:design-wf}）。
+为此，本章将先分别介绍这两种建模工具的基础，再在Petri网的基础之上，结合两者的优点，提出F-Petri网的概念，使其模型更为易用、可读。
+最后，本文提出了L-Petri网的概念，扩展了Petri网的建模能力，使其能够建模复杂的并行优化问题。
+
+\section{UML活动图}
+\subsection{定义}
+根据统一建模语言标准文档~\inlinecite{omg}，活动图（Activity Diagram）中主要包括以下几种元素（限于篇幅，本文后续建模过程中没有用到的元素恕不一一列出）：
+\begin{description}
+  \item[活动（Activity）] 建模系统的复杂行为，包括一系列用控制流互相连接的节点
+  \item[节点（Node）] 建模系统行为中的某一步操作，具体分为以下几种：
+  \begin{description}
+    \item[初始（Initial）] 标识工作流开始位置
+    \item[终止（Final）] 标识工作流结束位置
+    \item[分支（Fork）] 同时开始多个并发的工作流
+    \item[同步（Join）] 多个工作流全部完成之后再继续后面的工作流
+    \item[汇合（Merge）] 任意一个工作流完成之后都会执行一次后面的工作流
+    \item[条件（Decision）] 判断一组条件是否满足，根据结果执行不同的工作流
+    \item[动作（Action）] 一项具体行为——接受输入产生输出
+  \end{description}
+  \item[控制流（Control Flow）] 建模各项操作之间的执行次序
+\end{description}
+
+\subsection{例子}
+为了便于理解，尤其是分清同步节点和汇合节点，本节给出一个UML活动图的示例，如\cref{fig:petri-act}所示。
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{UML活动图\label{fig:petri-act-example}}
+    {\includegraphics{./figures/dist/petri-act-example.pdf}}\par
+  \subcaptionbox{分支与同步\label{fig:petri-act-seq1}}
+    {\includegraphics{./figures/dist/petri-act-seq1.pdf}}
+  \hspace{10em}
+  \subcaptionbox{分支与汇合\label{fig:petri-act-seq2}}
+    {\includegraphics{./figures/dist/petri-act-seq2.pdf}}
+  \caption{UML活动图示例\label{fig:petri-act}}
+\end{figure}
+
+\Cref{fig:petri-act-example}使用UML语言描述了一个活动的内部结构：由若干控制流连接的7个动作节点和若干控制节点。
+该活动用自然语言表示如下：
+\begin{itemize}
+  \item 活动开始后，执行动作0；
+  \item 动作0执行完毕后，判断条件1是否满足：
+  \item 如果条件1满足，执行如下操作（参见\cref{fig:petri-act-seq1}）：
+  \begin{itemize}
+    \item 同时执行动作1和动作2；
+    \item 当动作1和动作2都执行完毕后，执行动作3；
+    \item 动作3执行完毕后，活动立即终止，不论是否还有未完成的动作。
+  \end{itemize}
+  \item 如果条件1不满足，执行如下操作（参见\cref{fig:petri-act-seq2}）：
+  \begin{itemize}
+    \item 同时执行动作4和动作5；
+    \item 动作4执行完毕后，执行动作6（不论其是否执行过）；
+    \item 动作5执行完毕后，执行动作6（不论其是否执行过）；
+    \item 动作6执行完毕后，活动立即终止，不论是否还有未完成的动作。
+  \end{itemize}
+\end{itemize}
+
+可见，同步节点保证了后续动作只会执行一次，适用于等待所有计算结果齐全的情况；
+而汇合节点会立即执行后续的动作，配合条件节点使用时非常合适。
+需要注意的是，如果条件节点配和同步节点使用，那么活动会永远卡在同步节点处，因为只有一个分支会被执行，同步节点永远不会等到所有分支全部执行完毕的情况。
+另外，汇合节点并非竞争结构（任意一个动作执行结束以后开始执行后续动作，但后续动作只会执行一次）。
+
+\section{Petri网}
+\subsection{定义}
+由于本文的目的是利用Petri网对工作流进行建模，故这里不再用数学语言赘述Petri网的形式化定义。
+遵照Petri网领域的重要专著~\inlinecite{peterson1981}，Petri网为有限个互相连接的以下几类元素：
+\begin{description}
+  \item[标记（Token）] 没有任何属性的、不可区分的对象
+  \item[位置（Place）] 包含若干个标记，建模系统的状态
+  \item[跳变（Transition）] 建模系统的原子动作
+  \item[输入弧（Input Arc）] 连接一个位置和一个跳变：跳变发生时，这个位置的标记数目减$n$（若该位置标记数$<n$，跳变不能发生）
+  \item[输出弧（Output Arc）] 连接一个位置和一个跳变：跳变发生时，这个位置的标记数目加$n$
+\end{description}
+其中每一个输入弧和输出弧都可以具有自己的重数$n\in\mathbb{N}, n\geq1$。如未特别说明，重数默认为1。
+
+\subsection{例子}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-raw-example.pdf}
+  \caption{Petri网示例\label{fig:petri-raw}}
+\end{figure}
+\Cref{fig:petri-raw}描绘了同一个Petri网的6种不同状态（更多状态并未画出），并标出了（在跳变发生时）这6种状态之间的互相转换关系。。
+对于传统的Petri网，位置、跳变、弧是固定的，而每个位置的标记数决定了该Petri网所处的状态。
+每个输入弧所连接的位置都有标记时，跳变即可发生。
+跳变发生时，从输入位置删除固定数量的标记，并在输出位置添加固定数量的标记。
+如果有不止一个跳变满足发生条件，那么哪个跳变会发生是任意的（见\cref{fig:petri-raw}中状态$(3,1,1)$或$(1,2,2)$的例子）。
+需要注意的是，虽然位置和跳变只有有限个，但Petri网却有无限种状态（包含零个位置的平凡Petri网不在考虑范围之内），
+这意味着Petri网相比有限状态机拥有更为强大的建模能力。
+
+\subsection{常见结构}
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{顺序结构\label{fig:petri-raw-seq}}
+    {\includegraphics{./figures/dist/petri-raw-seq.pdf}}
+  \hspace{1em}
+  \subcaptionbox{分支结构\label{fig:petri-raw-fork}}
+    {\includegraphics{./figures/dist/petri-raw-fork.pdf}}\par
+  \subcaptionbox{消息队列（省略了UML活动图模型）\label{fig:petri-raw-queue}}
+    {\includegraphics{./figures/dist/petri-raw-queue.pdf}}
+  \caption{使用UML活动图和Petri网对常见系统结构进行建模}
+\end{figure}
+Petri网的一个重要的特点在于其擅长对多组件并发系统进行建模。
+本小节将给出一些常见的并发结构的Petri网模型，并对其中部分结构附以UML活动图的等价模型，以为后续大型系统的建模进行铺垫。
+
+\Cref{fig:petri-raw-seq}给出了Petri网对顺序结构的建模：动作1执行结束之后执行动作2。
+需要注意的是，最上方的跳变没有输入，意味着任何时候都有可能发生，这正好标志着用户可能在任何时候输入数据。
+
+\Cref{fig:petri-raw-fork}给出了Petri网对分支-同步结构的建模：动作1和动作2可以以任何顺序执行。
+
+\Cref{fig:petri-raw-queue}则使用Petri网对消息队列的建模。
+由于UML活动图对这种结构的建模需要使用更复杂的节点（Send Signal Action，详见UML标准~\inlinecite{omg}），本文此处忽略UML活动图模型。
+用方框标出的部分代表工作者，可以同时存在任意多个；工作者的数目正好等于系统最多能够处理消息的数量。
+注意到每个工作者实际上是一个有限状态机，因此\cref{fig:petri-raw-queue}还提示了如何用Petri网对有限状态机进行建模。
+
+除了以上三种，常见的并发结构还包括异步（Asynchronous）、竞争（Race）、冲突（Conflict）、条件（Decision/Condition）等等。
+下一小节将会详细讲解条件结构，而其他结构由于在本文后续建模过程中并没有用到，故不再赘述。感兴趣的读者可以参阅文献~\inlinecite{peterson1981}。
+
+\section{条件结构与F-Petri网}
+虽然Petri网用异常简单的规则就获得了对并发性的非常强大的表达与建模能力，但其对条件结构的支持实在差强人意\cite{peterson1981}。
+零输入弧（Inhibitor Arc）的引入\cite{keller1972}在保证了Petri网良定义的数学性质的情况下，从本质上提高了Petri网的建模能力。
+然而，作为工作流建模工具，带零输入弧的Petri网对一些稍复杂的条件结构表示起来相当复杂，为了严谨性而失去了直观性。
+本文尝试将建模条件结构最常见、最方便、最直观的工具——流程图\cite{gilbreth1921}嵌入Petri网。
+
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-flow-example.pdf}
+  \caption{F-Petri网示例\label{fig:petri-flow}}
+\end{figure}
+
+\Cref{fig:petri-flow}给出了将流程图嵌入Petri网的方法——每个跳变设多个输入组和输出组，并在中间嵌入简化版的UML活动图。
+输入弧不再直接连接到跳变，而是连接到某一个输入组或者某一个输出组；
+输出弧也不再直接连接到跳变，而是连接到某一个输出弧。
+活动图不单设初始和终止节点，而把跳变的输入组视作初始节点、把输出组视作终止节点。
+为了保证跳变的原子性，活动图中只能包括条件节点和汇合节点，而不能包括动作节点。
+在执行时，一旦某个输入组的前置条件满足（组内输入位置标记数足够），则从此处进入活动图，判断各种条件，直到找到某一输出组
+（由于活动图内部没有分支节点，不可能同时到达两个或或者更多的输出组）。
+找到输出组后，扣减原输入组的标记数，扣减连在该输出组上的输入（用来建模条件输入），增加该组输出位置的标记数。
+本文将这类Petri网的扩展称为F-Petri网，其中F表示流程图（Flowchart）。
+不难证明，F-Petri网的表达能力不弱于带零输入弧的Petri网（只需在活动图中写明条件“某某位置标记数$=0$”即可）。
+
+需要特别注意的是，灵活性与严谨性是互相制约的，F-Petri网牺牲了严谨性，以换取在建模时的便利和灵活。
+不论是Petri网还是带零输入弧的Petri网，都是不依赖于外部任何信息的——给定某一状态，下一步可能的状态是严格固定的。
+但F-Petri网并没有这种性质——其内嵌的活动图可以任意使用外部条件。
+因此，F-Petri网难以建立严谨的数学模型，也不易从数学角度对其进行可达性（Reachability）、可决性（Decidability）等等分析。
+
+\section{分支结构与L-Petri网}
+不论是严谨的Petri网还是便利的F-Petri网，其位置和跳变的数量都是固定的，对含有动态分支结构（根据外部输出产生若干组工作流）的系统的建模束手无策。
+同样的，UML活动图也对这种问题没有简单的解决方案。
+实际上，这种系统在实际业务中相当常见。
+以本文研究的优化问题为例，用户指定同时进行的仿真数量，系统计算出若干（并不能在设计时确定）个初始位置，并行地在这些位置对目标函数进行求值。
+为此，本文尝试将层次结构引入Petri网，提出L-Petri网（其中的L表示分层，Layered），进一步加强Petri网的建模与表达能力。
+
+\subsection{定义}
+L-Petri网包括若干位置、跳变、层、普通弧、跨层弧；层包括若干位置、跳变、其他层、普通弧、跨层弧。
+跨层必须按照如下规则：从某一$k$次嵌套（每含在一层内算作一次嵌套，不含在任何层内为0层嵌套，下同）的跳变开始，
+先向外跨越$p$层（$p\geq 0$），再向内跨越$q$层（$p\geq 0$），最终到达某一$k-p+q$次嵌套的位置。
+对于输入弧，必须保证$p=0$；而输出弧没有这个限制。
+
+L-Petri网可以翻译成Petri网。翻译过程需要用到指标集$\mathbb{X}$，其基数可以是有限的、可数甚至不可数。
+常见的指标集为字符串，即$\mathbb{X}=\Sigma^*$，其中有限集合$\Sigma$为字母表，${}^*$为形式语言与自动机理论中的Klenne闭包。
+L-Petri网翻译成传统Petri网的过程如下：
+\begin{itemize}
+  \item 对L-Petri网中$k$次嵌套的元素（位置、跳变、普通弧），
+    遍历$\left(n_1,\ldots,n_k\right)\in\mathbb{X}^k$，为每个$\left(n_1,\ldots,n_k\right)$创造一个传统Petri网的元素。
+    称$\left(n_1,\ldots,n_k\right)$为该元素的层参数。
+  \item 对L-Petri网中的跨层弧，设其从属于$k$次嵌套的跳变，且其向外跨越$p$层、向内跨越$q$层，
+    则遍历$\left(n_1,\ldots,n_{k+q}\right)\in\mathbb{X}^{k+q}$，为每个$\left(n_1,\ldots,n_{k+q}\right)$创造一个传统Petri网的弧，
+    连接层参数为$\left(n_1,\ldots,n_k\right)$的跳变和层参数为$\left(n_1,\ldots,n_{k-p},n_{k+1},n_{k+q}\right)$的位置。
+    需要注意的是，实际执行时这些弧并非所有都要执行，具体执行规则参见下方对于L-Petri网执行的说明。
+\end{itemize}
+
+L-Petri网的执行即为传统Petri网的执行，不过对于跨层弧翻译而来弧的处理略有不同。
+设当前执行的跳变的层参数为$\left(n_1,\ldots,n_k\right)$，再设原跨层弧向外跨越了$p$层，向内跨越了$q$层。
+对于输入弧，有$p=0$，故只需扣减层参数为$\left(n_1,\ldots,n_{k-p}\right)$的位置即可；
+对于输出弧，情况比较复杂：
+则在执行时需要（一般是通过外部渠道）产生有限集合$M\subseteq\mathbb{X}^{q}$，然后对于所有$\left(m_1,\ldots,m_q\right)\in{}M$，
+激活当前跳变到位置$\left(n_1,\ldots,n_{k-p},m_1,\ldots,m_q\right)$的弧；对于所有$\left(m'_1,\ldots,m'_q\right)\in{}\mathbb{X}^{q}\setminus{}M$，
+禁用当前跳变到位置$\left(n_1,\ldots,n_{k-p},m'_1,\ldots,m'_q\right)$的弧。
+
+\subsection{例子}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-layer-example.pdf}
+  \caption{L-Petri网示例\label{fig:petri-layer}}
+\end{figure}
+
+\Cref{fig:petri-layer}给出了一个比较复杂的L-Petri网的例子。
+根据定义，不难证明其翻译出来的传统Petri网的位置包括
+$\left\|\mathbb{X}^{2}\|\right)$个a，
+$\left\|\mathbb{X}\|\right)$个b，
+$\left\|\mathbb{X}^{3}\|\right)$个c，
+以及一个d和一个e。
+在执行时，输出位置与执行的跳变的具体关系如下：
+\begin{itemize}
+  \item 当弧1对应的跳变（没有层参数）执行时，该跳变每给出一组$(m_1,m_2)\in\mathbb{X}^{2}$，就会增加一个输出到层参数为$(m_1,m_2)$的位置a。
+  \item 当弧2对应的跳变（设层参数为$(n_1,n_2)$）执行时，该跳变无需给出参数，自动输出到层参数为$(n_1)$的位置b。
+  \item 当弧3对应的跳变（设层参数为$(n_1)$）执行时，该跳变每给出一组$(m_1,m_2,m_3)\in\mathbb{X}^{3}$，就会增加一个输出到层参数为$(m_1,m_2,m_3)$的位置c。
+    需要注意的是，弧3先向外穿出了1层，再向内穿回了3层，这与直接向内穿越2层是不一样的。
+  \item 当弧4对应的跳变（设层参数为$(n_1,n_2,n_3)$）执行时，该跳变无需给出参数，自动输出到没有层参数的位置d。
+  \item 当弧5对应的跳变（没有层参数）执行时，该跳变无需给出参数，自动输出到同样没有层参数的位置e。
+\end{itemize}
+
+\section{含有动态分支结构的系统的建模}
+不难看出，F-Petri网和L-Petri网对传统Petri网的扩展是互相独立的。
+因此本节引入FL-Petri网的概念，将前述两种扩展有机结合，并用它来建模传统Petri网和UML活动图都无法建模的系统——含有动态分支结构的系统，
+以彰显其强大的建模能力，并为后续建模实际系统打下基础。
+
+\subsection{“逐项”系统}
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{简单“逐项”系统\label{fig:petri-layer-each}}
+    {\includegraphics{./figures/dist/petri-layer-each.pdf}}
+  \hspace{1em}
+  \subcaptionbox{带依赖的“逐项”系统（层外内容与左侧一致）\label{fig:petri-layer-dep}}
+    {\includegraphics{./figures/dist/petri-layer-dep.pdf}}
+  \caption{使用FL-Petri网建模含有动态分支结构的“逐项”系统}
+\end{figure}
+
+\Cref{fig:petri-layer-each}给出了含有动态分支结构的系统的“逐项”系统——根据外部输入，动态产生若干组几乎完全一致的工作流，并发执行，全部执行完毕之后结束——的Petri网模型。
+其核心思想是，将子工作流封装在层内，并在层外维护元信息——是否已启动（“启”）、子工作流总数（“总”）、已经执行完毕的子工作流数目（“毕”）。
+当确已启动且子工作流总数等于已经执行完毕的子工作流数时，即可清除所有元信息并继续执行后续的工作流。
+如果各个子工作流有先后依赖顺序，那么对简单“逐项”系统进行一定的修改。\Cref{fig:petri-layer-dep}给出了如何给“逐项”系统添加各项之间的依赖。
+通过在子层中增加一个表示位置，每组层参数都会具有3个有效状态——未完成、执行中、已完成。
+如果当前项属于“未完成”而其所有依赖都处于“已完成”状态，则当前项开始执行，并进入执行中状态。
+执行完毕后，进入已完成状态，使得依赖该项的其它项得以继续执行。
+
+\subsection{“迭代”系统}
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/petri-layer-iter.pdf}
+  \caption{使用FL-Petri网建模含有动态分支结构的“迭代”系统\label{fig:petri-layer-iter}}
+\end{figure}
+
+\Cref{fig:petri-layer-iter}给出了一个更为复杂的结构——“迭代”系统。相较于“逐项”系统，该系统在每一组子工作流执行完毕之后，都会尝试计算下一步迭代位置。
+如果正在计算迭代位置时又有一个子工作流执行完毕，那么正在进行的迭代会立刻中止，并利用新的数据重新计算下一步迭代位置。
+得到下一步迭代位置之后，若正在运行的工作流数目低于6，那么会继续尝试计算下一步迭代位置，直到有6个工作流同时进行。
+如果计算结果表明迭代已经收敛，那么整个系统工作流将在所有还在运行的迭代完成之后退出。
+迭代收敛后，子工作流执行完毕之后不会再尝试计算下一步迭代位置。
+该工作流特别适合于建模优化工作流。实际上，下一章对自动化设计系统的工作流建模的核心部分就是“迭代”系统。
+
+\end{document}
