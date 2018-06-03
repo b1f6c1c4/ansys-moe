@@ -1,0 +1,625 @@
+\chapter{外文资料原文}
+
+\title{Parallel Machine Learning Algorithms in Bioinformatics and Global Optimization \\ EPI: Expected Parallel Improvement}
+
+\textbf{Abstract:}
+This derivative-free global optimization method allows us to optimally sample many points concurrently from an expensive to evaluate, unknown and possibly non-convex function. Instead of sampling sequentially, which can be inefficient when the available resources allow for simultaneous evaluation, EPI provides the best set of points to sample next, allowing multiple samplings to be performed in unison.
+
+In this work we develop a model for expected parallel improvement based on numerically estimating the expected improvement using multiple samples and use multi-start gradient descent to find the optimal set of points to sample next, while fully taking into account points that are currently being sampled for which the result is not yet known.
+
+\section{EPI Introduction} % (fold)
+\label{cha:EPI Introduction}
+
+\subsection{Optimization of Expensive Functions}
+
+Optimization attempts to find the maximum or minimum value of some function or experiment. The goal is to find the input or set of parameters that either maximizes or minimizes a particular value. This can be maximizing gains in a financial model, minimizing costs in operations, finding the best result of a drug trial or any of a number of real world examples. The basic setup is that there is something that is desirable to maximize or minimize and we want to find the parameters that obtain this. The underlying functions may be difficult to sample; whether requiring long amounts of time such as drug trials, or excessive money such as financial models, or both such as exploration of natural resources. This limitation forces a good optimization algorithm to find the best possible solution quickly and efficiently, requiring as few exploratory samplings as possible before converging to an optimal solution.
+
+The quantitative and data-intensive explosion in fields such as bioinformatics and other sciences is producing petabytes of data and increasingly complex models and computer algorithms to analyze it. As the amount of data being inputed and the complexity of these algorithms grow they take more and more time to compute. Even with modern supercomputers that can perform many peta-FLOPS ($10^{15}$ Floating Point Operations Per Second) scientific codes simulating fluid dynamics \cite{Compo2011} and complex chemical reactions \cite{Valiev2010} can take many hours or days to compute, using millions of CPU hours or more. The assembly of a single genome using the software package Velvet \cite{Zerbino2008} can take 24 hours or more on a high memory supercomputer. The sheer amount of time and resources required to run these simulations and computations means that the fine-tuning of the parameters of the models is extremely time and resource intensive.
+
+Statistical methods such as EGO \cite{Jones1998} attempt to solve this problem by estimating the underlying function that is being optimized and computing the next point to sample so that it maximizes the expected improvement over the best result observed so far. When performed sequentially, this method often quickly finds a good point within the space of possible inputs, and given more samples will continue to search for the global optimum. This method is limited by its sequential nature, however, and cannot take advantage of possible parallel computational or sampling resources allowing for samples to be drawn concurrently. There have been some heuristic attempts to address the problem of parallel expected improvement \cite{Ginsbourger2008}, but all suffer from limitations in their sequential design. In this work we develop a model for expected parallel improvement, based on numerically estimating expected improvement using multiple samples and use multi-start gradient descent to find the optimal set of points to sample next, while fully taking into account points that are currently being sampled for which the result is not yet known.
+
+\subsection{Gaussian Processes}
+
+We begin with a Gaussian process prior on a continuous function $f$. The function $f$ has domain $A \subseteq \mathbb{R}^{d}$. Our overarching goal is to solve the global optimization problem
+
+\begin{equation}
+\max_{x \in A} f(x).
+\end{equation}
+This problem can be constrained or unconstrained depending on the set $A$.
+
+The paper \cite{Jones1998} developed a method for choosing which points to evaluate next based on fitting a global metamodel to the points evaluated thus far, and then maximizing a merit criterion over the whole surface to choose the single point to evaluate next.
+
+Although \cite{Jones1998} describes their technique, EGO, in terms of a kriging metamodel and uses frequentist language, their technique can also be understood in a Bayesian framework. This framework uses a Gaussian process prior on the function $f$, which is a probabilistic model whose estimates of $f$ have the corresponding framework described below.
+
+\subsection{Gaussian process priors}
+
+Any Gaussian process prior on $f$ is described by a mean function $\mu : A \mapsto \mathbb{R}$ and a covariance function $K : A \times A \mapsto \mathbb{R}_{+}$. The mean function is general, and sometimes reflects some overall trends believed to be in the data, but is more commonly chosen to be 0. The covariance function must satisfy certain conditions:
+
+\begin{equation}K(x,x) \geq 0,\end{equation}
+\begin{equation}K(x,y) = K(y,x),\end{equation}
+
+    and it must be positive semi-definite, which is to say that for all $\vec{x}_{1}, \ldots, \vec{x}_{k} \in A$, and all finite $k$, if we construct a matrix by setting the value at row $i$ and column $j$ to be $\Sigma_{ij} = K(\vec{x}_{i}, \vec{x}_{j})$ this matrix must be positive semi-definite,
+
+\begin{equation}\vec{v}^{T}\Sigma \vec{v} \geq 0, \ \ \ \forall \vec{v} \in \mathbb{R}^{d}.\end{equation}
+
+Common choices for $K$ include the Gaussian covariance function, $K(x,x^{\prime}) = a \exp(-b \| x - x^{\prime}\|^{2})$ for some parameters $a$ and $b$ and the power exponential error function, $K(x, x^{\prime}) = a \exp(-\sum_{i} b_{i} (x_{i} - x_{i}^{\prime})^{p})$ for some parameters $\vec{b} \in \mathbb{R}^{d}, p$ and $a$.
+
+Putting a Gaussian Process (GP) prior on $f$, written
+\begin{equation}
+ f \sim \mbox{GP}(\mu(\cdot), K(\cdot, \cdot))
+\end{equation}
+means that if we take any fixed set of points $x_{1}, \ldots, x_{n} \in A$ and consider the vector $(f(x_{1}), \ldots, f(x_{n}))$ as an unknown quantity, our prior on it is the multivariate normal,
+\begin{equation}
+    (f(x_{1}), \ldots, f(x_{n})) \sim N\left( \left[ \begin{tabular}{c} $\mu(x_{1})$ \\ $\vdots$ \\ $\mu(x_{n})$ \end{tabular} \right] , \Sigma_{n} = \left[ \begin{tabular}{ccc} $K(x_{1}, x_{1})$ & $\cdots$ & $K(x_{n}, x_{1})$ \\ $\vdots$ & $\ddots$ & $\vdots$ \\ $K(x_{1}, x_{n})$ & $\cdots$ & $K(x_{n},x_{n})$ \end{tabular} \right] \right).
+\end{equation}
+
+GPs are analytically convenient. If we observe the function $f$ at $x_{1}, \ldots, x_{n}$, getting values $y_{1} = f(x_{1}), \ldots, y_{n} = f(x_{n})$, then the posterior of $f$ is also a GP,
+\begin{equation}
+ f|x_{1:n}, y_{1:n} \sim GP(\mu_{n}, \Sigma_{n})
+\end{equation}
+where $\mu_{n}$ and $\Sigma_{n}$ are defined in the Methods section \ref{comp_of_gp}. We can see the evolution of the GP as more points are sampled in Figure \ref{fig:GPP_evolve}.
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_stepper_EI.png}}
+    \caption[Evolution of a GPP]{We can watch the GPP mean (green dashed) and variance (green shaded) evolve to become closer and closer to the true function (blue line) as more and more samples (red x) are drawn from the function. The mean adapts to fit the points sampled and the variance is lowest near sampled points.}
+ 	\label{fig:GPP_evolve}
+\end{figure}
+
+\subsection{Expected Improvement}
+
+When considering where to measure next, the EGO algorithm, and more generally the Expectation Improvement (EI) criterion, computes a merit function defined as
+\begin{equation}
+ \mbox{EI}(x) = \mathbb{E}_{n} \left[\left[ f_{n}^{\star} - f(x) \right]^{+} \right] = \mathbb{E} \left[ f_{n}^{\star} - f_{n+1}^{\star}| x_{n} = x\right]
+\end{equation}
+where $f_{n}^{\star} = \min_{m \leq n} f(x_{m})$.
+
+This is the point where we expect the greatest improvement to the best point sampled so far, $f_{n}^{\star}$. The algoritm attempts to maximize the EI at every iteration, sampling only the points with the greatest potential return. In Figure \ref{fig:GPP_EI_evolve} we show the values of EI for the GPP in Figure \ref{fig:GPP_evolve}.
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_example_EI4.png}}
+    \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_example_EI.png}}
+    \caption[Evolution of expected improvement of a GPP]{The expected improvement of panels 4 and 5 of Figure \ref{fig:GPP_evolve}. We can see that regions with low mean and high variance have the highest expected improvement.}
+ 	\label{fig:GPP_EI_evolve}
+\end{figure}
+
+\subsubsection{Parrallel Heuristics}
+
+The inherent downside to the EGO algorithm is that it is sequential; it results in only a single proposed sample point, which must be sampled before a new point can be proposed. This is a waste of resources if many points can be sampled simultaneously. Under the EGO algorithm these excess resources would sit idle while each point is sampled one at a time.
+
+There are a few heuristic extensions to the EGO algorithm that attempt to alleviate this bottleneck including the {\it constant liar} and {\it kriging believer} methods proposed by \cite{Ginsbourger2008}.
+
+\paragraph{Constant liar heuristic}
+
+In this heuristic the points that are currently being sampled are all artificially set to a constant value like $\min(\vec{y}), \max(\vec{y})$ or mean$(\vec{y})$ and then normal EI maximization is performed. This method fails to accurately account for the subtleties of the model and information that the GPP provides at each location.
+
+\paragraph{Kriging believer heuristic}
+
+In this heuristic the points being sampled are assumed to return a value equal to their expectation, effectively lowering the variance to 0 at the given point. This method fails to account for the variability at the points sampled, and the way this variability affects the value of additional evaluations at other points.
+
+\subsection{Expected Parallel Improvement}
+
+We propose to extend the EI algorithm to be used in parallel systems, where we can evaluate several function values simultaneously on different cores, CPUs or GPGPUs. Instead of having to pick a single point to sample next, we can pick several.
+
+The core of this idea is that we can calculate the expected improvement for simultaneous evaluation of points $x_{n+1}, \ldots, x_{n+l} = \vec{x}$ as
+\begin{equation}
+ \mbox{EI}(x_{n+1}, \ldots, x_{n+l}) = \mathbb{E}_{n}\left[\left[f_{n}^{\star} - \min\left\{f(x_{n+1}), \ldots, f(x_{n+l})\right\}\right]^{+}\right].
+\end{equation}
+The optimization then approximates the solution to
+\begin{equation}
+ \argmin_{\vec{x} \in \mathbb{R}^{d \times l}} \mbox{EI}(\vec{x}),
+\end{equation}
+and chooses this batch of points to evaluate next. While the purely sequential case allows straightforward analytic evaluation of $\mbox{EI}(x)$, calculating $\mbox{EI}(\vec{x})$ in the parallel case is more challenging and requires numerical estimation. Although straightforward estimation via standard Monte Carlo are inefficient, we deploy several techniques to more accurately estimate and optimize $\mbox{EI}(\vec{x})$.
+
+% chapter EPI Introduction (end)
+
+\section{EPI Methods} % (fold)
+\label{cha:EPI Methods}
+
+\subsection{Components of the Gaussian Prior}
+\label{comp_of_gp}
+
+In the following sections we will explicitly define the mean (Section \ref{methods_GP_mean}) and variance (Section \ref{methods_GP_var}) of the GP, as well as their component-wise gradients. We will also define the partial derivatives for our default covariance function, the squared exponential covariance in Section \ref{methods_GP_cov}.
+
+\subsubsection{The GP mean}
+\label{methods_GP_mean}
+
+First we try to decompose the GP mean in order to easily find an analytic expression for its gradient:
+\begin{equation}
+ \vec{\mu_{\star}} = K(\vec{x}_{\star}, \textbf{X} )K(\textbf{X},\textbf{X})^{-1}\vec{y}.
+\end{equation}
+Where $\textbf{X}$ is the matrix whose rows are composed of a collection of vectors in $A$. We define the matrix $K(\vec{y}, \vec{z})$ component-wise as
+\begin{equation}
+    K(\vec{y}, \vec{z})_{ij} = K(\vec{y}_{i}, \vec{z}_{j}).
+\end{equation}
+We note that if $\vec{x_{\star}}$ is a single point then the matrix $K(\vec{x}_{\star}, \textbf{X} )$ collapses to a vector. We also rewrite $K(\textbf{X},\textbf{X})^{-1}$ as $K^{-1}$ for simplicity,
+\begin{equation}
+ \vec{\mu_{\star}} = K(\vec{x}_{\star}, \textbf{X} ) K^{-1} \vec{y}.
+\end{equation}
+We further note that we can decompose the resulting vector dot product into a sum for each component of $\vec{\mu_{\star}}$,
+\begin{equation}
+ \mu_{\star {i}} = \sum_{j = 1}^{N} K(x_{\star i}, X_{j}) \left(K^{-1} \vec{y} \right)_{j}.
+\end{equation}
+
+When we take the gradient, we note that it can be brought inside the sum and the vector $(K^{-1}\vec{y})$ is constant with respect to $x_{\star}$,
+\begin{equation}
+ \frac{\partial}{\partial x_{\star t}} \mu_{\star i} = \sum_{j = 1}^{N} \left(K^{-1} \vec{y} \right)_{j} \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{j}).
+\end{equation}
+We note that
+\begin{equation}
+\frac{\partial}{\partial x_{\star t}} \mu_{\star i} = \left\{ \begin{tabular}{cc}
+                                                                  $\sum_{j = 1}^{N} \left(K^{-1} \vec{y} \right)_{j} \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{j})$ & for $i = t$ \\
+								  0 & otherwise
+                                                                 \end{tabular}\right..
+\end{equation}
+
+\subsubsection{The GP variance}
+\label{methods_GP_var}
+
+Now we do the same thing for the covariance which is defined as
+\begin{equation}
+ K(\mu_{star}) = K(\textbf{X$_{\star}$}, \textbf{X$_{\star}$}) - K(\textbf{X$_{\star}$}, \textbf{X}) K(\textbf{X}, \textbf{X})^{-1} K(\textbf{X}, \textbf{X$_{\star}$}).
+\end{equation}
+The components $(i,j)$ of $\Sigma$ (see Section \ref{EPI_imp_var}) are
+\begin{equation}
+ \Sigma_{ij} = K(x_{\star i}, x_{\star j}) - \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p})
+\end{equation}
+and the derivative $\frac{\partial}{\partial x_{\star t}} \Sigma_{ij}$ becomes
+\begin{equation}
+ \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, x_{\star j}) - \\
+ \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star t}} K(x_{\star j}, X_{p}) + K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{q}) \right)
+\end{equation}
+For a more detailed discussion see Section \ref{EPI_imp_var}.
+
+\subsubsection{Defining the covariance derivatives}
+\label{methods_GP_cov}
+
+A common function for the covariance is the squared exponential covariance function,
+\begin{equation}
+    K(x_{i}, x_{j}) = \sigma_{f}^{2}\exp\left( -\frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right)  + \sigma_{n}^{2}\delta_{ij},
+\end{equation}
+where $\delta_{ij}$ is the Kronecker delta,
+\begin{equation}
+    \delta_{ij} = \left\{ \begin{tabular}{ccc}
+        1 & if & $i=j$ \\
+        0 & if & $i\neq j$
+    \end{tabular} \right..
+\end{equation}
+We will use an instance of this covariance function where $l$ is a length scale, $\sigma_{f}^{2}$ is the signal variance, and $\sigma_{n}^{2}$ is the sample variance. The maximum likelihood of these parameters can be determined from the training data as seen in section \ref{sec:Adaptation of hyperparameters}. We will treat them as constants for now.
+
+It will be sufficient to show the partial derivative of one of the variables because cov$(x_{i}, x_{j}) = $ cov$(x_{j}, x_{i})$.
+\begin{equation}
+    \frac{\partial}{\partial x_{i}} K(x_{i}, x_{j}) = \delta_{ij} + \frac{\partial}{\partial x_{i}} \sigma_{f}^{2} \exp\left( - \frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right)
+\end{equation}
+\begin{equation}
+    =  \delta_{ij} + \frac{-\sigma_{f}^{2}}{2l^{2}} \exp\left( - \frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right) \frac{\partial}{\partial x_{i}} |x_{i} - x_{j}|^{2}
+\end{equation}
+\begin{equation}
+    =  \frac{x_{j} - x_{i}}{l^{2}} K(x_{i}, x_{j}) + \delta_{ij}.
+\end{equation}
+
+\subsection{Estimation of expected improvement}
+\label{estEI}
+
+We estimate the expected improvement at a set of points $\vec{x}$ by sampling from the GP over many Monte Carlo iterations.
+
+The mean $\vec{\mu}$ and covariance $\Sigma$ of the points to be sampled $\Sigma$ is defined in section \ref{methods_GP_mean} and \ref{methods_GP_var}.
+
+We can simulate drawing points from this multivariate gaussian like so,
+\begin{equation}
+    \vec{y}^{\prime} = \vec{\mu} + L \vec{w}
+\end{equation}
+where $L$ is the Cholesky decomposition of $\Sigma$ and $\vec{w}$ is a vector of independent, identically distributed normal variables with mean 0 and variance 1.
+
+The improvement from this simulated sample is
+\begin{equation}
+    I^{\prime} = \left[f_{n}^{\star} - \min(\vec{y}^{\prime})\right]^{+}.
+\end{equation}
+By averaging over many such simulated draws we can accurately estimate the expected improvement for the set of points $\vec{x}$. Further discussion and analysis of the accuracy of this method is discussed in section \ref{GPUEI}.
+
+
+\subsection{Estimation and optimization of $\mbox{EI}(\vec{x})$}
+
+To optimize $\mbox{EI}(\vec{x})$, we calculate stochastic gradients
+\begin{equation}
+ g(\vec{x}) = \bigtriangledown \mbox{EI}(\vec{x})
+\end{equation}
+and use infinitesimal perturbation analysis \cite{Fu1994} to interchange derivative and expectation, see section \ref{EPI_proof}. Then use multistart gradient descent to find the set of points that maximize $\mbox{EI}(\vec{x})$, see section \ref{sec:multistart}.
+
+\subsubsection{Interchange of gradient}
+\label{EPI_proof}
+
+Let $\vec{x} = \left(\vec{x}_{1}, \ldots, \vec{x}_{l}\right)$ and
+\begin{equation}
+    Z \left(\vec{x}\right) = \left[f_{n}^{\star} - \min_{i = 1,\ldots,l} f \left(\vec{x}_{i}\right)\right]^{+}
+\end{equation}
+with
+\begin{equation}
+    f_{n}^{\star} = \min_{m\leq n} f \left(\vec{x}_{m}\right).
+\end{equation}
+Then
+\begin{equation}
+    EI_{n}(\vec{x}) = \mathbb{E}_{n}\left[Z \left(\vec{x}\right)\right].
+\end{equation}
+
+We conjecture
+\begin{equation}
+    \nabla \left[\mathbb{E}_{n}\left[Z \left(\vec{x}\right)\right]\right] = \mathbb{E}_{n}\left[\nabla Z \left(\vec{x}\right)\right] =  \mathbb{E}_{n}\left[g_{n}(\vec{x})\right]
+\end{equation}
+for all $\vec{x}$ with $\vec{x}_{i} \neq \vec{x}_{j}$ for every $i \neq j$.
+
+We have
+\begin{equation}
+    g_{n}(\vec{x}) = \left\{ \begin{tabular}{ccc}
+        0 & if & $i^{\star}(\vec{x}) = 0$ \\
+        $-\nabla_{\vec{x}} f(\vec{x}_{i})$ & if & $i^{\star}(\vec{x}) = i$
+    \end{tabular} \right.
+\end{equation}
+and
+\begin{equation}
+    i^{\star}(\vec{x}) = \left\{ \begin{tabular}{ccc}
+        0 & if & $f_{n}^{\star} \leq \min_{i=1,\ldots,l} f(\vec{x}_{i})$ \\
+        $\min \argmin_{i=1,\ldots,l} f(\vec{x}_{i})$ & & otherwise.
+    \end{tabular} \right.
+\end{equation}
+and leave the proof for a later publication.
+
+\subsection{Multistart gradient descent}
+\label{sec:multistart}
+
+We use multistart gradient descent to find the set of points that maximizes the parallel expected improvement over some number of total restarts $R$.
+
+For each multistart iteration we draw the initial points $\vec{x}^{(t=0)}$ from a Latin hypercube. The update formula for each $\vec{x}_{i}$ in the set of proposed points to sample is
+\begin{equation}
+    \vec{x}_{i}^{(t+1)} = \vec{x}_{i}^{(t)} + \frac{a}{t^{\gamma}} \nabla_{\vec{x}_{i}} {\rm EI}\left(\vec{P}^{(t)} | \vec{X}\right)
+\end{equation}
+where $a$ and $\gamma$ are parameters of the gradient descent model. $\vec{P}^{(t)}$ is the union of the set of points being currently sampled and the proposed new points to sample. This update is performed for some set number of iterations, or until
+\begin{equation}
+    \left|\vec{x}_{i}^{(t+1)} - \vec{x}_{i}^{(t)}\right| < \epsilon
+\end{equation}
+for some threshold $\epsilon > 0$.
+
+After $R$ restarts, the set of points with the best expected EI is chosen as the set of points to sample next. Figure \ref{fig:pk_paths} shows the paths of 128 multistart gradient descent paths with $l = 2$ on the EI of the Branin function.
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/branin_2d_32pk_paths_and_EI.png}}
+    \caption[Gradient descent paths in Branin Function]{The gradient descent paths of 2 points (simulating 2 free cores, $l=2$) with initial points chosen from a Latin hypercube of the domain over 128 restarts (each color represents a different restart). The EI of the function is shown as a contour plot. We see the paths converging on the point of highest EI.}
+ 	\label{fig:pk_paths}
+ \end{figure}
+
+ We note that some points appear to not move in Figure \ref{fig:pk_paths}. This happens when one of the points has a very high expected evaluation value under the GP. This causes that point to not contribute to the EI, and therefore the gradient of the EI with respect to that point is low, or zero, causing it to remain stationary while the other point rushes to the maximum EI (from section \ref{estEI}).
+
+
+% chapter EPI Methods (end)
+
+\section{EPI Results} % (fold)
+\label{cha:EPI Results}
+
+In this chapter we will present preliminary results using the EPI algorithm and software package. The research is ongoing and the full results will be published in a forthcoming paper with Peter Frazier.
+
+%TODO graphs showing gain vs wallclock time
+
+\subsection{Parallel speedup using function drawn from prior}
+
+To test the speedup obtained by using EPI over serial methods such as EGO we generate a set of test functions from a 1-D prior and determine the average improvement at each wall clock unit of time for EGO and EPI running with 2, 4 and 8 cores. Each wall clock unit of time represents $n$ samplings of the function where $n$ is the number of cores being used.
+
+We can see in Figure \ref{fig:EPI_res1} that the number of cores (or concurrent experiments) is directly proportional to the ending average improvement after a set number of wall clock time ($t = 10$). Future work includes refining these results, increasing the maximum number of cores and testing EPI against other heuristics in this and higher dimensional spaces.
+
+%TODO
+%more cores, more samples, more MC runs
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/speedup_vs_wallclock_8_core_9_its.png}}
+    \caption[Parallel speedup for function drawn from prior]{Parallel speedup using function drawn from prior. We can see that the number of cores is directly related to the final average improvement. EPI with 8 cores results in a markedly better average improvement when compared to the serial method EGO (1 core).}
+ 	\label{fig:EPI_res1}
+\end{figure}
+
+%TODO
+%Compare EPI to EI, constant liar and kriging believer
+
+%\subsection{Speedup for large space}
+
+%TODO
+%if domain of sampling is large (ie $D >> l$) how does EPI compare to regular EI and random sampling
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[EPI comparison for large domain]{EPI vs EGO for large domain...}
+% 	\label{fig:EPI_res3}
+%\end{figure}
+
+%\subsubsection{Comparison to other methods}
+%
+%TODO
+%Compare EPI to space (in timing and accuracy)
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[EPI vs SPACE for large domain]{EPI vs SPACE for large domain...}
+% 	\label{fig:EPI_res4}
+%\end{figure}
+%
+%\subsection{Speedup for Branin function}
+%
+%TODO
+%show contour of log like WITH vectors
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[Parallel speedup using Branin function]{Parallel speedup using Branin function...}
+% 	\label{fig:EPI_res5}
+%\end{figure}
+%
+%TODO
+%show contour of log like WITH vectors
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[Comparison using Branin function]{Comparison using Branin function...}
+% 	\label{fig:EPI_res6}
+%\end{figure}
+
+% chapter EPI Results (end)
+
+\section{EPI Implementation} % (fold)
+\label{cha:EPI Implementation}
+
+\subsection{Adaptation of hyperparameters} % (fold)
+\label{sec:Adaptation of hyperparameters}
+
+In this section we show how we adapt the hyperparameters of the GP using the sampling information. This follows the methods outlined in \cite{RW}.
+
+The log-likelihood of the data $\vec{y}$ given the points sampled $X$ and the hyperparameters $\theta$ is
+\begin{equation}
+    \log p(\vec{y}|X, \theta) = -\frac{1}{2}\vec{y}^{T}\Sigma^{-1}\vec{y} - \frac{1}{2}\log|\Sigma| - \frac{n}{2} \log 2\pi
+\end{equation}
+where $\Sigma$ is the covariance function defined as before, $\theta$ are the hyperparameters of the covariance function and $|\cdot|$ is the matrix norm defined for a matrix $B$ as
+\begin{equation}
+    |B| = \max \left( \frac{|B\vec{x}|}{|\vec{x}|} : \vec{x} \in \mathbb{R}^{n}\backslash\{\vec{0}\} \right).
+\end{equation}
+
+The partial derivative with respect to each hyperparameter $\theta_{i}$ is
+\begin{equation}
+    \frac{\partial}{\partial \theta_{i}} \log p(\vec{y}|X,\theta) = \frac{1}{2}\vec{y}^{T}\Sigma^{-1}\frac{\partial \Sigma}{\partial \theta_{i}} \Sigma^{-1}\vec{y} - \frac{1}{2} {\rm tr}\left( \Sigma^{-1}\frac{\partial \Sigma}{\partial \theta_{i}} \right)
+\end{equation}
+where tr$(\cdot)$ is the trace of a matrix. If we set $\vec{\alpha} = \Sigma^{-1}\vec{y}$ this further reduces to
+\begin{equation}
+    \frac{\partial}{\partial \theta_{i}} \log p(\vec{y}|X,\theta) = \frac{1}{2} {\rm tr}\left((\vec{\alpha}\vec{\alpha}^{T} - \Sigma^{-1})\frac{\partial \Sigma}{\partial \theta_{i}}\right).
+\end{equation}
+
+The key part of this equation is the partial derivative of $\Sigma$ with respect to each hyperparameter. For our squared exponential covariance function the partial derivatives are
+\begin{equation}
+    \frac{\partial}{\partial \sigma_{f}^{2}} \Sigma(x_{i}, x_{j}) = \exp\left( -\frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right) = \frac{\Sigma(x_{i}, x_{j})}{\sigma_{f}^{2}},
+\end{equation}
+\begin{equation}
+    \frac{\partial}{\partial l} \Sigma(x_{i}, x_{j}) = \frac{1}{l^{3}}|x_{i} - x_{j}|^{2}\Sigma(x_{i}, x_{j})
+\end{equation}
+and
+\begin{equation}
+    \frac{\partial}{\partial \sigma_{n}^{2}} \Sigma(x_{i}, x_{j}) = \delta_{ij}.
+\end{equation}
+
+\subsubsection{Example of hyperparameter evolution}
+
+In this section we demonstrate the hyperparameter evolution capabilities of the software package. We start with a function drawn from the prior with hyperparameters set to $(\sigma_{f}^{2} = 1, l = 1, \sigma_{n}^{2} = 0.01)$ and a domain of $[-7,7]$. We set the initial hyperparameters at $(\sigma_{f}^{2} = 1, l = 2, \sigma_{n}^{2} = 0.1)$. As we sample points from the function we expect these hyperparameters to become closer and closer to those of the prior from which it was drawn.
+
+As we sample sets of 20 points from a latin hypercube we notice in Figure \ref{fig:EPI_hyper_1} and Figure \ref{fig:EPI_hyper_2} that the likelihood of the parameters becomes maximized near the correct values. The algorithm is able to use gradient decent to find the point of maximum likelihood, the correct values of the hyperparameters.
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_20s.pdf}}
+    \centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_60s.pdf}}
+    \caption[Likelihood of hyperparameters]{Likelihood of hyperparameters $l$ and $\sigma_{n}^{2}$ at various values after 20 points (top) and 60 points (bottom) have been sampled from the function.}
+ 	\label{fig:EPI_hyper_1}
+\end{figure}
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_pre.png}}
+    \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_post.png}}
+    \caption[Evolution of hyperparameters]{We note that visually the set of hyperparameters that the algorithm finds using the adaptive method provide a better fit to the data (bottom) than those initially provided in the experiment (top).}
+ 	\label{fig:EPI_hyper_2}
+\end{figure}
+
+% section Adaptation of hyperparameters (end)
+
+\subsection{Math Appendix}
+
+In this section we will show the component-wise calculation of the gradient of the covariance matrix as well as a method for differentiating the Cholesky decomposition of this matrix.
+
+\subsubsection{Variance matrix calculations}
+\label{EPI_imp_var}
+
+From \cite{RW} we have
+\begin{equation}
+ \Sigma = K(\vec{x_{\star}}, \vec{x_{\star}}) - K(\vec{x_{\star}}, \vec{X}) K(\vec{X}, \vec{X})^{-1} K(\vec{X}, \vec{x_{\star}}).
+\end{equation}
+We will use $K^{-1} = K(\vec{X}, \vec{X})^{-1}$. We have by definition
+\begin{equation}
+ K(\vec{x_{\star}}, \vec{x_{\star}})_{ij} = K(x_{\star i}, x_{\star j})
+\end{equation}
+\begin{equation}
+ K(\vec{x_{\star}}, \vec{X})_{ij} = K(x_{\star i}, X_{j})
+\end{equation}
+\begin{equation}
+ K(\vec{X}, \vec{x_{\star}})_{ij} = K(X_{i}, x_{\star j}).
+\end{equation}
+We will define a temporary matrix $T^{(1)}$ to be
+\begin{equation}
+ T^{(1)} = K(\vec{x_{\star}}, \vec{X}) K^{-1}
+\end{equation}
+and decompose it into its components to get
+\begin{equation}
+ T^{(1)}_{ip} = \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}).
+\end{equation}
+We then define
+\begin{equation}
+ T^{(2)} = T^{(1)} K(\vec{X}, \vec{x_{\star}})
+\end{equation}
+and decompose it to get
+\begin{equation}
+ T^{(2)}_{ij} = \sum_{p = 1}^{N} T^{(1)}_{ip} K(X_{p}, x_{\star j}) = \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p}).
+\end{equation}
+and note
+\begin{equation}
+ \Sigma_{ij} = K(\vec{x_{\star}}, \vec{x_{\star}})_{ij} - T^{(2)}_{ij}
+\end{equation}
+\begin{equation}
+ \Sigma_{ij} = K(x_{\star i}, x_{\star j}) - \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p}).
+\end{equation}
+The partial derivative is found by applying the operation component wise and a simple use of the chain rule
+\begin{equation}
+ \begin{tabular}{rl}
+ $\frac{\partial}{\partial x_{\star t}} \Sigma_{ij} =$ & $\frac{\partial}{\partial x_{\star t}} K(x_{\star i}, x_{\star j})$ \\
+ & $- \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star t}} K(x_{\star j}, X_{p}) + K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{q}) \right)$
+ \end{tabular}
+\end{equation}
+where we note that $\frac{\partial}{\partial x_{\star t}} T^{(2)}_{ij} = $
+\begin{equation}
+    \left\{ \begin{tabular}{cc}
+        $2 \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{p}) \right)$ & $t = i = j$ \\
+        $\sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{q})$ & $t = i \neq j$ \\
+							$\sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{p}) \frac{\partial}{\partial x_{\star j}} K(x_{\star j}, X_{q})$ & $t = j \neq i$ \\
+							$0$ & otherwise
+                                                      \end{tabular} \right..
+\end{equation}
+
+\subsubsection{Differentiation of the Cholesky decomposition}
+
+To incorporate the gradient into the Cholesky decomposition we follow the method outlined by \cite{Smith1995}.
+
+The algorithm takes $\Sigma$ as input and produces a lower triangular matrix $L$ and $\frac{\partial}{\partial x_{\star t}} L$ such that $\Sigma = LL^{T}$.
+
+We use the following notation
+\begin{equation}
+    \frac{\partial}{\partial x_{\star t}} L_{ij} = L_{ij} (x_{\star t})
+\end{equation}
+\begin{enumerate}
+ \item $L_{ij} = \Sigma_{ij}$ \\
+       $L_{ij (x_{\star t})} = \frac{\partial}{\partial x_{\star t}} \Sigma_{ij}$
+ \item for $k = 1\ldots N$ if $|L_{kk}| > \epsilon_{m}$ (machine precision)
+ \begin{enumerate}
+  \item $L_{kk} = \sqrt{L_{kk}}$ \\
+	$L_{kk (x_{\star t})} = \frac{1}{2} \frac{L_{kk (x_{\star t})}}{L_{kk}}$.
+  \item for $j = k+1\ldots N$ \\
+	$L_{jk} = L_{jk}/L_{kk}$ \\
+	$L_{jk (x_{\star t})} = \frac{L_{jk (x_{\star t})} + L_{jk}L_{kk (x_{\star t})}}{L_{kk}}$.
+  \item for $j = k+1\ldots N$ and $i = j\ldots N$ \\
+	$L_{ij} = L_{ij} - L_{ik}L_{jk}$ \\
+	$L_{ij (x_{\star t})} = L_{ij (x_{\star t})} - L_{ik (x_{\star t})}L_{jk} - L_{ik}L_{jk (x_{\star t})}$.
+ \end{enumerate}
+
+This returns a lower triangular matrix $L$ and $\frac{\partial}{\partial x_{\star t}} L$ such that $\Sigma = LL^{T}$.
+
+\end{enumerate}
+
+\subsection{GPGPU Computing} % (fold)
+\label{sec:GPGPU Computing}
+
+GPU computing allows for the cheap implementation of parallel algorithms. Modern graphics cards can have many hundreds of cores and can perform many teraFLOPS from within a desktop workstation. The development and maturation of C-like programing languages like CUDA and openCL allow for the implementation of parallel codes on these General Purpose Graphical Processing Units (GPGPUs) if the algorithm can be designed to fit into the tight memory restrictions of the GPGPU cores, as shown below.
+
+\subsubsection{Expected Improvement}
+\label{GPUEI}
+
+The trivially parallelizeable Monte Carlo step in the expected improvement algorithm and relatively low memory requirements ($\mathcal{O}(l^{2})$) lends itself to GPGPU implementation perfectly. We implement this algorithm into a CUDA kernel and compare it to a serial python implementation.
+
+%\paragraph{Accuracy}
+%
+%When the dimension of the problem is low we can compute the expected improvement analytically. \cite{Ginsbourger2008} gives solutions for the 1-D and 2-D EI exactly. We compare our method to these and see how many MC iterations are required to achieve different levels of accuracy.
+%
+%TODO
+%graph for 1 point, 2 points exp error vs analytic, var of error vs its
+
+\paragraph{Speedup}
+
+The CUDA implementation of the EI algorithm is about 300 times faster to run on the GPGPU than on a CPU (using python). In figure \ref{GPUspeed1} we see the wall clock time required to compute the expected improvement for 4 points in 2 dimensions ($l=4, d=2$).
+
+ \begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/exp_EI_speedup_vs_its.png}}
+    \caption[CPU vs GPU time to compute EI]{Wall clock time to compute $\mathbb{E}_{n}\left[{\rm EI}(\vec{x})\right]$ on a CPU (blue, line) and GPU (green, x) for $l = 4$.}
+ 	\label{GPUspeed1}
+ \end{figure}
+
+%\subsubsection{Gradient of Expected Improvement}
+%
+%MC step, some memory problems (see section).
+%
+%TODO
+%graph: wall clock time vs number of iterations
+%graph: wall clock time vs number of samples
+%graph: wall clock time vs number of restarts (paths)
+
+\subsubsection{Memory Restrictions} % (fold)
+\label{sub:Memory Restrictions}
+
+GPGPU cores have very low memory per core/block (16KB for tesla, 4KB for a GT 2{\it XX} card). Our algorithm uses matrices of various sizes (table \ref{EPImemory}), some of which grow to be quite large as more points are sampled.
+
+\begin{table}
+    \caption{GPP matrix memory footprint}
+    \label{EPImemory}
+\begin{center}
+    \begin{tabular}{c|c}
+    Variable & Size \\
+    \hline
+    $K$ & $n \times n$ \\
+    $K_{\star }$ & $n \times l$ \\
+    $K_{\star \star }$ & $l \times l$ \\
+    $L = {\rm cholesky}(K + \sigma^{2}I) $ & $n \times n$ \\
+    $\vec{v} = L \backslash K_{\star }$ & $n \times l$ \\
+    $\vec{\alpha} = L^{T} \backslash L \backslash \vec{y}$ & $n \times 1$ \\
+    $\vec{\mu} = K_{\star }^{T}\vec{\alpha}$ & $l \times 1$  \\
+    $\Sigma = K_{\star \star} - \vec{v}^{T}\vec{v}$ & $l \times l$ \\
+    $\vec{\nabla} \vec{\mu}$ & $l \times d$ \\
+    $\vec{\nabla} \Sigma$ & $l \times l \times d$
+    \end{tabular}
+\end{center}
+\end{table}
+
+The trivially MC portions of the algorithm only ``need" the matrices of size $l \times l$ to compute their estimates, so that is all that is sent to the GPU, the calculations involving $n \times n$ are computed on the CPU where system memory is abundant.
+
+\paragraph{Memory Transfer} % (fold)
+\label{ssub:Memory Transfer}
+
+The required vectors and matrices need to be transfered to the GPU as linear arrays. This is accomplished by flattening each component in the following ways. This allows for easy deconstruction into 2-D and 3-D arrays once the data is in the global memory of the GPU.
+
+\begin{equation}
+    \vec{\mu} = \left[ \underbrace{\left[ \underbrace{\left[\mu_{1}^{(1)}, \ldots, \mu_{c}^{(1)}, \mu_{c+1}^{(1)}, \ldots, \mu_{l}^{(1)} \right]}_{l}, \ldots, \underbrace{\left[\mu_{1}^{(R)}, \ldots, \mu_{c}^{(R)}, \mu_{c+1}^{(R)}, \ldots, \mu_{l}^{(R)} \right]}_{l} \right]}_{R} \right]
+\end{equation}
+
+Requiring memory of $O(lR)$ per run, $O(l)$ per GPU block.
+
+\begin{equation}
+    \Sigma = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \Sigma_{11}^{(1)}, \ldots, \Sigma_{1l}^{(1)} \right]}_{l}, \ldots, \underbrace{ \left[ \Sigma_{l1}^{(1)}, \ldots, \Sigma_{ll}^{(1)} \right]}_{l} \right] }_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \Sigma_{11}^{(R)}, \ldots, \Sigma_{1l}^{(R)} \right]}_{l}, \ldots, \underbrace{ \left[ \Sigma_{l1}^{(R)}, \ldots, \Sigma_{ll}^{(R)} \right]}_{l} \right] }_{l}  \right]}_{R}\right]
+\end{equation}
+
+Requiring memory of $O(l^{2}R)$ per run, $O(l^{2})$ per GPU block.
+
+\begin{equation}
+    \nabla \vec{\mu} = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \mu_{1}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \mu_{l}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \mu_{1}^{(R)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \mu_{l}^{(R)} \right]}_{d}\right]}_{l} \right]}_{R} \right]
+\end{equation}
+
+Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
+
+\begin{equation}
+    \nabla \Sigma = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \Sigma_{11}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \Sigma_{1l}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \Sigma_{l1}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \Sigma_{ll}^{(1)} \right]}_{d}\right]}_{l} \right] }_{l}, \ldots \right]}_{R} \right]
+\end{equation}
+
+Requiring memory of $O(l^{2}dR)$ per run, $O(l^{2}d)$ per GPU block.
+
+\begin{equation}
+    \nabla {\rm EI} = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} {\rm EI}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} {\rm EI}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} {\rm EI}^{(R)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} {\rm EI}^{(R)} \right]}_{d}\right]}_{l} \right]}_{R} \right]\end{equation}
+
+Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
+
+% subsubsection Memory Transfer (end)
+
+% subsection Memory Restrictions (end)
+
+% section GPGPU Computing (end)
+
+\subsection{Availability and requirements}
+ \begin{itemize}
+  \item \textbf{Project name:} EPI
+  \item \textbf{Project home page:} www.github.com/sc932/EPI
+  \item \textbf{Operating systems:} Linux 32/64-bit, Mac OSX, Windows (Cygwin)
+  \item \textbf{Programming languages:} Python, C, CUDA
+  \item \textbf{Other requirements:} Some python packages, see documentation
+  \item \textbf{License:} UoI/CNSA Open Source
+ \end{itemize}
+
+
+% chapter EPI Implementation (end)
+
+% part EPI: Expected Parallel Improvement (end)

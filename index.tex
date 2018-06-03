@@ -1,5 +1,6 @@
 \documentclass[degree=bachelor,tocarialchapter]{../thuthesis/thuthesis}
 \usepackage{./thuthesis/thuthesis}
+\usepackage{./thuappendixbib/thuappendixbib}
 \usepackage{subfiles}
 \usepackage{siunitx}
 \usepackage{cleveref}
@@ -45,6 +46,8 @@
 \newcommand{\Cov}[2]{\operatorname{Cov}\!\left[#1,#2\right]}
 \newcommand{\Corr}[2]{\operatorname{Corr}\!\left[#1,#2\right]}
 \newcommand{\Normal}[2]{\operatorname{N}\!\left(#1,#2\right)}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
 \newcommand{\Denotation}[0]{%
 \begin{denotation}
   \item[$\one_n$] $n\times{}1$的全1列向量
@@ -113,7 +116,9 @@
   致谢
 \end{acknowledgement}
 
-% \begin{appendix}
-% \end{appendix}
+\begin{appendix}
+\include{trans}
+\input{raw}
+\end{appendix}
 
 \end{document}

@@ -10,8 +10,13 @@ figures/dist/%.png: figures/%.xml
 	-mkdir figures\dist
 	drawio $< -o $@
 
-all: index.tex
-	$(MK) -pvc- $< & exit
-
 %: %.tex
 	$(MK) -pvc $< & exit
+
+# [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
+all: index.tex
+	-mkdir dist
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" index.tex
+	-bibtex dist/index
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" index.tex
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" index.tex
