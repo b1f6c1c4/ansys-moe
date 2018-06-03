@@ -2,3 +2,6 @@
 	path = thuthesis
 	url = https://github.com/xueruini/thuthesis
   shallow = true
+[submodule "raw"]
+	path = raw
+	url = https://github.com/sc932/Thesis
