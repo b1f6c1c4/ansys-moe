@@ -1,18 +1,19 @@
+\documentclass[index]{subfiles}
+\begin{document}
 \chapter{书面翻译}
 
-\title{Parallel Machine Learning Algorithms in Bioinformatics and Global Optimization \\ EPI: Expected Parallel Improvement}
+\title{生物信息学和全局最优化中的并行机器学习算法 \\ EPI: 并行提升期望}
 
-\textbf{Abstract:}
-This derivative-free global optimization method allows us to optimally sample many points concurrently from an expensive to evaluate, unknown and possibly non-convex function. Instead of sampling sequentially, which can be inefficient when the available resources allow for simultaneous evaluation, EPI provides the best set of points to sample next, allowing multiple samplings to be performed in unison.
+\textbf{摘要:}
+EPI是一种不依赖梯度信息的全局最优化方法，它从未知非凸函数中最优地选取多个点来进行求值。EPI给出了下一步采样的最佳下一步位置集合，因此允许多个采样同时进行进行。与之对标的依次采样方法则在资源充足到可以同时进行多个求值的情况下较为低效。
 
-In this work we develop a model for expected parallel improvement based on numerically estimating the expected improvement using multiple samples and use multi-start gradient descent to find the optimal set of points to sample next, while fully taking into account points that are currently being sampled for which the result is not yet known.
+本文还实现了EPI算法模型：其基于多次采样来对EI进行数值估计，基于多起点梯度下降法来找到最佳下一步采样位置集合。该模型充分考虑了正在采样中但结果尚未获知的点。
 
-\section{EPI Introduction} % (fold)
+\section{EPI介绍} % (fold)
 \label{cha:EPI Introduction}
 
-\subsection{Optimization of Expensive Functions}
-
-Optimization attempts to find the maximum or minimum value of some function or experiment. The goal is to find the input or set of parameters that either maximizes or minimizes a particular value. This can be maximizing gains in a financial model, minimizing costs in operations, finding the best result of a drug trial or any of a number of real world examples. The basic setup is that there is something that is desirable to maximize or minimize and we want to find the parameters that obtain this. The underlying functions may be difficult to sample; whether requiring long amounts of time such as drug trials, or excessive money such as financial models, or both such as exploration of natural resources. This limitation forces a good optimization algorithm to find the best possible solution quickly and efficiently, requiring as few exploratory samplings as possible before converging to an optimal solution.
+\subsection{对昂贵函数的最优化}
+最优化方法尝试找到某个函数或者实验的最大值或最小值。其目标是找对输入参数的组合以最大化或最小化某个值，比如最大化经济模型中的收益，最小化运行成本，寻找药物试验的最优结果，以及生活中其他各种例子。优化问题的基本设定是有一个我们想要最大化或者最小化的目标函数，而我们想要找到一些参数来实现这个目标。对这个目标函数来说，可能是非常难以进行求值的：有可能需要大量的时间（如药物实验），有可能需要大量的金钱（如经济模型），或者同时需要时间和金钱（如寻找石油等自然资源）。这种限制强迫一个好的最优化算法应该更快、更有效地找到最优的解决方案，尤其是应该在收敛到最优位置之前尽量少地进行探索性实验。
 
 The quantitative and data-intensive explosion in fields such as bioinformatics and other sciences is producing petabytes of data and increasingly complex models and computer algorithms to analyze it. As the amount of data being inputed and the complexity of these algorithms grow they take more and more time to compute. Even with modern supercomputers that can perform many peta-FLOPS ($10^{15}$ Floating Point Operations Per Second) scientific codes simulating fluid dynamics \cite{Compo2011} and complex chemical reactions \cite{Valiev2010} can take many hours or days to compute, using millions of CPU hours or more. The assembly of a single genome using the software package Velvet \cite{Zerbino2008} can take 24 hours or more on a high memory supercomputer. The sheer amount of time and resources required to run these simulations and computations means that the fine-tuning of the parameters of the models is extremely time and resource intensive.
 
@@ -624,6 +625,7 @@ Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
 
 % part EPI: Expected Parallel Improvement (end)
 
+\end{document}
 \bibliographystyle{thuthesis-numeric}
 \begin{thebibliography}{}
 
