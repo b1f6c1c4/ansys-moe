@@ -31,7 +31,7 @@
 % For subfiles
 \makeatletter%
 \@ifclassloaded{subfiles}%
-  {\AtBeginDocument{\Denotation}
+  {%\AtBeginDocument{\Denotation}
   \AtEndDocument{%
     \bibliographystyle{thuthesis-author-year}
     \bibliography{index}

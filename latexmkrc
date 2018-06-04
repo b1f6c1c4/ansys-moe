@@ -1,5 +1,5 @@
-$pdf_mode = 1;
+$pdf_mode = 5;
 $pdf_previewer = '"C:/Program Files/SumatraPDF/SumatraPDF.exe"';
 $out_dir = './dist';
-$pdflatex = 'xelatex -synctex=1';
+$xelatex = 'xelatex -synctex=1 %O %S';
 $use_make_for_missing_files
