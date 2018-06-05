@@ -18,16 +18,41 @@
   csupervisor={陈凯楠~助理研究员},
   esupervisor={Chen, Kainan Assistant Professor},
 }
-\sisetup{list-separator={, },list-final-separator={, },list-pair-separator={, },separate-uncertainty,range-phrase={\ensuremath{\sim}}}
+\sisetup{binary-units=true,list-separator={, },list-final-separator={, },list-pair-separator={, },separate-uncertainty,range-phrase={\ensuremath{\sim}}}
 \newcommand\crefpairgroupconjunction{和}\newcommand\crefmiddlegroupconjunction{、}\newcommand\creflastgroupconjunction{和}
 \newcommand\crefrangeconjunction{至}\newcommand\crefrangepreconjunction{}\newcommand\crefrangepostconjunction{}
 \newcommand\crefpairconjunction{和}\newcommand\crefmiddleconjunction{、}\newcommand\creflastconjunction{和}
+\crefname{appendix}{附录}{附录}\Crefname{appendix}{附录}{附录}
 \crefname{listing}{程序}{程序}\Crefname{listing}{程序}{程序}
 \crefname{equation}{式}{式}\Crefname{equation}{式}{式}
 \crefformat{chapter}{第#1章}\Crefformat{chapter}{第#1章}
 \crefname{section}{节}{节}\Crefname{section}{节}{节}
+\crefname{subappendix}{节}{节}\Crefname{subappendix}{节}{节}
+\crefname{subsubappendix}{节}{节}\Crefname{subsubappendix}{节}{节}
+\crefname{subsubsubappendix}{节}{节}\Crefname{subsubsubappendix}{节}{节}
 \crefname{figure}{图}{图}\Crefname{figure}{图}{图}
 \crefname{table}{表}{表}\Crefname{table}{表}{表}
+\AtBeginDocument{% ...if you're using hyperref
+  \let\oldlabel\label% Copy original version of \label
+  \let\oldref\ref% Copy original version of \ref
+  \let\oldcref\cref% Copy original version of \cref
+  \let\oldCref\Cref% Copy original version of \Cref
+}
+\newcommand{\addlabelprefix}[1]{%
+  \renewcommand{\label}[1]{\oldlabel{#1-##1}}% Update \label
+  \renewcommand{\ref}[1]{\oldref{#1-##1}}% Update \ref
+}
+\newcommand{\addlabelprefixc}[1]{%
+  \renewcommand{\label}[1]{\oldlabel{#1-##1}}% Update \label
+  \renewcommand{\cref}[1]{\oldcref{#1-##1}}% Update \cref
+  \renewcommand{\Cref}[1]{\oldCref{#1-##1}}% Update \Cref
+}
+\newcommand{\removelabelprefix}{%
+  \renewcommand{\label}{\oldlabel}% Restore \label
+  \renewcommand{\ref}{\oldref}% Restore \ref
+  \renewcommand{\cref}{\oldcref}% Restore \cref
+  \renewcommand{\Cref}{\oldCref}% Restore \Cref
+}
 % For subfiles
 \makeatletter%
 \@ifclassloaded{subfiles}%
@@ -117,8 +142,12 @@
 \end{acknowledgement}
 
 \begin{appendix}
+\addlabelprefixc{trans}
 \subfile{trans}
+\removelabelprefix
+\addlabelprefix{raw}
 \subfile{raw}
+\removelabelprefix
 \end{appendix}
 
 \end{document}
