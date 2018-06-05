@@ -544,10 +544,10 @@ EI算法的CUDA实现比CPU上的Python实现要快约300倍。\Cref{GPUspeed1}�
 \subsubsection{内存限制} % (fold)
 \label{sub:Memory Restrictions}
 
-在GPGPU上，每核拥有的内存非常之少：（Tesla图形卡上有\SI{16}{\kilo\byte}，GT 2{\it XX}图形卡上有\SI{4}{\kilo\byte}）。本文中的算法使用的矩阵的大小（\cref{EPImemory}）, some of which grow to be quite large as more points are sampled.
+在GPGPU上，每核拥有的内存非常之少：（Tesla图形卡上有\SI{16}{\kilo\byte}，GT 2{\it XX}图形卡上有\SI{4}{\kilo\byte}）。本文中的算法使用的矩阵（见\cref{EPImemory}）中有些可能会随着点数增加在快速增长。
 
 \begin{table}
-    \caption{GPP matrix memory footprint}
+    \caption{GPP矩阵内存消耗}
     \label{EPImemory}
 \begin{center}
     \begin{tabular}{c|c}
@@ -569,39 +569,39 @@ EI算法的CUDA实现比CPU上的Python实现要快约300倍。\Cref{GPUspeed1}�
 
 The trivially MC portions of the algorithm only ``need" the matrices of size $l \times l$ to compute their estimates, so that is all that is sent to the GPU, the calculations involving $n \times n$ are computed on the CPU where system memory is abundant.
 
-\paragraph{Memory Transfer} % (fold)
+\paragraph{数据传输} % (fold)
 \label{ssub:Memory Transfer}
 
-The required vectors and matrices need to be transfered to the GPU as linear arrays. This is accomplished by flattening each component in the following ways. This allows for easy deconstruction into 2-D and 3-D arrays once the data is in the global memory of the GPU.
+为了将向量和矩阵传输到GPU，需要采用（线性）数组作为物理结构，因此必须对每个部分分别压平。这样做也使得GPU中将数据还原成2维或者3维矩阵相当方便。
 
 \begin{equation}
     \vec{\mu} = \left[ \underbrace{\left[ \underbrace{\left[\mu_{1}^{(1)}, \ldots, \mu_{c}^{(1)}, \mu_{c+1}^{(1)}, \ldots, \mu_{l}^{(1)} \right]}_{l}, \ldots, \underbrace{\left[\mu_{1}^{(R)}, \ldots, \mu_{c}^{(R)}, \mu_{c+1}^{(R)}, \ldots, \mu_{l}^{(R)} \right]}_{l} \right]}_{R} \right]
 \end{equation}
 
-Requiring memory of $O(lR)$ per run, $O(l)$ per GPU block.
+每次运行需要内存$O(lR)$，每GPU核需要内存$O(l)$。
 
 \begin{equation}
     \Sigma = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \Sigma_{11}^{(1)}, \ldots, \Sigma_{1l}^{(1)} \right]}_{l}, \ldots, \underbrace{ \left[ \Sigma_{l1}^{(1)}, \ldots, \Sigma_{ll}^{(1)} \right]}_{l} \right] }_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \Sigma_{11}^{(R)}, \ldots, \Sigma_{1l}^{(R)} \right]}_{l}, \ldots, \underbrace{ \left[ \Sigma_{l1}^{(R)}, \ldots, \Sigma_{ll}^{(R)} \right]}_{l} \right] }_{l}  \right]}_{R}\right]
 \end{equation}
 
-Requiring memory of $O(l^{2}R)$ per run, $O(l^{2})$ per GPU block.
+每次运行需要内存$O(l^{2}R)$，每GPU核需要内存$O(l^{2})$。
 
 \begin{equation}
     \nabla \vec{\mu} = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \mu_{1}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \mu_{l}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \mu_{1}^{(R)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \mu_{l}^{(R)} \right]}_{d}\right]}_{l} \right]}_{R} \right]
 \end{equation}
 
-Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
+每次运行需要内存$O(ldR)$，每GPU核需要内存$O(ld)$。
 
 \begin{equation}
     \nabla \Sigma = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \Sigma_{11}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \Sigma_{1l}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \Sigma_{l1}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \Sigma_{ll}^{(1)} \right]}_{d}\right]}_{l} \right] }_{l}, \ldots \right]}_{R} \right]
 \end{equation}
 
-Requiring memory of $O(l^{2}dR)$ per run, $O(l^{2}d)$ per GPU block.
+每次运行需要内存$O(l^{2}dR)$，每GPU核需要内存$O(l^{2}d)$。
 
 \begin{equation}
     \nabla {\rm EI} = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} {\rm EI}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} {\rm EI}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} {\rm EI}^{(R)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} {\rm EI}^{(R)} \right]}_{d}\right]}_{l} \right]}_{R} \right]\end{equation}
 
-Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
+每次运行需要内存$O(ldR)$，每GPU核需要内存$O(ld)$。
 
 % subsubsection Memory Transfer (end)
 
@@ -609,14 +609,14 @@ Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
 
 % section GPGPU Computing (end)
 
-\subsection{Availability and requirements}
+\subsection{软件包下载方式和需求}
  \begin{itemize}
-  \item \textbf{Project name:} EPI
-  \item \textbf{Project home page:} www.github.com/sc932/EPI
-  \item \textbf{Operating systems:} Linux 32/64-bit, Mac OSX, Windows (Cygwin)
-  \item \textbf{Programming languages:} Python, C, CUDA
-  \item \textbf{Other requirements:} Some python packages, see documentation
-  \item \textbf{License:} UoI/CNSA Open Source
+  \item \textbf{项目名称:} EPI
+  \item \textbf{项目主页:} www.github.com/sc932/EPI
+  \item \textbf{操作系统:} Linux 32/64-bit, Mac OSX, Windows (Cygwin)
+  \item \textbf{程序语言:} Python, C, CUDA
+  \item \textbf{其他需求:} Some python packages, see documentation
+  \item \textbf{开源协议:} UoI/CNSA Open Source
  \end{itemize}
 
 
