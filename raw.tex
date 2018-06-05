@@ -1,6 +1,10 @@
 \documentclass[index]{subfiles}
 \begin{document}
 \chapter{外文资料原文}
+\ctexset{%
+  figurename={Figure},
+  tablename={Table},
+}
 
 \title{Parallel Machine Learning Algorithms in Bioinformatics and Global Optimization \\ EPI: Expected Parallel Improvement}
 
@@ -62,6 +66,7 @@ GPs are analytically convenient. If we observe the function $f$ at $x_{1}, \ldot
 where $\mu_{n}$ and $\Sigma_{n}$ are defined in the Methods section \ref{comp_of_gp}. We can see the evolution of the GP as more points are sampled in Figure \ref{fig:GPP_evolve}.
 
 \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_stepper_EI.png}}
     \caption[Evolution of a GPP]{We can watch the GPP mean (green dashed) and variance (green shaded) evolve to become closer and closer to the true function (blue line) as more and more samples (red x) are drawn from the function. The mean adapts to fit the points sampled and the variance is lowest near sampled points.}
  	\label{fig:GPP_evolve}
@@ -78,6 +83,7 @@ where $f_{n}^{\star} = \min_{m \leq n} f(x_{m})$.
 This is the point where we expect the greatest improvement to the best point sampled so far, $f_{n}^{\star}$. The algoritm attempts to maximize the EI at every iteration, sampling only the points with the greatest potential return. In Figure \ref{fig:GPP_EI_evolve} we show the values of EI for the GPP in Figure \ref{fig:GPP_evolve}.
 
 \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_example_EI4.png}}
     \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_example_EI.png}}
     \caption[Evolution of expected improvement of a GPP]{The expected improvement of panels 4 and 5 of Figure \ref{fig:GPP_evolve}. We can see that regions with low mean and high variance have the highest expected improvement.}
@@ -283,6 +289,7 @@ for some threshold $\epsilon > 0$.
 After $R$ restarts, the set of points with the best expected EI is chosen as the set of points to sample next. Figure \ref{fig:pk_paths} shows the paths of 128 multistart gradient descent paths with $l = 2$ on the EI of the Branin function.
 
 \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/branin_2d_32pk_paths_and_EI.png}}
     \caption[Gradient descent paths in Branin Function]{The gradient descent paths of 2 points (simulating 2 free cores, $l=2$) with initial points chosen from a Latin hypercube of the domain over 128 restarts (each color represents a different restart). The EI of the function is shown as a contour plot. We see the paths converging on the point of highest EI.}
  	\label{fig:pk_paths}
@@ -309,6 +316,7 @@ We can see in Figure \ref{fig:EPI_res1} that the number of cores (or concurrent 
 %TODO
 %more cores, more samples, more MC runs
 \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/speedup_vs_wallclock_8_core_9_its.png}}
     \caption[Parallel speedup for function drawn from prior]{Parallel speedup using function drawn from prior. We can see that the number of cores is directly related to the final average improvement. EPI with 8 cores results in a markedly better average improvement when compared to the serial method EGO (1 core).}
  	\label{fig:EPI_res1}
@@ -402,6 +410,7 @@ In this section we demonstrate the hyperparameter evolution capabilities of the 
 As we sample sets of 20 points from a latin hypercube we notice in Figure \ref{fig:EPI_hyper_1} and Figure \ref{fig:EPI_hyper_2} that the likelihood of the parameters becomes maximized near the correct values. The algorithm is able to use gradient decent to find the point of maximum likelihood, the correct values of the hyperparameters.
 
 \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_20s.pdf}}
     \centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_60s.pdf}}
     \caption[Likelihood of hyperparameters]{Likelihood of hyperparameters $l$ and $\sigma_{n}^{2}$ at various values after 20 points (top) and 60 points (bottom) have been sampled from the function.}
@@ -409,6 +418,7 @@ As we sample sets of 20 points from a latin hypercube we notice in Figure \ref{f
 \end{figure}
 
 \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_pre.png}}
     \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_post.png}}
     \caption[Evolution of hyperparameters]{We note that visually the set of hyperparameters that the algorithm finds using the adaptive method provide a better fit to the data (bottom) than those initially provided in the experiment (top).}
@@ -529,6 +539,7 @@ The trivially parallelizeable Monte Carlo step in the expected improvement algor
 The CUDA implementation of the EI algorithm is about 300 times faster to run on the GPGPU than on a CPU (using python). In figure \ref{GPUspeed1} we see the wall clock time required to compute the expected improvement for 4 points in 2 dimensions ($l=4, d=2$).
 
  \begin{figure}[hpt]
+  \captionsetup{labelsep=colon}
  	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/exp_EI_speedup_vs_its.png}}
     \caption[CPU vs GPU time to compute EI]{Wall clock time to compute $\mathbb{E}_{n}\left[{\rm EI}(\vec{x})\right]$ on a CPU (blue, line) and GPU (green, x) for $l = 4$.}
  	\label{GPUspeed1}
@@ -549,6 +560,7 @@ The CUDA implementation of the EI algorithm is about 300 times faster to run on 
 GPGPU cores have very low memory per core/block (16KB for tesla, 4KB for a GT 2{\it XX} card). Our algorithm uses matrices of various sizes (table \ref{EPImemory}), some of which grow to be quite large as more points are sampled.
 
 \begin{table}
+  \captionsetup{labelsep=colon}
     \caption{GPP matrix memory footprint}
     \label{EPImemory}
 \begin{center}
@@ -625,4 +637,9 @@ Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
 % chapter EPI Implementation (end)
 
 % part EPI: Expected Parallel Improvement (end)
+
+\ctexset{%
+  figurename=图,
+  tablename=表,
+}
 \end{document}
