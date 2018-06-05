@@ -355,78 +355,78 @@ EGO算法本质的缺陷是它的顺序执行；这导致了其每次只会产�
 
 % chapter EPI Results (end)
 
-\section{EPI Implementation} % (fold)
+\section{EPI实现} % (fold)
 \label{cha:EPI Implementation}
 
-\subsection{Adaptation of hyperparameters} % (fold)
+\subsection{元参数的调节} % (fold)
 \label{sec:Adaptation of hyperparameters}
 
-In this section we show how we adapt the hyperparameters of the GP using the sampling information. This follows the methods outlined in \cite{RW}.
+本节将会讨论如何根据采样信息来计算GP的元参数。本节内容与文献\cite{RW}中的方法框架一致。
 
-The log-likelihood of the data $\vec{y}$ given the points sampled $X$ and the hyperparameters $\theta$ is
+对于采样点$X$、采样值$\vec{y}$、元参数$\theta$来说，对数似然函数为
 \begin{equation}
     \log p(\vec{y}|X, \theta) = -\frac{1}{2}\vec{y}^{T}\Sigma^{-1}\vec{y} - \frac{1}{2}\log|\Sigma| - \frac{n}{2} \log 2\pi
 \end{equation}
-where $\Sigma$ is the covariance function defined as before, $\theta$ are the hyperparameters of the covariance function and $|\cdot|$ is the matrix norm defined for a matrix $B$ as
+其中$\Sigma$是之前讨论的协方差函数；$\theta$是协方差函数的元参数；$|\cdot|$是矩阵范数，具体定义如下：矩阵$B$的范数为
 \begin{equation}
     |B| = \max \left( \frac{|B\vec{x}|}{|\vec{x}|} : \vec{x} \in \mathbb{R}^{n}\backslash\{\vec{0}\} \right).
 \end{equation}
 
-The partial derivative with respect to each hyperparameter $\theta_{i}$ is
+而其对每个元参数$\theta_{i}$的偏导数为：
 \begin{equation}
     \frac{\partial}{\partial \theta_{i}} \log p(\vec{y}|X,\theta) = \frac{1}{2}\vec{y}^{T}\Sigma^{-1}\frac{\partial \Sigma}{\partial \theta_{i}} \Sigma^{-1}\vec{y} - \frac{1}{2} {\rm tr}\left( \Sigma^{-1}\frac{\partial \Sigma}{\partial \theta_{i}} \right)
 \end{equation}
-where tr$(\cdot)$ is the trace of a matrix. If we set $\vec{\alpha} = \Sigma^{-1}\vec{y}$ this further reduces to
+其中tr$(\cdot)$是矩阵的迹。若令$\vec{\alpha} = \Sigma^{-1}\vec{y}$则上式可以进一步化简：
 \begin{equation}
     \frac{\partial}{\partial \theta_{i}} \log p(\vec{y}|X,\theta) = \frac{1}{2} {\rm tr}\left((\vec{\alpha}\vec{\alpha}^{T} - \Sigma^{-1})\frac{\partial \Sigma}{\partial \theta_{i}}\right).
 \end{equation}
 
-The key part of this equation is the partial derivative of $\Sigma$ with respect to each hyperparameter. For our squared exponential covariance function the partial derivatives are
+上式中最关键的部分是$\Sigma$对每个元参数的偏导数。对于本文采用指数平方协方差函数而言，其偏导数为：
 \begin{equation}
     \frac{\partial}{\partial \sigma_{f}^{2}} \Sigma(x_{i}, x_{j}) = \exp\left( -\frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right) = \frac{\Sigma(x_{i}, x_{j})}{\sigma_{f}^{2}},
 \end{equation}
 \begin{equation}
     \frac{\partial}{\partial l} \Sigma(x_{i}, x_{j}) = \frac{1}{l^{3}}|x_{i} - x_{j}|^{2}\Sigma(x_{i}, x_{j})
 \end{equation}
-and
+和
 \begin{equation}
     \frac{\partial}{\partial \sigma_{n}^{2}} \Sigma(x_{i}, x_{j}) = \delta_{ij}.
 \end{equation}
 
-\subsubsection{Example of hyperparameter evolution}
+\subsubsection{元参数演化的例子}
 
-In this section we demonstrate the hyperparameter evolution capabilities of the software package. We start with a function drawn from the prior with hyperparameters set to $(\sigma_{f}^{2} = 1, l = 1, \sigma_{n}^{2} = 0.01)$ and a domain of $[-7,7]$. We set the initial hyperparameters at $(\sigma_{f}^{2} = 1, l = 2, \sigma_{n}^{2} = 0.1)$. As we sample points from the function we expect these hyperparameters to become closer and closer to those of the prior from which it was drawn.
+本节将会展示软件包中对元参数演化的处理能力。首先从元参数为$(\sigma_{f}^{2} = 1, l = 1, \sigma_{n}^{2} = 0.01)$、定义域为$[-7,7]$的高斯随机过程中抽取一个函数，并设置算法的初始元参数为$(\sigma_{f}^{2} = 1, l = 2, \sigma_{n}^{2} = 0.1)$随着不断地从函数中采样，我们希望元参数可以尽量逼近最开始的元参数。
 
-As we sample sets of 20 points from a latin hypercube we notice in Figure \ref{fig:EPI_hyper_1} and Figure \ref{fig:EPI_hyper_2} that the likelihood of the parameters becomes maximized near the correct values. The algorithm is able to use gradient decent to find the point of maximum likelihood, the correct values of the hyperparameters.
+从\cref{fig:EPI_hyper_1}和\cref{fig:EPI_hyper_2}中不难看出，由LHS方法生成的20个采样点以后，在正确元参数位置处的似然函数最大。因此该算法能够采用梯度下降法来找对似然函数最大处，也即正确的元参数。
 
 \begin{figure}[hpt]
  	\centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_20s.pdf}}
     \centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_60s.pdf}}
-    \caption[Likelihood of hyperparameters]{Likelihood of hyperparameters $l$ and $\sigma_{n}^{2}$ at various values after 20 points (top) and 60 points (bottom) have been sampled from the function.}
+    \caption[元参数的似然函数]{在20采样点（上方）和60采样点（下方）后，元参数$l$和$\sigma_{n}^{2}$的似然函数值。}
  	\label{fig:EPI_hyper_1}
 \end{figure}
 
 \begin{figure}[hpt]
  	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_pre.png}}
     \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_post.png}}
-    \caption[Evolution of hyperparameters]{We note that visually the set of hyperparameters that the algorithm finds using the adaptive method provide a better fit to the data (bottom) than those initially provided in the experiment (top).}
+    \caption[元参数的演化]{从直观上不难发现，该算法利用自适应方法找到的元参数（下方）比起最开始使用的元参数（上方）能更好地拟合原始数据。}
  	\label{fig:EPI_hyper_2}
 \end{figure}
 
 % section Adaptation of hyperparameters (end)
 
-\subsection{Math Appendix}
+\subsection{数学证明}
 
-In this section we will show the component-wise calculation of the gradient of the covariance matrix as well as a method for differentiating the Cholesky decomposition of this matrix.
+本节将会给出协方差矩阵的梯度的每个元素计算方式，以及提供一种将Cholesky分解结果进行微分的方法。
 
-\subsubsection{Variance matrix calculations}
+\subsubsection{协方差矩阵的计算}
 \label{EPI_imp_var}
 
-From \cite{RW} we have
+文献~\cite{RW}给出了
 \begin{equation}
  \Sigma = K(\vec{x_{\star}}, \vec{x_{\star}}) - K(\vec{x_{\star}}, \vec{X}) K(\vec{X}, \vec{X})^{-1} K(\vec{X}, \vec{x_{\star}}).
 \end{equation}
-We will use $K^{-1} = K(\vec{X}, \vec{X})^{-1}$. We have by definition
+本文记$K^{-1} = K(\vec{X}, \vec{X})^{-1}$。根据定义，
 \begin{equation}
  K(\vec{x_{\star}}, \vec{x_{\star}})_{ij} = K(x_{\star i}, x_{\star j})
 \end{equation}
@@ -436,37 +436,37 @@ We will use $K^{-1} = K(\vec{X}, \vec{X})^{-1}$. We have by definition
 \begin{equation}
  K(\vec{X}, \vec{x_{\star}})_{ij} = K(X_{i}, x_{\star j}).
 \end{equation}
-We will define a temporary matrix $T^{(1)}$ to be
+记临时矩阵$T^{(1)}$为
 \begin{equation}
  T^{(1)} = K(\vec{x_{\star}}, \vec{X}) K^{-1}
 \end{equation}
-and decompose it into its components to get
+将其分解得到
 \begin{equation}
  T^{(1)}_{ip} = \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}).
 \end{equation}
-We then define
+再定义
 \begin{equation}
  T^{(2)} = T^{(1)} K(\vec{X}, \vec{x_{\star}})
 \end{equation}
-and decompose it to get
+分解以得到
 \begin{equation}
  T^{(2)}_{ij} = \sum_{p = 1}^{N} T^{(1)}_{ip} K(X_{p}, x_{\star j}) = \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p}).
 \end{equation}
-and note
+并记
 \begin{equation}
  \Sigma_{ij} = K(\vec{x_{\star}}, \vec{x_{\star}})_{ij} - T^{(2)}_{ij}
 \end{equation}
 \begin{equation}
  \Sigma_{ij} = K(x_{\star i}, x_{\star j}) - \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p}).
 \end{equation}
-The partial derivative is found by applying the operation component wise and a simple use of the chain rule
+使用链式法则，对每个元素进行操作，即可得到偏导数：
 \begin{equation}
  \begin{tabular}{rl}
  $\frac{\partial}{\partial x_{\star t}} \Sigma_{ij} =$ & $\frac{\partial}{\partial x_{\star t}} K(x_{\star i}, x_{\star j})$ \\
  & $- \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star t}} K(x_{\star j}, X_{p}) + K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{q}) \right)$
  \end{tabular}
 \end{equation}
-where we note that $\frac{\partial}{\partial x_{\star t}} T^{(2)}_{ij} = $
+其中$\frac{\partial}{\partial x_{\star t}} T^{(2)}_{ij} = $
 \begin{equation}
     \left\{ \begin{tabular}{cc}
         $2 \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{p}) \right)$ & $t = i = j$ \\
@@ -476,13 +476,13 @@ where we note that $\frac{\partial}{\partial x_{\star t}} T^{(2)}_{ij} = $
                                                       \end{tabular} \right..
 \end{equation}
 
-\subsubsection{Differentiation of the Cholesky decomposition}
+\subsubsection{Choleskey分解的微分}
 
-To incorporate the gradient into the Cholesky decomposition we follow the method outlined by \cite{Smith1995}.
+为了将梯度引入Choleskey分解，本文遵循文献~\inlinecite{Smith1995}中的方法。
 
-The algorithm takes $\Sigma$ as input and produces a lower triangular matrix $L$ and $\frac{\partial}{\partial x_{\star t}} L$ such that $\Sigma = LL^{T}$.
+该算法输入$\Sigma$，输出一个下三角矩阵$L$和$\frac{\partial}{\partial x_{\star t}} L$使得$\Sigma = LL^{T}$。
 
-We use the following notation
+本文采用以下记号：
 \begin{equation}
     \frac{\partial}{\partial x_{\star t}} L_{ij} = L_{ij} (x_{\star t})
 \end{equation}
@@ -501,19 +501,19 @@ We use the following notation
 	$L_{ij (x_{\star t})} = L_{ij (x_{\star t})} - L_{ik (x_{\star t})}L_{jk} - L_{ik}L_{jk (x_{\star t})}$.
  \end{enumerate}
 
-This returns a lower triangular matrix $L$ and $\frac{\partial}{\partial x_{\star t}} L$ such that $\Sigma = LL^{T}$.
+这样就得到了下三角矩阵$L$和$\frac{\partial}{\partial x_{\star t}} L$使得$\Sigma = LL^{T}$。
 
 \end{enumerate}
 
-\subsection{GPGPU Computing} % (fold)
+\subsection{GPGPU计算} % (fold)
 \label{sec:GPGPU Computing}
 
-GPU computing allows for the cheap implementation of parallel algorithms. Modern graphics cards can have many hundreds of cores and can perform many teraFLOPS from within a desktop workstation. The development and maturation of C-like programing languages like CUDA and openCL allow for the implementation of parallel codes on these General Purpose Graphical Processing Units (GPGPUs) if the algorithm can be designed to fit into the tight memory restrictions of the GPGPU cores, as shown below.
+GPU计算使得并行算法的简易实现成为可能。现代图形卡可以包括数百个核心，一台桌面工作站上就能进行TFLOPS级别的运算。类C语言的程序，如CUDA和openCL使得并行算法在通用图形处理器（GPGPU）上的实现成为可能，只要算法在设计上可以接受GPGPU较为紧张的内存限制。具体情况如下文所示。
 
-\subsubsection{Expected Improvement}
+\subsubsection{EI}
 \label{GPUEI}
 
-The trivially parallelizeable Monte Carlo step in the expected improvement algorithm and relatively low memory requirements ($\mathcal{O}(l^{2})$) lends itself to GPGPU implementation perfectly. We implement this algorithm into a CUDA kernel and compare it to a serial python implementation.
+在EI算法中，蒙特卡洛步骤是（相当平凡地）可并行化的；又因为其较低的内存要求（$\mathcal{O}(l^{2})$），很自然地导致我们采用GPGPU来实现它。本文将该算法在CUDA核上的实现与串行Python实现进行比较。
 
 %\paragraph{Accuracy}
 %
@@ -522,13 +522,13 @@ The trivially parallelizeable Monte Carlo step in the expected improvement algor
 %TODO
 %graph for 1 point, 2 points exp error vs analytic, var of error vs its
 
-\paragraph{Speedup}
+\paragraph{速度提升}
 
-The CUDA implementation of the EI algorithm is about 300 times faster to run on the GPGPU than on a CPU (using python). In figure \ref{GPUspeed1} we see the wall clock time required to compute the expected improvement for 4 points in 2 dimensions ($l=4, d=2$).
+EI算法的CUDA实现比CPU上的Python实现要快约300倍。\Cref{GPUspeed1}中详细表明了不同方法计算2维空间中4个点（$l=4, d=2$）的EI时需要的钟表时间。
 
  \begin{figure}[hpt]
  	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/exp_EI_speedup_vs_its.png}}
-    \caption[CPU vs GPU time to compute EI]{Wall clock time to compute $\mathbb{E}_{n}\left[{\rm EI}(\vec{x})\right]$ on a CPU (blue, line) and GPU (green, x) for $l = 4$.}
+    \caption[CPU和GPU计算EI的时间消耗]{计算$\mathbb{E}_{n}\left[{\rm EI}(\vec{x})\right]$所需的钟表时间：采用CPU（蓝色实线）或GPU（绿色X线），$l = 4$。}
  	\label{GPUspeed1}
  \end{figure}
 
@@ -541,10 +541,10 @@ The CUDA implementation of the EI algorithm is about 300 times faster to run on 
 %graph: wall clock time vs number of samples
 %graph: wall clock time vs number of restarts (paths)
 
-\subsubsection{Memory Restrictions} % (fold)
+\subsubsection{内存限制} % (fold)
 \label{sub:Memory Restrictions}
 
-GPGPU cores have very low memory per core/block (16KB for tesla, 4KB for a GT 2{\it XX} card). Our algorithm uses matrices of various sizes (table \ref{EPImemory}), some of which grow to be quite large as more points are sampled.
+在GPGPU上，每核拥有的内存非常之少：（Tesla图形卡上有\SI{16}{\kilo\byte}，GT 2{\it XX}图形卡上有\SI{4}{\kilo\byte}）。本文中的算法使用的矩阵的大小（\cref{EPImemory}）, some of which grow to be quite large as more points are sampled.
 
 \begin{table}
     \caption{GPP matrix memory footprint}
@@ -625,6 +625,8 @@ Requiring memory of $O(ldR)$ per run, $O(ld)$ per GPU block.
 % part EPI: Expected Parallel Improvement (end)
 
 \end{document}
+\begingroup
+\renewcommand{\addcontentsline}[3]{}
 \bibliographystyle{thuthesis-numeric}
 \begin{thebibliography}{}
 
@@ -718,3 +720,4 @@ Thompson J.D., Plewniak F., Poch O. (1999) Comparison study of several multiple 
 Zhang \textit{et~al}. (2000) A greedy algorithm for aligning DNA sequences. \textit{Journal of Computational Biology}, \textbf{7}, 203-214.
 
 \end{thebibliography}
+\endgroup

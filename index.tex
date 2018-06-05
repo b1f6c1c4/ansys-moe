@@ -97,6 +97,7 @@
   \item[$K_{ss}$] 未完成实验处对未完成实验处随机变量的归一化协方差矩阵
 \end{denotation}
 }
+\setcounter{tocdepth}{2}
 
 \begin{document}
 \frontmatter
@@ -142,12 +143,20 @@
 \end{acknowledgement}
 
 \begin{appendix}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+\addtocontents{lof}{\protect\iffalse}
+\addtocontents{lot}{\protect\iffalse}
+\addtocontents{loe}{\protect\iffalse}
 \addlabelprefixc{trans}
 \subfile{trans}
 \removelabelprefix
 \addlabelprefix{raw}
 \subfile{raw}
 \removelabelprefix
+\addtocontents{toc}{\protect\setcounter{tocdepth}{5}}
+\addtocontents{lof}{\protect\fi}
+\addtocontents{lot}{\protect\fi}
+\addtocontents{loe}{\protect\fi}
 \end{appendix}
 
 \end{document}
