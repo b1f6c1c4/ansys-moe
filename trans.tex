@@ -225,90 +225,90 @@ EGO算法本质的缺陷是它的顺序执行；这导致了其每次只会产�
 \end{equation}
 并采用无穷小扰动分析\cite{Fu1994}的方法来处理导数和期望（见\cref{EPI_proof}）。然后使用多起点梯度下降法来找到一组样本点以最大化$\mbox{EI}(\vec{x})$（见\cref{sec:multistart}）。
 
-\subsubsection{Interchange of gradient}
+\subsubsection{梯度的处理}
 \label{EPI_proof}
 
-Let $\vec{x} = \left(\vec{x}_{1}, \ldots, \vec{x}_{l}\right)$ and
+令$\vec{x} = \left(\vec{x}_{1}, \ldots, \vec{x}_{l}\right)$，则
 \begin{equation}
     Z \left(\vec{x}\right) = \left[f_{n}^{\star} - \min_{i = 1,\ldots,l} f \left(\vec{x}_{i}\right)\right]^{+}
 \end{equation}
-with
+其中
 \begin{equation}
     f_{n}^{\star} = \min_{m\leq n} f \left(\vec{x}_{m}\right).
 \end{equation}
-Then
+然后
 \begin{equation}
     EI_{n}(\vec{x}) = \mathbb{E}_{n}\left[Z \left(\vec{x}\right)\right].
 \end{equation}
 
-We conjecture
+猜想
 \begin{equation}
     \nabla \left[\mathbb{E}_{n}\left[Z \left(\vec{x}\right)\right]\right] = \mathbb{E}_{n}\left[\nabla Z \left(\vec{x}\right)\right] =  \mathbb{E}_{n}\left[g_{n}(\vec{x})\right]
 \end{equation}
-for all $\vec{x}$ with $\vec{x}_{i} \neq \vec{x}_{j}$ for every $i \neq j$.
+对于所有的$\vec{x}$（其中$\vec{x}_{i} \neq \vec{x}_{j}$）和$i \neq j$都成立。
 
-We have
+不难有
 \begin{equation}
     g_{n}(\vec{x}) = \left\{ \begin{tabular}{ccc}
         0 & if & $i^{\star}(\vec{x}) = 0$ \\
         $-\nabla_{\vec{x}} f(\vec{x}_{i})$ & if & $i^{\star}(\vec{x}) = i$
     \end{tabular} \right.
 \end{equation}
-and
+且
 \begin{equation}
     i^{\star}(\vec{x}) = \left\{ \begin{tabular}{ccc}
         0 & if & $f_{n}^{\star} \leq \min_{i=1,\ldots,l} f(\vec{x}_{i})$ \\
         $\min \argmin_{i=1,\ldots,l} f(\vec{x}_{i})$ & & otherwise.
     \end{tabular} \right.
 \end{equation}
-and leave the proof for a later publication.
+关于证明，将会在后续文献中给出。
 
-\subsection{Multistart gradient descent}
+\subsection{多起点梯度下降}
 \label{sec:multistart}
 
-We use multistart gradient descent to find the set of points that maximizes the parallel expected improvement over some number of total restarts $R$.
+本文采用多起点梯度下降法来找对最优位置几何使其EPI在总共$R$次重启中最大。
 
-For each multistart iteration we draw the initial points $\vec{x}^{(t=0)}$ from a Latin hypercube. The update formula for each $\vec{x}_{i}$ in the set of proposed points to sample is
+对每个多起点迭代，用LHS方法随机抽取$\vec{x}^{(t=0)}$组初始位置。对于每个位置，$\vec{x}_{i}$，迭代公式为：
 \begin{equation}
     \vec{x}_{i}^{(t+1)} = \vec{x}_{i}^{(t)} + \frac{a}{t^{\gamma}} \nabla_{\vec{x}_{i}} {\rm EI}\left(\vec{P}^{(t)} | \vec{X}\right)
 \end{equation}
-where $a$ and $\gamma$ are parameters of the gradient descent model. $\vec{P}^{(t)}$ is the union of the set of points being currently sampled and the proposed new points to sample. This update is performed for some set number of iterations, or until
+其中$a$和$\gamma$是梯度下降模型的参数。$\vec{P}^{(t)}$是正在被采样的点的集合与即将提出的新采样点的集合。如此更新每经过指定迭代次数就会发生一次，或者条件
 \begin{equation}
     \left|\vec{x}_{i}^{(t+1)} - \vec{x}_{i}^{(t)}\right| < \epsilon
 \end{equation}
-for some threshold $\epsilon > 0$.
+对某个给定的阈值$\epsilon > 0$成立。
 
-After $R$ restarts, the set of points with the best expected EI is chosen as the set of points to sample next. Figure \ref{fig:pk_paths} shows the paths of 128 multistart gradient descent paths with $l = 2$ on the EI of the Branin function.
+在$R$次重启后，有着最佳EI的组合将被作为下一步采样点的集合。\Cref{fig:pk_paths}显示了128个多起点梯度下降法对Branin的EI的搜索轨迹，其中$l = 2$。
 
 \begin{figure}[hpt]
  	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/branin_2d_32pk_paths_and_EI.png}}
-    \caption[Gradient descent paths in Branin Function]{The gradient descent paths of 2 points (simulating 2 free cores, $l=2$) with initial points chosen from a Latin hypercube of the domain over 128 restarts (each color represents a different restart). The EI of the function is shown as a contour plot. We see the paths converging on the point of highest EI.}
+    \caption[Branin的梯度下降搜索轨迹]{梯度下降的搜索轨迹（模拟$l=2$即2个核的情况）。初始值由LHS算法得到；重启128次（每种颜色表示一次重启）。目标函数的EI用等值线图表示。不难发现这些路径都收敛到了EI最高的位置。}
  	\label{fig:pk_paths}
  \end{figure}
 
- We note that some points appear to not move in Figure \ref{fig:pk_paths}. This happens when one of the points has a very high expected evaluation value under the GP. This causes that point to not contribute to the EI, and therefore the gradient of the EI with respect to that point is low, or zero, causing it to remain stationary while the other point rushes to the maximum EI (from section \ref{estEI}).
+注意到\cref{fig:pk_paths}中一些点似乎没有移动；这是因为其中某一个点已经在GP模型中有了很高的目标函数，也就导致了EI在此处的梯度非常低甚至为零，使得这个点几乎不动。（详见\cref{estEI}）。
 
 
 % chapter EPI Methods (end)
 
-\section{EPI Results} % (fold)
+\section{EPI结果} % (fold)
 \label{cha:EPI Results}
 
-In this chapter we will present preliminary results using the EPI algorithm and software package. The research is ongoing and the full results will be published in a forthcoming paper with Peter Frazier.
+在本章中我们将会给出一些EPI算法和软件包的一些初等结果。因为该研究还在继续，所以后续结果将会由Peter Frazier进行发表。
 
 %TODO graphs showing gain vs wallclock time
 
-\subsection{Parallel speedup using function drawn from prior}
+\subsection{对从先验估计中抽取的目标函数的并行速度提升}
 
-To test the speedup obtained by using EPI over serial methods such as EGO we generate a set of test functions from a 1-D prior and determine the average improvement at each wall clock unit of time for EGO and EPI running with 2, 4 and 8 cores. Each wall clock unit of time represents $n$ samplings of the function where $n$ is the number of cores being used.
+为了测试EPI相较于其他串行方法（如EGO）的速度提升，本文从1维先验估计测试函数，并计算了采用2、4、8个核心时，同一钟表时间下不同方法（EGO和EPI）的平均提升。每个钟表时间单位表示$n$个采样，其中$n$为使用的核数。
 
-We can see in Figure \ref{fig:EPI_res1} that the number of cores (or concurrent experiments) is directly proportional to the ending average improvement after a set number of wall clock time ($t = 10$). Future work includes refining these results, increasing the maximum number of cores and testing EPI against other heuristics in this and higher dimensional spaces.
+从\cref{fig:EPI_res1}中可以看到核心数目（即并发实验数）与一定时间（$t = 10$）以后的最终性能提升成正比。未来工作还包括继续改进这些结果，提高同时运行的核数，比较EPI与其他启发式算法，以及考虑高维的情况。
 
 %TODO
 %more cores, more samples, more MC runs
 \begin{figure}[hpt]
  	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/speedup_vs_wallclock_8_core_9_its.png}}
-    \caption[Parallel speedup for function drawn from prior]{Parallel speedup using function drawn from prior. We can see that the number of cores is directly related to the final average improvement. EPI with 8 cores results in a markedly better average improvement when compared to the serial method EGO (1 core).}
+    \caption[并行速度提升]{对从先验估计中抽取的目标函数的并行速度提升。可以看出核数与最终的提升有直接的关系。8核EPI比起串行（单核）EGO有着显著的性能提升。}
  	\label{fig:EPI_res1}
 \end{figure}
 
