@@ -38,36 +38,35 @@
 
 关于螺线管式磁耦合系统，常见结构包括Flux pipe\cite{budhia2010}、H\cite{takanashi2012}等。
 文献~\inlinecite{haldi2013}利用有限元分析的手段，对平面式磁耦合系统和螺线管式磁耦合系统进行了详细的比较，并指出平面式磁耦合系统相比于螺线管式有着更多的优势。
+但也有文献\cite{唐云宇2015}指出平面式结构存在诸多缺点，如有零耦合偏移点、磁通分布路径半径小等等，并建议采用螺线管式结构。
+关于两种结构的讨论还远未得出最终结论，仍然需要更多的研究。
 
 \subsection{优化设计}
+许多文献或多或少对磁谐振优化设计问题进行了研究，也即调节线圈和铁芯的形状、材料、尺寸等参数以使得系统性能达到相对最佳。
+目前已知大部分文献采用一次搜索一个变量的方法来进行优化设计：
+文献~\inlinecite{郑广君2017}依次对利兹线、线圈形状、线圈串联结构、长宽比、工作频率等参数进行设计。
+文献~\inlinecite{zhao2017}分别对线圈和铁芯的尺寸进行设计。
+文献~\inlinecite{ye2016}采用解析方法对线圈匝数进行优化设计。
+文献~\inlinecite{tang2015}依次讨论了匝间距、线圈长度、磁芯位置、屏蔽结构的选择。
+文献~\inlinecite{shjio2015}独立地研究了铁芯形状和铁芯的厚度。
+不难看出，这些方法虽然能起到一定的性能调优的目的，但距离在所有的设计可能性中找到一个最佳方案还有着很大的空间。
 
-在线圈结构已知，但具体尺寸尚未确定的情况下，目前已知绝大部分文献\cite{budhia2011,shijo2015,tang2015}都采用暴力搜索——遍历所有可行解——的方法来进行优化设计，而罕有从数学角度和工程角度研究优化问题本身。
-文献~\inlinecite{deng2016}采用在可行域内沿某一固定方向按给定步长进行线性搜索的方式来优化其提出的三线圈无线充电系统；
-虽然该方法从数学和工程角度对优化问题的求解做出了初等的尝试，但该方法显然不能找到全局最优设计，且在本质上与暴力搜索区别不大。
+文献~\inlinecite{movagharnejad2016}给出了一个通用的电动汽车无线充电磁谐振系统的优化设计工作流，依次选择各个参数，再检验是否满足设计要求。遗憾的是，文中对该工作流中性能参数的具体计算和选择语焉不详，更没有讨论在设计不满足要求时该如何进行调整。
 
-多目标
-T. Yilmaz, N. Hasan, R. Zane and Z. Pantic, "Multi-Objective Optimization of Circular Magnetic Couplers for Wireless Power Transfer Applications," in IEEE Transactions on Magnetics, vol. 53, no. 8, pp. 1-12, Aug. 2017.  doi: 10.1109/TMAG.2017.2692218
-S. Bandyopadhyay, V. Prasanth, L. R. Elizondo and P. Bauer, "Design considerations for a misalignment tolerant wireless inductive power system for electric vehicle (EV) charging," 2017 19th European Conference on Power Electronics and Applications (EPE'17 ECCE Europe), Warsaw, 2017, pp. P.1-P.10.  doi: 10.23919/EPE17ECCEEurope.2017.8099320
-S. Bandyopadhyay, V. Prasanth, P. Bauer and J. A. Ferreira, "Multi-objective optimisation of a 1-kW wireless IPT systems for charging of electric vehicles," 2016 IEEE Transportation Electrification Conference and Expo (ITEC), Dearborn, MI, 2016, pp. 1-7.  doi: 10.1109/ITEC.2016.7520210
+文献~\inlinecite{deng2016}尝试同时对线圈尺寸、补偿电容、谐振频率三者进行优化。然而，该文采用了在可行域内沿某一固定方向按给定步长进行线性搜索的方式来进行计算，显然不能找到全局最优设计。
 
-\iffalse
-6: budhia2010%
-7: takanashi2012%
-8: budhia2011%
-9: budhia2013%
-10: covic2011%
-11: choi2014%
-bgo4mppt abdelrahman2016
-26: budhia2013%
-92: zhang2014%WTF
-93: budhia2011%
-94: budhia2010%
-95: takanashi2012%
-96: nguyen2014%wtf
-97: zaheer2015%
-98: haldi2013%%
-\fi%  
-% TODO
+若要找到全局最优设计，则要么遍历所有可能的设计组合，要么就采用全局最优化算法。
+文献~\inlinecite{yilmaz2017}真正从全局最优化算法的角度研究了如何同时对多个设计变量进行优化：作者同时考虑了线圈位置和形状，建立设计变量的离散表示，利用Matlab实现了多目标混合粒子群优化算法（MOHPSO），再从Matlab调用Ansys仿真程序以进行具体电磁场解算。此文同时考虑了多种可能的设计目标组合，并充分考虑不同设计目标之间权衡情况，给出了多组帕累托前沿（Pareto Front）。
+文献~\inlinecite{bandyopadhyay2016,bandyopadhyay2017}研究了类似问题，只不过采用了不同的设计变量优化目标组合。
+同样基于全局最优化算法的类似文献还包括\inlinecite{ning2014,han2014}，只不过使用了遗传算法（GA）而非粒子群优化算法（PSO）。
+
+然而，这一方面的研究还有相当大的空缺。
+一方面，一些更为优秀的全局最优化方法，如已经应用到了光伏发电最大功率点追踪\cite{abdelrahman2016}的贝叶斯优化算法，还没有被引入电动汽车无线充电系统磁谐振部件的优化设计方法中；
+另一方面，上述所有文献都只是就事论事地讨论某一个具体设计问题下如何进行设计决策，而对于一般性的设计问题既没有一个很好的概括，也没有相应的软件实现。
+
 \section{论文结构}
-% TODO
+本文针对以上这些不足之处，在充分考虑一般性电动汽车无线充电系统磁谐振部件优化设计问题的特点（\cref{sec:fea}）的基础上，首先对现代全局最优化方法进行系统化的回顾（\cref{sec:doebgo}），找到适用于该问题的优化算法——贝叶斯优化算法（详见\cref{sec:bgo}），再展开相应的软件研究——设计、开发一套自动化设计系统（\cref{sec:petri,sec:design,sec:impl}），最后利用具体算例实验证该系统的有效性（\cref{sec:example}）。
+
+由于设计问题的复杂性，自动化设计系统的软件结构异常复杂；为此，本文先对现有的软件结构建模工具进行扩展（\cref{sec:petri}），再依据软件工程的原则，按自顶向下的顺序，先建模系统顶层架构（\cref{sec:design}），再讨论系统底层实现（\cref{sec:impl}）。
+
 \end{document}
