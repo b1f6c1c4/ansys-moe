@@ -183,10 +183,6 @@ Elastalert组件（不属于ELK架构）则会定时对一些关键系统运行�
 \subsection{硬件设备简述}
 为了方便系统开发，也为了从网络任意位置访问该系统，购买的小型云主机一台（Linux系统）；
 为了进行非常消耗计算资源的Ansys仿真，租用工作站一台（Windows系统）。
-由于该工作站位于校园内网，无法访问外部任何资源，故租用跳板机一台（Windows系统），以供工作站访问云服务器，参与计算。
-
-在跳板机上，本文采用Windows系统内置的TCP端口转发功能实现工作站访问云主机的消息队列、文件存储、Elasticsearch数据写入、Logstash日志写入等服务；
-而使用开源UDP端口转发实现——updx\footnote{\href{https://github.com/felipejfc/udpx}{https://github.com/felipejfc/udpx}}来实现工作站日志上传。
 
 \subsection{容器化与Docker}
 容器化的基本思想同虚拟化一致：在一台物理机上运行多个组件时，将不同组件的运行环境隔离开，防止其互相干扰，也防止其干扰物理机（宿主）本身。
