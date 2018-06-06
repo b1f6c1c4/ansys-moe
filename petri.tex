@@ -49,12 +49,14 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
   \centering%
   \subcaptionbox{UML活动图\label{fig:petri-act-example}}
     {\includegraphics{./figures/dist/petri-act-example.pdf}}\par
-  \subcaptionbox{分支与同步\label{fig:petri-act-seq1}}
+  \subcaptionbox{分支-同步节点的语义\label{fig:petri-act-seq1}}
     {\includegraphics{./figures/dist/petri-act-seq1.pdf}}
   \hspace{10em}
-  \subcaptionbox{分支与汇合\label{fig:petri-act-seq2}}
+  \subcaptionbox{分支-汇合节点的语义\label{fig:petri-act-seq2}}
     {\includegraphics{./figures/dist/petri-act-seq2.pdf}}
-  \caption{UML活动图示例\label{fig:petri-act}}
+  \caption[UML活动图示例]{UML活动图示例。\Cref{fig:petri-act-seq1}给出了一个简单的UML活动图。
+  在满足条件1时，后续将会执行分支-同步节点，如\cref{fig:petri-act-seq1}所示。
+  在不满足条件1时，后续将会执行分支-汇合节点，如\cref{fig:petri-act-seq2}所示。\label{fig:petri-act}}
 \end{figure}
 
 \Cref{fig:petri-act-example}使用UML语言描述了一个活动的内部结构：由若干控制流连接的7个动作节点和若干控制节点。
@@ -99,7 +101,7 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/petri-raw-example.pdf}
-  \caption{Petri网示例\label{fig:petri-raw}}
+  \caption[Petri网示例]{Petri网示例。图中描绘了一个Petri网的其中6种状态及其跳转关系（粗箭头表示）。\label{fig:petri-raw}}
 \end{figure}
 \Cref{fig:petri-raw}描绘了同一个Petri网的6种不同状态（更多状态并未画出），并标出了（在跳变发生时）这6种状态之间的互相转换关系。。
 对于传统的Petri网，位置、跳变、弧是固定的，而每个位置的标记数决定了该Petri网所处的状态。
@@ -119,7 +121,7 @@ Petri网可以对包含多个组件的复杂系统进行建模，还可以建模
     {\includegraphics{./figures/dist/petri-raw-fork.pdf}}\par
   \subcaptionbox{消息队列（省略了UML活动图模型）\label{fig:petri-raw-queue}}
     {\includegraphics{./figures/dist/petri-raw-queue.pdf}}
-  \caption{使用UML活动图和Petri网对常见系统结构进行建模}
+  \caption[常见系统结构的建模]{使用UML活动图和Petri网对常见系统结构进行建模。}
 \end{figure}
 Petri网的一个重要的特点在于其擅长对多组件并发系统进行建模。
 本小节将给出一些常见的并发结构的Petri网模型，并对其中部分结构附以UML活动图的等价模型，以为后续大型系统的建模进行铺垫。
@@ -146,7 +148,7 @@ Petri网的一个重要的特点在于其擅长对多组件并发系统进行建
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/petri-flow-example.pdf}
-  \caption{F-Petri网示例\label{fig:petri-flow}}
+  \caption[F-Petri网示例]{F-Petri网示例。一个跳变中嵌入了简化版的UML活动图。\label{fig:petri-flow}}
 \end{figure}
 
 \Cref{fig:petri-flow}给出了将流程图嵌入Petri网的方法——每个跳变设多个输入组和输出组，并在中间嵌入简化版的UML活动图。
@@ -203,7 +205,7 @@ L-Petri网的执行即为传统Petri网的执行，不过对于跨层弧翻译�
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/petri-layer-example.pdf}
-  \caption{L-Petri网示例\label{fig:petri-layer}}
+  \caption[L-Petri网示例]{L-Petri网示例。该L-Petri网一共包括4个层。\label{fig:petri-layer}}
 \end{figure}
 
 \Cref{fig:petri-layer}给出了一个比较复杂的L-Petri网的例子。
@@ -235,7 +237,7 @@ $\left\|\mathbb{X}^{3}\|\right)$个c，
   \hspace{1em}
   \subcaptionbox{带依赖的“逐项”系统（层外内容与左侧一致）\label{fig:petri-layer-dep}}
     {\includegraphics{./figures/dist/petri-layer-dep.pdf}}
-  \caption{使用FL-Petri网建模含有动态分支结构的“逐项”系统}
+  \caption[FL-Petri建模“逐项”系统]{使用FL-Petri网建模含有动态分支结构的“逐项”系统。}
 \end{figure}
 
 \Cref{fig:petri-layer-each}给出了含有动态分支结构的系统的“逐项”系统——根据外部输入，动态产生若干组几乎完全一致的工作流，并发执行，全部执行完毕之后结束——的Petri网模型。
@@ -250,7 +252,7 @@ $\left\|\mathbb{X}^{3}\|\right)$个c，
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/petri-layer-iter.pdf}
-  \caption{使用FL-Petri网建模含有动态分支结构的“迭代”系统\label{fig:petri-layer-iter}}
+  \caption[FL-Petri建模“迭代”系统]{使用FL-Petri网建模含有动态分支结构的“迭代”系统。\label{fig:petri-layer-iter}}
 \end{figure}
 
 \Cref{fig:petri-layer-iter}给出了一个更为复杂的结构——“迭代”系统。相较于“逐项”系统，该系统在每一组子工作流执行完毕之后，都会尝试计算下一步迭代位置。
