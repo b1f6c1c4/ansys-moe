@@ -23,25 +23,49 @@
 为后续分析描绘了基本图景。
 
 \section{研究现状}
-现有文献针对电动汽车无线充电系统的
+对于无线充电系统磁谐振部件的设计问题，现有文献已经给出了相当多的解决方案。
+综述~\cite{张艺明2016}总结了几种适用于通用磁谐振式WPT系统的传输线圈和铁芯的结构。
+而针对电动汽车这一特殊应用，磁谐振部件可以根据充电过程中汽车的运动状态分为动态与静态两大类\cite{赵争鸣2016}。
+由于动态充电系统（发射端一般是通电轨道，接收端一般是汽车上的接收线圈）的物理结构和设计分析方法都相对复杂，本文将讨论局限在静态（也即固定式）充电系统。
 
-6: budhia2010
-7: takanashi2012
-8: budhia2011
-9: budhia2013
-10: covic2011
-11: 
+\subsection{线圈结构}
+固定式电动汽车无线充电系统的磁耦合系统按基本结构划分，可以分为平面式（亦称单边式、平板式）和螺线管式（亦称双边式、圆柱式）\cite{高大威2015}。
+平面式的基本特点是（对发射端或者接收端而言）铁磁材料位于下方，传输线圈水平放在其上；
+而螺线管式的基本特点则是铁磁材料位于中央，传输线圈缠绕在铁磁材料之上。
+
+平面式磁耦合系统再做细分可以分为圆形\cite{budhia2011}、DD\cite{budhia2013}、DDQ\cite{budhia2013}、BP\cite{covic2011}、方形\cite{choi2014}等等。
+文献~\inlinecite{zaheer2012,zaheer2015}对比了上述几种线圈结构并指出采用DDQ和BP作为接收线圈具有较好的充电效果。
+
+关于螺线管式磁耦合系统，常见结构包括Flux pipe\cite{budhia2010}、H\cite{takanashi2012}等。
+文献~\inlinecite{haldi2013}利用有限元分析的手段，对平面式磁耦合系统和螺线管式磁耦合系统进行了详细的比较，并指出平面式磁耦合系统相比于螺线管式有着更多的优势。
+
+\subsection{优化设计}
+
+在线圈结构已知，但具体尺寸尚未确定的情况下，目前已知绝大部分文献\cite{budhia2011,shijo2015,tang2015}都采用暴力搜索——遍历所有可行解——的方法来进行优化设计，而罕有从数学角度和工程角度研究优化问题本身。
+文献~\inlinecite{deng2016}采用在可行域内沿某一固定方向按给定步长进行线性搜索的方式来优化其提出的三线圈无线充电系统；
+虽然该方法从数学和工程角度对优化问题的求解做出了初等的尝试，但该方法显然不能找到全局最优设计，且在本质上与暴力搜索区别不大。
+
+多目标
+T. Yilmaz, N. Hasan, R. Zane and Z. Pantic, "Multi-Objective Optimization of Circular Magnetic Couplers for Wireless Power Transfer Applications," in IEEE Transactions on Magnetics, vol. 53, no. 8, pp. 1-12, Aug. 2017.  doi: 10.1109/TMAG.2017.2692218
+S. Bandyopadhyay, V. Prasanth, L. R. Elizondo and P. Bauer, "Design considerations for a misalignment tolerant wireless inductive power system for electric vehicle (EV) charging," 2017 19th European Conference on Power Electronics and Applications (EPE'17 ECCE Europe), Warsaw, 2017, pp. P.1-P.10.  doi: 10.23919/EPE17ECCEEurope.2017.8099320
+S. Bandyopadhyay, V. Prasanth, P. Bauer and J. A. Ferreira, "Multi-objective optimisation of a 1-kW wireless IPT systems for charging of electric vehicles," 2016 IEEE Transportation Electrification Conference and Expo (ITEC), Dearborn, MI, 2016, pp. 1-7.  doi: 10.1109/ITEC.2016.7520210
+
 \iffalse
+6: budhia2010%
+7: takanashi2012%
+8: budhia2011%
+9: budhia2013%
+10: covic2011%
+11: choi2014%
 bgo4mppt abdelrahman2016
-15: kurs2007
-26: budhia2013
-92: zhang2014
-93: budhia2011
-94: budhia2010
-95: takanashi2012
-96: nguyen2014
-97: zaheer2015
-98: haldi2013
+26: budhia2013%
+92: zhang2014%WTF
+93: budhia2011%
+94: budhia2010%
+95: takanashi2012%
+96: nguyen2014%wtf
+97: zaheer2015%
+98: haldi2013%%
 \fi%  
 % TODO
 \section{论文结构}
