@@ -35,7 +35,7 @@ module.exports = (petri) => {
       if (d.kind === 'discrete') {
         return d.steps;
       }
-      return Math.ceil((d.upperBound - d.lowerBound) / d.precision);
+      return Math.ceil(((d.upperBound - d.lowerBound) / d.precision) + 0.5);
     });
     const script = _.template(dedent`
       import doe
@@ -69,10 +69,10 @@ module.exports = (petri) => {
     r.logger.silly('initPoints', initPoints);
     const getPars = (p) => _.fromPairs(dVars.map((d, i) => {
       r.logger.silly('in getPars', { d, i, p: p[i] });
-      if (d.kind === 'discrete') {
-        return [d.name, ((p[i] / (d.steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
-      }
-      return [d.name, ((p[i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+      const steps = d.kind === 'discrete'
+        ? d.steps
+        : Math.ceil(((d.upperBound - d.lowerBound) / d.precision) + 0.5);
+      return [d.name, ((p[i] / (steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
     }));
     const ongoing = {};
     await r.dyn('/eval');
