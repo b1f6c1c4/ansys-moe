@@ -4,6 +4,8 @@
 \usepackage{subfiles}
 \usepackage{siunitx}
 \usepackage{cleveref}
+\usepackage{upgreek}
+\usepackage{listings}
 \thusetup{%
   ctitle={电动汽车无线充电系统\\磁谐振部件优化设计软件研究},
   etitle={Software research for optimal design of magnetic resonant components of EV wireless charging system},
@@ -18,7 +20,19 @@
   csupervisor={陈凯楠~助理研究员},
   esupervisor={Chen, Kainan Assistant Professor},
 }
-\sisetup{binary-units=true,list-separator={, },list-final-separator={, },list-pair-separator={, },separate-uncertainty,range-phrase={\ensuremath{\sim}}}
+\sisetup{%
+  binary-units=true,list-separator={, },
+  list-final-separator={, },
+  list-pair-separator={, },
+  separate-uncertainty,
+  range-phrase={\ensuremath{\sim}},
+  math-micro=\upmu,
+  text-micro=\upmu
+}
+\lstset{%
+  basicstyle=\ttfamily\small,
+  extendedchars=false
+}
 \newcommand\crefpairgroupconjunction{和}\newcommand\crefmiddlegroupconjunction{、}\newcommand\creflastgroupconjunction{和}
 \newcommand\crefrangeconjunction{至}\newcommand\crefrangepreconjunction{}\newcommand\crefrangepostconjunction{}
 \newcommand\crefpairconjunction{和}\newcommand\crefmiddleconjunction{、}\newcommand\creflastconjunction{和}
@@ -153,6 +167,7 @@
 \end{acknowledgement}
 
 \begin{appendix}
+\subfile{tricks}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \addtocontents{lof}{\protect\iffalse}
 \addtocontents{lot}{\protect\iffalse}
