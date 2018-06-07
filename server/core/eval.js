@@ -252,7 +252,7 @@ module.exports = (petri) => {
 
   const eGepDone = async (r, payload) => {
     const rst = parse(payload);
-    if (!rst) {
+    if (_.isNil(rst)) {
       r.logger.error(`${r.param.gep} ${r.param.name} failed`, payload);
       await r.incr({ '../../error': 1 });
       return;
