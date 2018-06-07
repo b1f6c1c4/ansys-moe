@@ -28,9 +28,9 @@ EGO\cite{Jones1998}等统计学方法尝试通过以下手段来解决这一问�
 \end{equation}
 根据$A$的性质，这个问题可能是有约束的也可能是无约束的。
 
-文献\inlinecite{Jones1998}提出了一种寻找下一步选择的点的方法：先对现有点进行全局元模型拟合，再在全空间中选取一个点使得其最大化某个判据。
+文献~\inlinecite{Jones1998}提出了一种寻找下一步选择的点的方法：先对现有点进行全局元模型拟合，再在全空间中选取一个点使得其最大化某个判据。
 
-虽然\inlinecite{Jones1998}采用了频率统计学派的语言中的Kriging元模型来描述这种技术——EGO，但这一技术也能够被很好地用在贝叶斯学派的框架中。这一框架采用对目标函数$f$的高斯过程先验估计，具体细节如下节所示。
+虽然文献~\inlinecite{Jones1998}采用了频率统计学派的语言中的Kriging元模型来描述这种技术——EGO，但这一技术也能够被很好地用在贝叶斯学派的框架中。这一框架采用对目标函数$f$的高斯过程先验估计，具体细节如下节所示。
 
 \subsection{高斯过程的先验估计}
 
@@ -361,7 +361,7 @@ EGO算法本质的缺陷是它的顺序执行；这导致了其每次只会产�
 \subsection{元参数的调节} % (fold)
 \label{sec:Adaptation of hyperparameters}
 
-本节将会讨论如何根据采样信息来计算GP的元参数。本节内容与文献\cite{RW}中的方法框架一致。
+本节将会讨论如何根据采样信息来计算GP的元参数。本节内容与文献~\inlinecite{RW}中的方法框架一致。
 
 对于采样点$X$、采样值$\vec{y}$、元参数$\theta$来说，对数似然函数为
 \begin{equation}
@@ -422,7 +422,7 @@ EGO算法本质的缺陷是它的顺序执行；这导致了其每次只会产�
 \subsubsection{协方差矩阵的计算}
 \label{EPI_imp_var}
 
-文献~\cite{RW}给出了
+文献~\inlinecite{RW}给出了
 \begin{equation}
  \Sigma = K(\vec{x_{\star}}, \vec{x_{\star}}) - K(\vec{x_{\star}}, \vec{X}) K(\vec{X}, \vec{X})^{-1} K(\vec{X}, \vec{x_{\star}}).
 \end{equation}
