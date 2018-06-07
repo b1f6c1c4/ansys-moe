@@ -22,6 +22,7 @@ type GlobalConfigT struct {
 	PathPython     string `yaml:"pythonPath"`
 	PathMma        string `yaml:"mmaPath"`
 	PathRLang      string `yaml:"rlangPath"`
+	PartialUpload  bool   `yaml:"partialUpload"`
 }
 
 func loadConfig(exeDir string) GlobalConfigT {
@@ -47,6 +48,7 @@ func loadConfig(exeDir string) GlobalConfigT {
 	cfg.PathPython = os.Getenv("PYTHON_PATH")
 	cfg.PathMma = os.Getenv("MATHEMATICA_PATH")
 	cfg.PathRLang = os.Getenv("RLANG_PATH")
+	cfg.PartialUpload = os.Getenv("PARTIAL_UPLOAD") != ""
 	txt, err := ioutil.ReadFile(filepath.Join(exeDir, "config.yaml"))
 	if err != nil {
 		RL.Error(Core, "config", "Cannot open config.yaml")

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -142,17 +143,20 @@ func upload(e ExeContext, remote, local string, writer *multipart.Writer) error 
 	return nil
 }
 
-func uploadDir(e ExeContext, remote, local string, writer *multipart.Writer) error {
+func uploadDir(e ExeContext, remote, local string, writer *multipart.Writer, ignore *regexp.Regexp) error {
 	files, err := ioutil.ReadDir(local)
 	if err != nil {
 		RL.Error(e, "uploadDir", "Read dir: "+err.Error())
 		return err
 	}
 	for _, f := range files {
+		if ignore != nil && ignore.MatchString(f.Name()) {
+			continue
+		}
 		nr := remote + "/" + f.Name()
 		nl := filepath.Join(local, f.Name())
 		if f.IsDir() {
-			err = uploadDir(e, nr, nl, writer)
+			err = uploadDir(e, nr, nl, writer, ignore)
 		} else {
 			err = upload(e, nr, nl, writer)
 		}
@@ -164,12 +168,12 @@ func uploadDir(e ExeContext, remote, local string, writer *multipart.Writer) err
 }
 
 // UploadDir a dir from data path to remote
-func UploadDir(e ExeContext, remote, local string) error {
+func UploadDir(e ExeContext, remote, local string, ignore *regexp.Regexp) error {
 	RL.Debug(e, "uploadDir", "Will upload data/"+local)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	err := uploadDir(e, remote, filepath.Join(DataPath, local), writer)
+	err := uploadDir(e, remote, filepath.Join(DataPath, local), writer, ignore)
 	if err != nil {
 		return err
 	}
