@@ -181,10 +181,11 @@ module.exports = (petri) => {
       return;
     }
     const pars = _.fromPairs(dVars.map((d, i) => {
-      if (d.kind === 'discrete') {
-        return [d.name, ((nextPoint[i] / (d.steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
-      }
-      return [d.name, ((nextPoint[i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+      r.logger.silly('in pars', { d, i, np: nextPoint[i] });
+      const steps = d.kind === 'discrete'
+        ? d.steps
+        : Math.ceil(((d.upperBound - d.lowerBound) / d.precision) + 0.5);
+      return [d.name, ((nextPoint[i] / (steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
     }));
     const dpars = _.assign({}, cVars, pars);
     const dHash = hash(dpars);
