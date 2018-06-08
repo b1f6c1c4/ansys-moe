@@ -122,22 +122,26 @@ class ViewCatPage extends React.PureComponent {
     const events = [];
     _.values(cat.eval).forEach((e) => {
       if (e.startTime && e.ei !== undefined) {
-        events.push({ time: +e.startTime, ei: e.ei });
+        events.push({ type: 'ei', time: +e.startTime, ei: e.ei });
       }
       if (e.endTime) {
-        events.push({ time: +e.endTime, p0: e.P0 });
+        events.push({ type: 'p0', time: +e.endTime, p0: e.P0 });
       }
     });
     let opt = Infinity;
     const sorted = _.sortBy(events, 'time');
     // eslint-disable-next-line no-restricted-syntax
     for (const e of sorted) {
-      if (e.p0 !== undefined) {
-        if (e.p0 < opt) {
+      if (e.type === 'p0') {
+        let { p0 } = e;
+        if (_.isNil(p0)) {
+          p0 = p.config.P0.default || 0;
+        }
+        if (p0 < opt) {
           if (_.isFinite(opt)) {
             ub.push({ x: e.time - 1, y: opt });
           }
-          opt = e.p0;
+          opt = p0;
           ub.push({ x: e.time, y: opt });
         }
       } else {
