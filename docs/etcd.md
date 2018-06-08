@@ -73,6 +73,7 @@
   - /history
   - /ongoing
   - /iterate
+  - /gp
 - /finals
 - /final
 
