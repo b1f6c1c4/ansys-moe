@@ -17,7 +17,7 @@ type Query {
 type Mutation {
 
   # Run a new project or modify an existing project
-  # name MUST match /^[a-z][-_a-zz0-9]*$/
+  # name MUST match /^[a-z][-_a-z0-9]*$/
   run(name: ID!, config: JSON!): Boolean
 
   # Start controller docker container
