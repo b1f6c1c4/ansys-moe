@@ -67,37 +67,68 @@ module.exports = (petri) => {
       (dpar[name] - lowerBound) / (upperBound - lowerBound));
     const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
     const ongoing = await r.retrieve('/p/:proj/results/cat/:cHash/ongoing').json();
-    const sampled = _.chain(history)
-      .map('D')
-      .map(tDpar)
-      .flatten()
-      .value();
+    const gp = await r.retrieve('/p/:proj/results/cat/:cHash/gp').json();
+    const gpHash = hash(history, true);
+    let script;
     const beingSampled = _.chain(ongoing)
       .values()
       .map(tDpar)
       .flatten()
       .value();
-    const script = _.template(dedent`
-      sink(stderr());
-      source("R/ei.R");
-      library(jsonlite);
-      rngs <- c(<%= rngs.join(', ') %>);
-      sampled <- t(matrix(c(<%= sampled.join(', ') %>), nrow=<%= rngs.length %>));
-      values <- c(<%= values.join(', ') %>);
-      <% if (beingSampled.length) { %>
-        being_sampled <- t(matrix(c(<%= beingSampled.join(', ') %>), nrow=<%= rngs.length %>));
-      <% } else { %>
-        being_sampled <- NULL
-      <% } %>
-      rst <- eiopt(rngs, sampled, values, being_sampled);
-      sink();
-      print(toJSON(rst, digits=NA));
-    `)({
-      rngs,
-      values: _.map(history, 'P0').map((v) => v === null ? defaultValue : v),
-      sampled,
-      beingSampled,
-    });
+    if (gp && gpHash in gp) {
+      r.logger.trace('GPfit cache hit', gpHash);
+      const gpq = JSON.stringify(gp[gpHash]);
+      const gpQuoted = gpq.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      script = _.template(dedent`
+        sink(stderr());
+        source("R/ei.R");
+        library(jsonlite);
+        rngs <- c(<%= rngs.join(', ') %>);
+        <% if (beingSampled.length) { %>
+          being_sampled <- t(matrix(c(<%= beingSampled.join(', ') %>), nrow=<%= rngs.length %>));
+        <% } else { %>
+          being_sampled <- NULL
+        <% } %>
+        obj <- unserializeJSON("<%= gpQuoted %>");
+        rst <- eiopt(rngs, obj, being_sampled);
+        sink();
+        print(toJSON(rst, digits=NA));
+      `)({
+        rngs,
+        gpQuoted,
+        beingSampled,
+      });
+    } else {
+      r.logger.debug('GPfit cache invalidated', gpHash);
+      const sampled = _.chain(history)
+        .map('D')
+        .map(tDpar)
+        .flatten()
+        .value();
+      script = _.template(dedent`
+        sink(stderr());
+        source("R/ei.R");
+        library(jsonlite);
+        rngs <- c(<%= rngs.join(', ') %>);
+        sampled <- t(matrix(c(<%= sampled.join(', ') %>), nrow=<%= rngs.length %>));
+        values <- c(<%= values.join(', ') %>);
+        <% if (beingSampled.length) { %>
+          being_sampled <- t(matrix(c(<%= beingSampled.join(', ') %>), nrow=<%= rngs.length %>));
+        <% } else { %>
+          being_sampled <- NULL
+        <% } %>
+        obj <- gpfit(sampled, values);
+        rst <- eiopt(rngs, obj, being_sampled);
+        sink();
+        print(toJSON(rst, digits=NA));
+        print(serializeJSON(obj));
+      `)({
+        rngs,
+        values: _.map(history, 'P0').map((v) => v === null ? defaultValue : v),
+        sampled,
+        beingSampled,
+      });
+    }
     const iId = newId();
     r.logger.debug('Iter calculation started', iId);
     amqp.publish(
@@ -140,6 +171,13 @@ module.exports = (petri) => {
       return;
     }
     r.logger.debug('Iter succeed', rst);
+    const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
+    if (rst[1]) {
+      const gpHash = hash(history, true);
+      const gp = { [gpHash]: rst[1] };
+      await r.store('/p/:proj/results/cat/:cHash/gp', gp);
+      r.logger.debug('GPfit cache updated', gpHash);
+    }
     const nextPoint = rst[0].x;
     const nextEI = rst[0].ei[0];
     if (!_.isNil(r.cfg.minEI) && nextEI < r.cfg.minEI) {
@@ -155,7 +193,6 @@ module.exports = (petri) => {
     }
     const cVars = await r.retrieve('/hashs/cHash/:cHash').json();
     const dVars = await r.retrieve('/p/:proj/results/cat/:cHash/D').json();
-    const history = await r.retrieve('/p/:proj/results/cat/:cHash/history').json();
     const hasDone = (dpar) => _.every(dVars, (d, i) => {
       if (d.kind === 'discrete') {
         const id = ((dpar[d.name] - d.lowerBound) / (d.upperBound - d.lowerBound)) * (d.steps - 1);
@@ -181,10 +218,11 @@ module.exports = (petri) => {
       return;
     }
     const pars = _.fromPairs(dVars.map((d, i) => {
-      if (d.kind === 'discrete') {
-        return [d.name, ((nextPoint[i] / (d.steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
-      }
-      return [d.name, ((nextPoint[i] * d.precision) * (d.upperBound - d.lowerBound)) + d.lowerBound];
+      r.logger.silly('in pars', { d, i, np: nextPoint[i] });
+      const steps = d.kind === 'discrete'
+        ? d.steps
+        : Math.ceil(((d.upperBound - d.lowerBound) / d.precision) + 0.5);
+      return [d.name, ((nextPoint[i] / (steps - 1)) * (d.upperBound - d.lowerBound)) + d.lowerBound];
     }));
     const dpars = _.assign({}, cVars, pars);
     const dHash = hash(dpars);
