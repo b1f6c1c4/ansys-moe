@@ -2,10 +2,10 @@ MK=latexmk -silent -use-make
 
 .DEFAULT_GOAL: all
 
-data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv
+data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv data/common.R data/plot.R
 	-mkdir data\dist
-	Rscript --vanilla data/plot.R -i $^ -o $@
-	-rm Rplots.pdf
+	Rscript --vanilla data/plot.R -i $< -o $@
+	-del /Q Rplots.pdf
 
 figures/dist/%.pdf: figures/%.xml
 	-mkdir figures\dist
