@@ -1,0 +1,723 @@
+\documentclass[index]{subfiles}
+\begin{document}
+\chapter{书面翻译}
+
+\title{生物信息学和全局最优化中的并行机器学习算法 \\ EPI: 并行提升期望}
+
+\textbf{摘要:}
+EPI是一种不依赖梯度信息的全局最优化方法，它从未知非凸函数中最优地选取多个点来进行求值。EPI给出了下一步采样的最佳下一步位置集合，因此允许多个采样同时进行进行。与之对标的依次采样方法则在资源充足到可以同时进行多个求值的情况下较为低效。
+
+本文还实现了EPI算法模型：其基于多次采样来对EI进行数值估计，基于多起点梯度下降法来找到最佳下一步采样位置集合。该模型充分考虑了正在采样中但结果尚未获知的点。
+
+\section{EPI介绍} % (fold)
+\label{cha:EPI Introduction}
+
+\subsection{对昂贵函数的最优化}
+最优化方法尝试找到某个函数或者实验的最大值或最小值。其目标是找对输入参数的组合以最大化或最小化某个值，比如最大化经济模型中的收益，最小化运行成本，寻找药物试验的最优结果，以及生活中其他各种例子。优化问题的基本设定是有一个我们想要最大化或者最小化的目标函数，而我们想要找到一些参数来实现这个目标。对这个目标函数来说，可能是非常难以进行求值的：有可能需要大量的时间（如药物实验），有可能需要大量的金钱（如经济模型），或者同时需要时间和金钱（如寻找石油等自然资源）。这种限制强迫一个好的最优化算法应该更快、更有效地找到最优的解决方案，尤其是应该在收敛到最优位置之前尽量少地进行探索性实验。
+
+生物信息学等等科学中的数据密集型研究会产生\si{\peta\byte}级别的数据、越来越复杂的模型以及分析其的计算机算法。随着输入数据量的增加、算法复杂性的提升，这些算法需要越来越多的时间来进行计算。即便现代超级计算机能够处理\si{\peta FLOPS}(每秒钟$10^{15}$次浮点运算)，流体动力学模拟\cite{Compo2011}、复杂化学反应模拟\cite{Valiev2010}的程序代码依然会消耗数个小时甚至数天，累计几百万个CPU时。使用软件包Velvet\cite{Zerbino2008}分析单个基因的组成需要在超级计算机上运行24个小时。这些仿真和计算对时间和资源的绝对消耗量意味着仔细调整这些模型的参数是一个非常耗时耗力的工作。
+
+EGO\cite{Jones1998}等统计学方法尝试通过以下手段来解决这一问题：对待优化的目标函数进行估计，并计算下一次最佳采样的点以最大化目标函数比起当前最佳结果的改进（提升）的期望（EI）。当这种方法被连续执行起来时，就常常能够很快地在可行域内找到一个很好的点。然而，这种方法受限于其顺序执行的本质，也无法借助于可能的并行计算或者并发采样。对EPI的问题，有很多启发式的尝试\cite{Ginsbourger2008}，但这些设计都受限于其顺序化的本质。本文基于对多个采样点的提升期望的数值估计，提出了一种EPI的模型，并采样多起点梯度下降法来找到最佳下一步采样位置集合。该模型充分考虑了正在采样中但结果尚未获知的点。
+
+\subsection{高斯过程}
+
+首先讨论对一个连续函数$f$的高斯过程先验估计。函数$f$的定义域是$A \subseteq \mathbb{R}^{d}$。本文的最终目标是求解以下全局最优化问题：
+
+\begin{equation}
+\max_{x \in A} f(x).
+\end{equation}
+根据$A$的性质，这个问题可能是有约束的也可能是无约束的。
+
+文献~\inlinecite{Jones1998}提出了一种寻找下一步选择的点的方法：先对现有点进行全局元模型拟合，再在全空间中选取一个点使得其最大化某个判据。
+
+虽然文献~\inlinecite{Jones1998}采用了频率统计学派的语言中的Kriging元模型来描述这种技术——EGO，但这一技术也能够被很好地用在贝叶斯学派的框架中。这一框架采用对目标函数$f$的高斯过程先验估计，具体细节如下节所示。
+
+\subsection{高斯过程的先验估计}
+
+任一对函数$f$的高斯过程先验估计由一均值函数$\mu : A \mapsto \mathbb{R}$和一协方差函数$K : A \times A \mapsto \mathbb{R}_{+}$共同描述。均值函数是通用的；虽在某些情况下会用来反映一些全局的目标函数的变化趋势，但更多情况会设置成0。而协方差函数需要满足以下条件：
+
+\begin{equation}K(x,x) \geq 0,\end{equation}
+\begin{equation}K(x,y) = K(y,x),\end{equation}
+
+同时它还必须是半正定的，也即对任何有限的$k$，若任取$\vec{x}_{1}, \ldots, \vec{x}_{k} \in A$，构造矩阵$\Sigma$使第$i$行第$j$列的元素为$\Sigma_{ij} = K(\vec{x}_{i}, \vec{x}_{j})$，则$\Sigma$都是半正定的：
+
+\begin{equation}\vec{v}^{T}\Sigma \vec{v} \geq 0, \ \ \ \forall \vec{v} \in \mathbb{R}^{d}.\end{equation}
+
+关于$K$的常见选取方法包括高斯协方差函数$K(x,x^{\prime}) = a \exp(-b \| x - x^{\prime}\|^{2})$（包含参数$a$、$b$）、指数误差函数$K(x, x^{\prime}) = a \exp(-\sum_{i} b_{i} (x_{i} - x_{i}^{\prime})^{p})$（包含参数$\vec{b} \in \mathbb{R}^{d}, p$和$a$）。
+
+给定$f$的高斯过程（GP）先验估计，用
+\begin{equation}
+ f \sim \mbox{GP}(\mu(\cdot), K(\cdot, \cdot))
+\end{equation}
+表示对于任意固定点集$x_{1}, \ldots, x_{n} \in A$，考虑向量$(f(x_{1}), \ldots, f(x_{n}))$为未知数量（先验估计为多元正态分布），有：
+\begin{equation}
+    (f(x_{1}), \ldots, f(x_{n})) \sim N\left( \left[ \begin{tabular}{c} $\mu(x_{1})$ \\ $\vdots$ \\ $\mu(x_{n})$ \end{tabular} \right] , \Sigma_{n} = \left[ \begin{tabular}{ccc} $K(x_{1}, x_{1})$ & $\cdots$ & $K(x_{n}, x_{1})$ \\ $\vdots$ & $\ddots$ & $\vdots$ \\ $K(x_{1}, x_{n})$ & $\cdots$ & $K(x_{n},x_{n})$ \end{tabular} \right] \right).
+\end{equation}
+
+高斯过程在求解析解上非常方便。如果在$x_{1}, \ldots, x_{n}$观察函数$f$得到值$y_{1} = f(x_{1}), \ldots, y_{n} = f(x_{n})$，则对$f$的后验估计也是高斯过程：
+\begin{equation}
+ f|x_{1:n}, y_{1:n} \sim GP(\mu_{n}, \Sigma_{n})
+\end{equation}
+其中$\mu_{n}$和$\Sigma_{n}$在\cref{comp_of_gp}中会给出详细定义。不难看出，随着采样点逐渐增多，GP过程将如\cref{fig:GPP_evolve}所示变化。
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_stepper_EI.png}}
+    \caption[GPP的演变]{观察GPP均值（绿色虚线）和方差（绿色阴影）如何随着采样点的增加而逐渐接近真实函数值（蓝色实线）。采样点处的均值等于采样值，而方差在采样点附近最低。}
+ 	\label{fig:GPP_evolve}
+\end{figure}
+
+\subsection{提升期望（EI）}
+
+在考虑下一步该测量哪里的时候，EGO算法，以及从它推广而来的EI判据，计算收获函数如下：
+\begin{equation}
+ \mbox{EI}(x) = \mathbb{E}_{n} \left[\left[ f_{n}^{\star} - f(x) \right]^{+} \right] = \mathbb{E} \left[ f_{n}^{\star} - f_{n+1}^{\star}| x_{n} = x\right]
+\end{equation}
+其中$f_{n}^{\star} = \min_{m \leq n} f(x_{m})$。
+
+这也就是判断下一步采样位置$f_{n}^{\star}$的关键。这个算法在迭代中的每一步都会尝试最大化EI；在这些位置采样就会带来最大的回报。\Cref{fig:GPP_EI_evolve}中展示了\cref{fig:GPP_evolve}中不同位置的EI。
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_example_EI4.png}}
+    \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/GPP_example_EI.png}}
+    \caption[GPP的EI的演变]{描绘了\cref{fig:GPP_evolve}中第4和第5部分的EI。可以看出有较低均值和较高方差的区域有着更大的EI。}
+ 	\label{fig:GPP_EI_evolve}
+\end{figure}
+
+\subsubsection{启发式并行化}
+
+EGO算法本质的缺陷是它的顺序执行；这导致了其每次只会产生一个采样点，且其必须采样完毕才能找到下一个采样点。如果多个点可以同时采样，那么这种做法就会浪费资源。在EGO算法下，一次一个采样会导致盈余资源只能闲置。
+
+前人提出了一些启发式的EGO算法的扩展来尝试缓解这个瓶颈，包括{\it constant liar}和{\it kriging believer}\cite{Ginsbourger2008}。
+
+\paragraph{Constant liar启发式算法}
+
+在这种启发式算法中，正在进行采样的位置会被人为地设置成某个常数值，比如$\min(\vec{y}), \max(\vec{y})$或者$(\vec{y})$，然后再进行常规的EI最大化。这种方法无法对模型中的细节和GPP在各点处提供的信息进行精确的衡量。
+
+\paragraph{Kriging believer启发式算法}
+
+在这种启发式算法中，正在进行采样的位置会被假设将会返回等同于其期望的值，也就是将指定点处的方差降到0。这种方法没有能够考虑到被采样点处的函数的波动性，以及这种波动性可能对其他位置的取值的影响。
+
+\subsection{并行提升期望（EPI）}
+
+本文提出一种可以应用在并行系统上的EI算法的扩展。该方法可以同时在多个核上计算函数值，既可以使用CPU也可以使用GPGPU。相较于传统方法一次取一个点进行采样，本方法可以一次取多个点。
+
+该方法的核心是用下式计算多个采样点的EI：
+\begin{equation}
+ \mbox{EI}(x_{n+1}, \ldots, x_{n+l}) = \mathbb{E}_{n}\left[\left[f_{n}^{\star} - \min\left\{f(x_{n+1}), \ldots, f(x_{n+l})\right\}\right]^{+}\right].
+\end{equation}
+优化过程会对其进行近似求解，得到
+\begin{equation}
+ \argmin_{\vec{x} \in \mathbb{R}^{d \times l}} \mbox{EI}(\vec{x}),
+\end{equation}
+然后找对下一批求值的位置。然而，相较于纯串行执行方式可以解析求解$\mbox{EI}(x)$，并行情况下对$\mbox{EI}(\vec{x})$的计算就要困难得多，也需要进行数值估计。虽然通过标准的蒙特卡洛法进行估计效率欠佳，本文提供了一些策略来更准确地估计$\mbox{EI}(\vec{x})$并对其进行优化。
+
+% chapter EPI Introduction (end)
+
+\section{EPI方法} % (fold)
+\label{cha:EPI Methods}
+
+\subsection{高斯先验估计的参数}
+\label{comp_of_gp}
+
+在以下几节中，本文将会对GP的均值（\cref{methods_GP_mean}）和方差（\cref{methods_GP_var}）及其对每个参数的偏导数给出明确的定义。本文还将在\cref{methods_GP_cov}中给出对默认协方差函数——指数平方函数——的各个偏导数。
+
+\subsubsection{GP均值}
+\label{methods_GP_mean}
+
+首先我盟尝试对GP均值进行分解，以期找到其梯度的解析表达式：
+\begin{equation}
+ \vec{\mu_{\star}} = K(\vec{x}_{\star}, \textbf{X} )K(\textbf{X},\textbf{X})^{-1}\vec{y}.
+\end{equation}
+其中$\textbf{X}$的每一行都是$A$中的一个向量。定义矩阵$K(\vec{y}, \vec{z})$的每个元素为
+\begin{equation}
+    K(\vec{y}, \vec{z})_{ij} = K(\vec{y}_{i}, \vec{z}_{j}).
+\end{equation}
+注意到如果$\vec{x_{\star}}$是一个点，则矩阵$K(\vec{x}_{\star}, \textbf{X} )$实际上只是个向量。为了方便起见，记$K(\textbf{X},\textbf{X})^{-1}$为$K^{-1}$。
+\begin{equation}
+ \vec{\mu_{\star}} = K(\vec{x}_{\star}, \textbf{X} ) K^{-1} \vec{y}.
+\end{equation}
+进一步注意到向量内积可以拆成对$\vec{\mu_{\star}}$元素的求和：
+\begin{equation}
+ \mu_{\star {i}} = \sum_{j = 1}^{N} K(x_{\star i}, X_{j}) \left(K^{-1} \vec{y} \right)_{j}.
+\end{equation}
+
+在计算梯度时，可以将其挪到求和符号里面，并注意到向量$(K^{-1}\vec{y})$关于$x_{\star}$是常量：
+\begin{equation}
+ \frac{\partial}{\partial x_{\star t}} \mu_{\star i} = \sum_{j = 1}^{N} \left(K^{-1} \vec{y} \right)_{j} \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{j}).
+\end{equation}
+注意到
+\begin{equation}
+\frac{\partial}{\partial x_{\star t}} \mu_{\star i} = \left\{ \begin{tabular}{cc}
+                                                                  $\sum_{j = 1}^{N} \left(K^{-1} \vec{y} \right)_{j} \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{j})$ & for $i = t$ \\
+								  0 & otherwise
+                                                                 \end{tabular}\right..
+\end{equation}
+
+\subsubsection{GP方差}
+\label{methods_GP_var}
+
+现在对方差来进行同样的处理。方差的定义如下：
+\begin{equation}
+ K(\mu_{star}) = K(\textbf{X$_{\star}$}, \textbf{X$_{\star}$}) - K(\textbf{X$_{\star}$}, \textbf{X}) K(\textbf{X}, \textbf{X})^{-1} K(\textbf{X}, \textbf{X$_{\star}$}).
+\end{equation}
+矩阵$\Sigma$的元素$(i,j)$（参见\cref{EPI_imp_var}）为：
+\begin{equation}
+ \Sigma_{ij} = K(x_{\star i}, x_{\star j}) - \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p})
+\end{equation}
+故其偏导数$\frac{\partial}{\partial x_{\star t}} \Sigma_{ij}$为
+\begin{equation}
+ \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, x_{\star j}) - \\
+ \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star t}} K(x_{\star j}, X_{p}) + K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{q}) \right)
+\end{equation}
+对更详细的讨论可以参见\cref{EPI_imp_var}。
+
+\subsubsection{协方差的导数}
+\label{methods_GP_cov}
+
+一族常见的协方差函数的是指数平方函数：
+\begin{equation}
+    K(x_{i}, x_{j}) = \sigma_{f}^{2}\exp\left( -\frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right)  + \sigma_{n}^{2}\delta_{ij},
+\end{equation}
+其中$\delta_{ij}$是Kronecker记号：
+\begin{equation}
+    \delta_{ij} = \left\{ \begin{tabular}{ccc}
+        1 & if & $i=j$ \\
+        0 & if & $i\neq j$
+    \end{tabular} \right..
+\end{equation}
+本文使用这类协方差函数时需要包括以下几个参数：缩放尺度$l$，信号方差$\sigma_{f}^{2}$，样本方差$\sigma_{n}^{2}$。这些参数的极大似然估计可以由训练数据集（\cref{sec:Adaptation of hyperparameters}）中得出。目前先假定这些函数是常数。
+
+对以上任何参数的偏导数的计算都比较容易，因为cov$(x_{i}, x_{j}) = $ cov$(x_{j}, x_{i})$：
+\begin{equation}
+    \frac{\partial}{\partial x_{i}} K(x_{i}, x_{j}) = \delta_{ij} + \frac{\partial}{\partial x_{i}} \sigma_{f}^{2} \exp\left( - \frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right)
+\end{equation}
+\begin{equation}
+    =  \delta_{ij} + \frac{-\sigma_{f}^{2}}{2l^{2}} \exp\left( - \frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right) \frac{\partial}{\partial x_{i}} |x_{i} - x_{j}|^{2}
+\end{equation}
+\begin{equation}
+    =  \frac{x_{j} - x_{i}}{l^{2}} K(x_{i}, x_{j}) + \delta_{ij}.
+\end{equation}
+
+\subsection{EI的估计}
+\label{estEI}
+
+本文对在某一列数据点$\vec{x}$处的EI的估计由从GP中多次进行蒙特卡洛迭代来完成。
+
+在样本点处的均值$\vec{\mu}$和方差$\Sigma$分别已在\cref{methods_GP_mean}和\cref{methods_GP_var}中定义。
+
+具体做法是模拟从多元正态分布中抽取点：
+\begin{equation}
+    \vec{y}^{\prime} = \vec{\mu} + L \vec{w}
+\end{equation}
+其中$L$是$\Sigma$的Cholesky分解，而$\vec{w}$是独立同分布的标准正态分布样本。
+
+记从某个模拟采样中获得的提升如下：
+\begin{equation}
+    I^{\prime} = \left[f_{n}^{\star} - \min(\vec{y}^{\prime})\right]^{+}.
+\end{equation}
+通过多次计算去平均值的方法，不难对$\vec{x}$处的EI得到准确的估计。对于这种方法的准确性，将在\cref{GPUEI}中详细讨论。
+
+\subsection{$\mbox{EI}(\vec{x})$的估计和优化}
+
+为了对$\mbox{EI}(\vec{x})$进行优化，计算以下随机梯度：
+\begin{equation}
+ g(\vec{x}) = \bigtriangledown \mbox{EI}(\vec{x})
+\end{equation}
+并采用无穷小扰动分析\cite{Fu1994}的方法来处理导数和期望（见\cref{EPI_proof}）。然后使用多起点梯度下降法来找到一组样本点以最大化$\mbox{EI}(\vec{x})$（见\cref{sec:multistart}）。
+
+\subsubsection{梯度的处理}
+\label{EPI_proof}
+
+令$\vec{x} = \left(\vec{x}_{1}, \ldots, \vec{x}_{l}\right)$，则
+\begin{equation}
+    Z \left(\vec{x}\right) = \left[f_{n}^{\star} - \min_{i = 1,\ldots,l} f \left(\vec{x}_{i}\right)\right]^{+}
+\end{equation}
+其中
+\begin{equation}
+    f_{n}^{\star} = \min_{m\leq n} f \left(\vec{x}_{m}\right).
+\end{equation}
+然后
+\begin{equation}
+    EI_{n}(\vec{x}) = \mathbb{E}_{n}\left[Z \left(\vec{x}\right)\right].
+\end{equation}
+
+猜想
+\begin{equation}
+    \nabla \left[\mathbb{E}_{n}\left[Z \left(\vec{x}\right)\right]\right] = \mathbb{E}_{n}\left[\nabla Z \left(\vec{x}\right)\right] =  \mathbb{E}_{n}\left[g_{n}(\vec{x})\right]
+\end{equation}
+对于所有的$\vec{x}$（其中$\vec{x}_{i} \neq \vec{x}_{j}$）和$i \neq j$都成立。
+
+不难有
+\begin{equation}
+    g_{n}(\vec{x}) = \left\{ \begin{tabular}{ccc}
+        0 & if & $i^{\star}(\vec{x}) = 0$ \\
+        $-\nabla_{\vec{x}} f(\vec{x}_{i})$ & if & $i^{\star}(\vec{x}) = i$
+    \end{tabular} \right.
+\end{equation}
+且
+\begin{equation}
+    i^{\star}(\vec{x}) = \left\{ \begin{tabular}{ccc}
+        0 & if & $f_{n}^{\star} \leq \min_{i=1,\ldots,l} f(\vec{x}_{i})$ \\
+        $\min \argmin_{i=1,\ldots,l} f(\vec{x}_{i})$ & & otherwise.
+    \end{tabular} \right.
+\end{equation}
+关于证明，将会在后续文献中给出。
+
+\subsection{多起点梯度下降}
+\label{sec:multistart}
+
+本文采用多起点梯度下降法来找对最优位置几何使其EPI在总共$R$次重启中最大。
+
+对每个多起点迭代，用LHS方法随机抽取$\vec{x}^{(t=0)}$组初始位置。对于每个位置，$\vec{x}_{i}$，迭代公式为：
+\begin{equation}
+    \vec{x}_{i}^{(t+1)} = \vec{x}_{i}^{(t)} + \frac{a}{t^{\gamma}} \nabla_{\vec{x}_{i}} {\rm EI}\left(\vec{P}^{(t)} | \vec{X}\right)
+\end{equation}
+其中$a$和$\gamma$是梯度下降模型的参数。$\vec{P}^{(t)}$是正在被采样的点的集合与即将提出的新采样点的集合。如此更新每经过指定迭代次数就会发生一次，或者条件
+\begin{equation}
+    \left|\vec{x}_{i}^{(t+1)} - \vec{x}_{i}^{(t)}\right| < \epsilon
+\end{equation}
+对某个给定的阈值$\epsilon > 0$成立。
+
+在$R$次重启后，有着最佳EI的组合将被作为下一步采样点的集合。\Cref{fig:pk_paths}显示了128个多起点梯度下降法对Branin的EI的搜索轨迹，其中$l = 2$。
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/branin_2d_32pk_paths_and_EI.png}}
+    \caption[Branin的梯度下降搜索轨迹]{梯度下降的搜索轨迹（模拟$l=2$即2个核的情况）。初始值由LHS算法得到；重启128次（每种颜色表示一次重启）。目标函数的EI用等值线图表示。不难发现这些路径都收敛到了EI最高的位置。}
+ 	\label{fig:pk_paths}
+ \end{figure}
+
+注意到\cref{fig:pk_paths}中一些点似乎没有移动；这是因为其中某一个点已经在GP模型中有了很高的目标函数，也就导致了EI在此处的梯度非常低甚至为零，使得这个点几乎不动。（详见\cref{estEI}）。
+
+
+% chapter EPI Methods (end)
+
+\section{EPI结果} % (fold)
+\label{cha:EPI Results}
+
+在本章中我们将会给出一些EPI算法和软件包的一些初等结果。因为该研究还在继续，所以后续结果将会由Peter Frazier进行发表。
+
+%TODO graphs showing gain vs wallclock time
+
+\subsection{对从先验估计中抽取的目标函数的并行速度提升}
+
+为了测试EPI相较于其他串行方法（如EGO）的速度提升，本文从1维先验估计测试函数，并计算了采用2、4、8个核心时，同一钟表时间下不同方法（EGO和EPI）的平均提升。每个钟表时间单位表示$n$个采样，其中$n$为使用的核数。
+
+从\cref{fig:EPI_res1}中可以看到核心数目（即并发实验数）与一定时间（$t = 10$）以后的最终性能提升成正比。未来工作还包括继续改进这些结果，提高同时运行的核数，比较EPI与其他启发式算法，以及考虑高维的情况。
+
+%TODO
+%more cores, more samples, more MC runs
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/speedup_vs_wallclock_8_core_9_its.png}}
+    \caption[并行速度提升]{对从先验估计中抽取的目标函数的并行速度提升。可以看出核数与最终的提升有直接的关系。8核EPI比起串行（单核）EGO有着显著的性能提升。}
+ 	\label{fig:EPI_res1}
+\end{figure}
+
+%TODO
+%Compare EPI to EI, constant liar and kriging believer
+
+%\subsection{Speedup for large space}
+
+%TODO
+%if domain of sampling is large (ie $D >> l$) how does EPI compare to regular EI and random sampling
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[EPI comparison for large domain]{EPI vs EGO for large domain...}
+% 	\label{fig:EPI_res3}
+%\end{figure}
+
+%\subsubsection{Comparison to other methods}
+%
+%TODO
+%Compare EPI to space (in timing and accuracy)
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[EPI vs SPACE for large domain]{EPI vs SPACE for large domain...}
+% 	\label{fig:EPI_res4}
+%\end{figure}
+%
+%\subsection{Speedup for Branin function}
+%
+%TODO
+%show contour of log like WITH vectors
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[Parallel speedup using Branin function]{Parallel speedup using Branin function...}
+% 	\label{fig:EPI_res5}
+%\end{figure}
+%
+%TODO
+%show contour of log like WITH vectors
+%\begin{figure}[hpt]
+% 	\centerline{\includegraphics[width=0.5\textwidth]{raw/figures/placeholder.jpg}}
+%    \caption[Comparison using Branin function]{Comparison using Branin function...}
+% 	\label{fig:EPI_res6}
+%\end{figure}
+
+% chapter EPI Results (end)
+
+\section{EPI实现} % (fold)
+\label{cha:EPI Implementation}
+
+\subsection{元参数的调节} % (fold)
+\label{sec:Adaptation of hyperparameters}
+
+本节将会讨论如何根据采样信息来计算GP的元参数。本节内容与文献~\inlinecite{RW}中的方法框架一致。
+
+对于采样点$X$、采样值$\vec{y}$、元参数$\theta$来说，对数似然函数为
+\begin{equation}
+    \log p(\vec{y}|X, \theta) = -\frac{1}{2}\vec{y}^{T}\Sigma^{-1}\vec{y} - \frac{1}{2}\log|\Sigma| - \frac{n}{2} \log 2\pi
+\end{equation}
+其中$\Sigma$是之前讨论的协方差函数；$\theta$是协方差函数的元参数；$|\cdot|$是矩阵范数，具体定义如下：矩阵$B$的范数为
+\begin{equation}
+    |B| = \max \left( \frac{|B\vec{x}|}{|\vec{x}|} : \vec{x} \in \mathbb{R}^{n}\backslash\{\vec{0}\} \right).
+\end{equation}
+
+而其对每个元参数$\theta_{i}$的偏导数为：
+\begin{equation}
+    \frac{\partial}{\partial \theta_{i}} \log p(\vec{y}|X,\theta) = \frac{1}{2}\vec{y}^{T}\Sigma^{-1}\frac{\partial \Sigma}{\partial \theta_{i}} \Sigma^{-1}\vec{y} - \frac{1}{2} {\rm tr}\left( \Sigma^{-1}\frac{\partial \Sigma}{\partial \theta_{i}} \right)
+\end{equation}
+其中tr$(\cdot)$是矩阵的迹。若令$\vec{\alpha} = \Sigma^{-1}\vec{y}$则上式可以进一步化简：
+\begin{equation}
+    \frac{\partial}{\partial \theta_{i}} \log p(\vec{y}|X,\theta) = \frac{1}{2} {\rm tr}\left((\vec{\alpha}\vec{\alpha}^{T} - \Sigma^{-1})\frac{\partial \Sigma}{\partial \theta_{i}}\right).
+\end{equation}
+
+上式中最关键的部分是$\Sigma$对每个元参数的偏导数。对于本文采用指数平方协方差函数而言，其偏导数为：
+\begin{equation}
+    \frac{\partial}{\partial \sigma_{f}^{2}} \Sigma(x_{i}, x_{j}) = \exp\left( -\frac{1}{2l^{2}} |x_{i} - x_{j}|^{2}\right) = \frac{\Sigma(x_{i}, x_{j})}{\sigma_{f}^{2}},
+\end{equation}
+\begin{equation}
+    \frac{\partial}{\partial l} \Sigma(x_{i}, x_{j}) = \frac{1}{l^{3}}|x_{i} - x_{j}|^{2}\Sigma(x_{i}, x_{j})
+\end{equation}
+和
+\begin{equation}
+    \frac{\partial}{\partial \sigma_{n}^{2}} \Sigma(x_{i}, x_{j}) = \delta_{ij}.
+\end{equation}
+
+\subsubsection{元参数演化的例子}
+
+本节将会展示软件包中对元参数演化的处理能力。首先从元参数为$(\sigma_{f}^{2} = 1, l = 1, \sigma_{n}^{2} = 0.01)$、定义域为$[-7,7]$的高斯随机过程中抽取一个函数，并设置算法的初始元参数为$(\sigma_{f}^{2} = 1, l = 2, \sigma_{n}^{2} = 0.1)$随着不断地从函数中采样，我们希望元参数可以尽量逼近最开始的元参数。
+
+从\cref{fig:EPI_hyper_1}和\cref{fig:EPI_hyper_2}中不难看出，由LHS方法生成的20个采样点以后，在正确元参数位置处的似然函数最大。因此该算法能够采用梯度下降法来找对似然函数最大处，也即正确的元参数。
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_20s.pdf}}
+    \centerline{\includegraphics[width=.85\textwidth]{raw/figures/EPI/hyper_update_loglike_60s.pdf}}
+    \caption[元参数的似然函数]{在20采样点（上方）和60采样点（下方）后，元参数$l$和$\sigma_{n}^{2}$的似然函数值。}
+ 	\label{fig:EPI_hyper_1}
+\end{figure}
+
+\begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_pre.png}}
+    \centerline{\includegraphics[width=0.75\textwidth]{raw/figures/EPI/hyper_update_GPP_post.png}}
+    \caption[元参数的演化]{从直观上不难发现，该算法利用自适应方法找到的元参数（下方）比起最开始使用的元参数（上方）能更好地拟合原始数据。}
+ 	\label{fig:EPI_hyper_2}
+\end{figure}
+
+% section Adaptation of hyperparameters (end)
+
+\subsection{数学证明}
+
+本节将会给出协方差矩阵的梯度的每个元素计算方式，以及提供一种将Cholesky分解结果进行微分的方法。
+
+\subsubsection{协方差矩阵的计算}
+\label{EPI_imp_var}
+
+文献~\inlinecite{RW}给出了
+\begin{equation}
+ \Sigma = K(\vec{x_{\star}}, \vec{x_{\star}}) - K(\vec{x_{\star}}, \vec{X}) K(\vec{X}, \vec{X})^{-1} K(\vec{X}, \vec{x_{\star}}).
+\end{equation}
+本文记$K^{-1} = K(\vec{X}, \vec{X})^{-1}$。根据定义，
+\begin{equation}
+ K(\vec{x_{\star}}, \vec{x_{\star}})_{ij} = K(x_{\star i}, x_{\star j})
+\end{equation}
+\begin{equation}
+ K(\vec{x_{\star}}, \vec{X})_{ij} = K(x_{\star i}, X_{j})
+\end{equation}
+\begin{equation}
+ K(\vec{X}, \vec{x_{\star}})_{ij} = K(X_{i}, x_{\star j}).
+\end{equation}
+记临时矩阵$T^{(1)}$为
+\begin{equation}
+ T^{(1)} = K(\vec{x_{\star}}, \vec{X}) K^{-1}
+\end{equation}
+将其分解得到
+\begin{equation}
+ T^{(1)}_{ip} = \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}).
+\end{equation}
+再定义
+\begin{equation}
+ T^{(2)} = T^{(1)} K(\vec{X}, \vec{x_{\star}})
+\end{equation}
+分解以得到
+\begin{equation}
+ T^{(2)}_{ij} = \sum_{p = 1}^{N} T^{(1)}_{ip} K(X_{p}, x_{\star j}) = \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p}).
+\end{equation}
+并记
+\begin{equation}
+ \Sigma_{ij} = K(\vec{x_{\star}}, \vec{x_{\star}})_{ij} - T^{(2)}_{ij}
+\end{equation}
+\begin{equation}
+ \Sigma_{ij} = K(x_{\star i}, x_{\star j}) - \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{q}) K(x_{\star j}, X_{p}).
+\end{equation}
+使用链式法则，对每个元素进行操作，即可得到偏导数：
+\begin{equation}
+ \begin{tabular}{rl}
+ $\frac{\partial}{\partial x_{\star t}} \Sigma_{ij} =$ & $\frac{\partial}{\partial x_{\star t}} K(x_{\star i}, x_{\star j})$ \\
+ & $- \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star t}} K(x_{\star j}, X_{p}) + K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star t}} K(x_{\star i}, X_{q}) \right)$
+ \end{tabular}
+\end{equation}
+其中$\frac{\partial}{\partial x_{\star t}} T^{(2)}_{ij} = $
+\begin{equation}
+    \left\{ \begin{tabular}{cc}
+        $2 \sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} \left( K(x_{\star i}, X_{q}) \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{p}) \right)$ & $t = i = j$ \\
+        $\sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star j}, X_{p}) \frac{\partial}{\partial x_{\star i}} K(x_{\star i}, X_{q})$ & $t = i \neq j$ \\
+							$\sum_{p = 1}^{N} \sum_{q = 1}^{N} K^{-1}_{qp} K(x_{\star i}, X_{p}) \frac{\partial}{\partial x_{\star j}} K(x_{\star j}, X_{q})$ & $t = j \neq i$ \\
+							$0$ & otherwise
+                                                      \end{tabular} \right..
+\end{equation}
+
+\subsubsection{Choleskey分解的微分}
+
+为了将梯度引入Choleskey分解，本文遵循文献~\inlinecite{Smith1995}中的方法。
+
+该算法输入$\Sigma$，输出一个下三角矩阵$L$和$\frac{\partial}{\partial x_{\star t}} L$使得$\Sigma = LL^{T}$。
+
+本文采用以下记号：
+\begin{equation}
+    \frac{\partial}{\partial x_{\star t}} L_{ij} = L_{ij} (x_{\star t})
+\end{equation}
+\begin{enumerate}
+ \item $L_{ij} = \Sigma_{ij}$ \\
+       $L_{ij (x_{\star t})} = \frac{\partial}{\partial x_{\star t}} \Sigma_{ij}$
+ \item for $k = 1\ldots N$ if $|L_{kk}| > \epsilon_{m}$ (machine precision)
+ \begin{enumerate}
+  \item $L_{kk} = \sqrt{L_{kk}}$ \\
+	$L_{kk (x_{\star t})} = \frac{1}{2} \frac{L_{kk (x_{\star t})}}{L_{kk}}$.
+  \item for $j = k+1\ldots N$ \\
+	$L_{jk} = L_{jk}/L_{kk}$ \\
+	$L_{jk (x_{\star t})} = \frac{L_{jk (x_{\star t})} + L_{jk}L_{kk (x_{\star t})}}{L_{kk}}$.
+  \item for $j = k+1\ldots N$ and $i = j\ldots N$ \\
+	$L_{ij} = L_{ij} - L_{ik}L_{jk}$ \\
+	$L_{ij (x_{\star t})} = L_{ij (x_{\star t})} - L_{ik (x_{\star t})}L_{jk} - L_{ik}L_{jk (x_{\star t})}$.
+ \end{enumerate}
+
+这样就得到了下三角矩阵$L$和$\frac{\partial}{\partial x_{\star t}} L$使得$\Sigma = LL^{T}$。
+
+\end{enumerate}
+
+\subsection{GPGPU计算} % (fold)
+\label{sec:GPGPU Computing}
+
+GPU计算使得并行算法的简易实现成为可能。现代图形卡可以包括数百个核心，一台桌面工作站上就能进行TFLOPS级别的运算。类C语言的程序，如CUDA和openCL使得并行算法在通用图形处理器（GPGPU）上的实现成为可能，只要算法在设计上可以接受GPGPU较为紧张的内存限制。具体情况如下文所示。
+
+\subsubsection{EI}
+\label{GPUEI}
+
+在EI算法中，蒙特卡洛步骤是（相当平凡地）可并行化的；又因为其较低的内存要求（$\mathcal{O}(l^{2})$），很自然地导致我们采用GPGPU来实现它。本文将该算法在CUDA核上的实现与串行Python实现进行比较。
+
+%\paragraph{Accuracy}
+%
+%When the dimension of the problem is low we can compute the expected improvement analytically. \cite{Ginsbourger2008} gives solutions for the 1-D and 2-D EI exactly. We compare our method to these and see how many MC iterations are required to achieve different levels of accuracy.
+%
+%TODO
+%graph for 1 point, 2 points exp error vs analytic, var of error vs its
+
+\paragraph{速度提升}
+
+EI算法的CUDA实现比CPU上的Python实现要快约300倍。\Cref{GPUspeed1}中详细表明了不同方法计算2维空间中4个点（$l=4, d=2$）的EI时需要的钟表时间。
+
+ \begin{figure}[hpt]
+ 	\centerline{\includegraphics[width=\textwidth]{raw/figures/EPI/exp_EI_speedup_vs_its.png}}
+    \caption[CPU和GPU计算EI的时间消耗]{计算$\mathbb{E}_{n}\left[{\rm EI}(\vec{x})\right]$所需的钟表时间：采用CPU（蓝色实线）或GPU（绿色X线），$l = 4$。}
+ 	\label{GPUspeed1}
+ \end{figure}
+
+%\subsubsection{Gradient of Expected Improvement}
+%
+%MC step, some memory problems (see section).
+%
+%TODO
+%graph: wall clock time vs number of iterations
+%graph: wall clock time vs number of samples
+%graph: wall clock time vs number of restarts (paths)
+
+\subsubsection{内存限制} % (fold)
+\label{sub:Memory Restrictions}
+
+在GPGPU上，每核拥有的内存非常之少：（Tesla图形卡上有\SI{16}{\kilo\byte}，GT 2{\it XX}图形卡上有\SI{4}{\kilo\byte}）。本文中的算法使用的矩阵（见\cref{EPImemory}）中有些可能会随着点数增加在快速增长。
+
+\begin{table}
+    \caption{GPP矩阵内存消耗}
+    \label{EPImemory}
+\begin{center}
+    \begin{tabular}{c|c}
+    Variable & Size \\
+    \hline
+    $K$ & $n \times n$ \\
+    $K_{\star }$ & $n \times l$ \\
+    $K_{\star \star }$ & $l \times l$ \\
+    $L = {\rm cholesky}(K + \sigma^{2}I) $ & $n \times n$ \\
+    $\vec{v} = L \backslash K_{\star }$ & $n \times l$ \\
+    $\vec{\alpha} = L^{T} \backslash L \backslash \vec{y}$ & $n \times 1$ \\
+    $\vec{\mu} = K_{\star }^{T}\vec{\alpha}$ & $l \times 1$  \\
+    $\Sigma = K_{\star \star} - \vec{v}^{T}\vec{v}$ & $l \times l$ \\
+    $\vec{\nabla} \vec{\mu}$ & $l \times d$ \\
+    $\vec{\nabla} \Sigma$ & $l \times l \times d$
+    \end{tabular}
+\end{center}
+\end{table}
+
+The trivially MC portions of the algorithm only ``need" the matrices of size $l \times l$ to compute their estimates, so that is all that is sent to the GPU, the calculations involving $n \times n$ are computed on the CPU where system memory is abundant.
+
+\paragraph{数据传输} % (fold)
+\label{ssub:Memory Transfer}
+
+为了将向量和矩阵传输到GPU，需要采用（线性）数组作为物理结构，因此必须对每个部分分别压平。这样做也使得GPU中将数据还原成2维或者3维矩阵相当方便。
+
+\begin{equation}
+    \vec{\mu} = \left[ \underbrace{\left[ \underbrace{\left[\mu_{1}^{(1)}, \ldots, \mu_{c}^{(1)}, \mu_{c+1}^{(1)}, \ldots, \mu_{l}^{(1)} \right]}_{l}, \ldots, \underbrace{\left[\mu_{1}^{(R)}, \ldots, \mu_{c}^{(R)}, \mu_{c+1}^{(R)}, \ldots, \mu_{l}^{(R)} \right]}_{l} \right]}_{R} \right]
+\end{equation}
+
+每次运行需要内存$O(lR)$，每GPU核需要内存$O(l)$。
+
+\begin{equation}
+    \Sigma = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \Sigma_{11}^{(1)}, \ldots, \Sigma_{1l}^{(1)} \right]}_{l}, \ldots, \underbrace{ \left[ \Sigma_{l1}^{(1)}, \ldots, \Sigma_{ll}^{(1)} \right]}_{l} \right] }_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \Sigma_{11}^{(R)}, \ldots, \Sigma_{1l}^{(R)} \right]}_{l}, \ldots, \underbrace{ \left[ \Sigma_{l1}^{(R)}, \ldots, \Sigma_{ll}^{(R)} \right]}_{l} \right] }_{l}  \right]}_{R}\right]
+\end{equation}
+
+每次运行需要内存$O(l^{2}R)$，每GPU核需要内存$O(l^{2})$。
+
+\begin{equation}
+    \nabla \vec{\mu} = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \mu_{1}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \mu_{l}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \mu_{1}^{(R)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \mu_{l}^{(R)} \right]}_{d}\right]}_{l} \right]}_{R} \right]
+\end{equation}
+
+每次运行需要内存$O(ldR)$，每GPU核需要内存$O(ld)$。
+
+\begin{equation}
+    \nabla \Sigma = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \Sigma_{11}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \Sigma_{1l}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} \Sigma_{l1}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} \Sigma_{ll}^{(1)} \right]}_{d}\right]}_{l} \right] }_{l}, \ldots \right]}_{R} \right]
+\end{equation}
+
+每次运行需要内存$O(l^{2}dR)$，每GPU核需要内存$O(l^{2}d)$。
+
+\begin{equation}
+    \nabla {\rm EI} = \left[ \underbrace{ \left[ \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} {\rm EI}^{(1)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} {\rm EI}^{(1)} \right]}_{d}\right]}_{l}, \ldots, \underbrace{ \left[ \underbrace{ \left[ \nabla_{\vec{x_{1}}} {\rm EI}^{(R)} \right]}_{d} , \ldots, \underbrace{ \left[ \nabla_{\vec{x_{l}}} {\rm EI}^{(R)} \right]}_{d}\right]}_{l} \right]}_{R} \right]\end{equation}
+
+每次运行需要内存$O(ldR)$，每GPU核需要内存$O(ld)$。
+
+% subsubsection Memory Transfer (end)
+
+% subsection Memory Restrictions (end)
+
+% section GPGPU Computing (end)
+
+\subsection{软件包下载方式和需求}
+ \begin{itemize}
+  \item \textbf{项目名称:} EPI
+  \item \textbf{项目主页:} www.github.com/sc932/EPI
+  \item \textbf{操作系统:} Linux 32/64-bit, Mac OSX, Windows (Cygwin)
+  \item \textbf{程序语言:} Python, C, CUDA
+  \item \textbf{其他需求:} Some python packages, see documentation
+  \item \textbf{开源协议:} UoI/CNSA Open Source
+ \end{itemize}
+
+
+% chapter EPI Implementation (end)
+
+% part EPI: Expected Parallel Improvement (end)
+
+\end{document}
+\begingroup
+\renewcommand{\addcontentsline}[3]{}
+\bibliographystyle{thuthesis-numeric}
+\begin{thebibliography}{}
+
+%%%%%%%%%%%%%%%%%%%
+        % ALE
+
+\bibitem[Aird {\it et~al}., 2011]{Aird2011} Aird,D., Chen,W.S., Ross,M., Connolly,K., Meldrim,J., Russ,C., Fisher,S., Jaffe,D., Nusbaum,C., Gnirke,A. (2011) Analyzing and minimizing bias in Illumina sequencing libraries, {\it Genome Biology}, {\bf 12}, R18.
+\bibitem[Altschul \textit{et~al}., 1990]{BLAST}
+    Altschul, S.F., Gish W., Miller W., Myers E.W., Lipman D.J. (1990) Basic local alignment search tool. \textit{Journal of Molecular Biology}, \textbf{215}(3):403-410.
+\bibitem[Altschul \textit{et~al}., 1997]{PSIBLAST}
+Altshul, S.F., \textit{et~al}. (1997) Gapped BLAST and PSI-BLAST: a new generation pf protein database search programs. \textit{Nucleic Acids Research} \textbf{25}(17), 3389-3402.
+\bibitem[Bailey \textit{et~al}., 2006]{MEME}
+Bailey, T.L., \textit{et~al}. (2006) MEME: discovering and analyzing DNA and protein sequence motifs. \textit{Nucleic Acids Research} \textbf{34} W369-W373.
+\bibitem[Brochu {\it et~al}., 2010]{Brochu2010} Brochu,E., Cora,V.M., de Freitas,N. (2010) A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning, {\it Computing Research Repository}, arXiv:1012.2599v1.
+\bibitem[Choi {\it et~al}., 2008]{Choi2008} Choi,J.H., Kim,S., Tang,H., Andrews,J., Gilbert,D.G., Colbourne,J.K. (2008) A Machine Learning Approach to Combined Evidence Validation of Genome Assemblies, {\it BMC Bioinformatics}, {\bf 24}(6), 744-750.
+\bibitem[Choudhary {\it et~al}., 2006]{Choudhary2006} Choudhary,M., Zanhua,X., Fu,Y.X., Kaplan,S. (2006) Genome analyses of three strains of Rhodobacter sphaeroides: evidence of rapid evolution of chromosome II, {\it Journal of Bacteriology}, {\bf 189}(5), 1914-1921.
+\bibitem[Compo {\it et~al}., 2011]{Compo2011} Compo,G.P., Whitaker,J.S., Sardeshmukh,P.D., Matsui,N., Allan,R.J., {\it et~al}. (2011) The Twentieth Century Reanalysis Project, {\it Quarterly Journal of the Royal Meteorological Society}, {\bf 137}(654), 1-28.
+\bibitem[Costello {\it et~al}., 2009]{Costello2009} Costello,E.K., Lauber,C.L., Hamady,M., Fierer,N., Gordon,J.I., Knight,R. (2009) Bacterial community variation in human body habitats across space and time, {\it Science}, {\bf 326}(5960), 1694-1697.
+\bibitem[Durbin {\it et~al}., 2006]{Durbin06}
+    Durbin,R., Eddy,S., Krogh,A., Mitchison,G. (2006) Biological sequence analysis, $11^{th}$ edition.
+\bibitem[Durfee {\it et~al}., 2008]{Durfee2008} Durfee,T., Nelson,R., Baldwin,S., Plunkett,G., Burland,V., Mau,B., Petrosino,J.F., Qin,X., Muzny,D.M., Ayele,M., {\it et~al}. (2008) The complete genome sequence of Escherichia coli DH10B: insights into the biology of a laboratory workhorse, {\it Journal of Bacteriology}, {\bf 190}(7), 2597-2606.
+\bibitem[Eddy, 1998]{Eddy98} Eddy, S.R. (1998) Profile hidden Markov models. \textit{Bioinformatics}, \textbf{14}(9):755-763.
+\bibitem[Edgar, 2004]{MUSCLE}
+Edgar, R.C. (2004) MUSCLE: multiple sequence alignment with high accuracy and high throughput. \textit{Nucleic Acids Research} \textbf{32}(5) 1792-1797.
+\bibitem[Edgar, 2010]{Edgar2010}
+Edgar, R.C. (2010) Quality measures for protein alignment benchmarks. \textit{Nucleic Acids Research} \textbf{38}(7), 2145-2153.
+\bibitem[Eid {\it et~al}., 2009]{Eid2009} Eid,J., Fehr,A., Gray,J., Luong,K., Lyle,J., Otto,G., Peluso,P., Rank,D., Baybayan,P., Bettman,B., {\it et~al}. (2009) Real-Time DNA Sequencing from Single Polymerase Molecules, {\it Science}, {\bf 323}(5910), 133-138.
+\bibitem[Fu, 1994]{Fu1994} Fu,M.C. (1994) Optimization via Simulation: A Review, {\it Annals of Operations Research}, {\bf 53}(1), 199-247.
+\bibitem[Fujimoto {\it et~al}., 2010]{Fujimoto2010} Fujimoto,A., Nakagawa,H., Hosono,N., Nakano,K., Abe,T., Boroevich,K.A., Nagasaki,M., Yamaguchi,R., Shibuya,T., Kubo,M., {\it et~al}. (2010) Whole-genome sequencing and comprehensive variant analysis of a Japanese individual using massively parallel sequencing, {\it Nature Genetics}, {\bf 42}, 931-936.
+\bibitem[Gelman {\it et~al}., 2004]{Gelman2004} Gelman,A.B., Carlin,J.B., Stern,H.S., Rubin,D.B. (2004) Appendix A: Standard Probability Distributions, {\it Bayesian Data Analysis}, 2$^{\text{nd}}$ ed.
+\bibitem[GenBank, 2009]{GenBank}
+GenBank. (2009) \textit{Nucleic acids research}, doi:10.1093/nar/gkp1024.
+\bibitem[Ginsbourger {\it et~al}., 2008]{Ginsbourger2008} Ginsbourger,D., Le Riche,R., Carraro,L. (2008) A Multi-points Criterion for Deterministic Parallel Global Optimization based on Gaussian Processes, {\it Unpublished results}.
+\bibitem[Gnerre {\it et~al}., 2010]{Gnerre2010} Gnerre,S., MacCallum,I., Przybylski,D., Ribeiro,F., Burton,J., Walker,B., Sharpe,T., Hall,G., Shea,T., Sykes,S., {\it et~al}. (2010) High-quality draft assemblies of mammalian genomes from massively parallel sequence data, {\it Proceedings of the National Academy of Sciences USA}.
+\bibitem[Haiminen {\it et~al}., 2011]{Haiminen2011} Haiminen,N., Kuhn,D.N., Parida,L., Rigoutsos,I. (2011) Evaluation of Methods for De Novo Genome Assembly from High-Throughput Sequencing Reads Reveals Dependencies That Affect the Quality of the Results, {\it PLoS ONE}, {\bf 6}(9).
+\bibitem[Henikoff and Henikoff, 1992]{Henikoff1992}
+    Henikoff,S. and Henikoff,J.G. (1992) Amino acid substitution matrices from protein blocks, {\it Proceedings of the National Academy of Sciences of the United States of America}, {\bf 89}(22), 10915-10919.
+\bibitem[Hess {\it et~al}., 2011]{Hess2011} Hess,M., Sczyrba,A., Egan,R., Kim,T.W., Chokhawala,H., Schroth,G., Luo,S., Clark,D.S., Chen,F., Zhang,T., {\it et~al}. (2011) Metagenomic Discovery of Biomass-Degrading Genes and Genomes from Cow Rumen, {\it Science}, {\bf 331}(6016), 463-467.
+\bibitem[Iverson {\it et~al}., 2012]{Iverson2012} Iverson,V., Morris,R.M., Frazar,C.D., Berthiaume,C.T., Morales,R.L., Armbrust,E.V. (2012) Untangling Genomes from Metagenomes: Revealing an Uncultured Class of Marine Euryarchaeota, {\it Science}, {\bf 335}(6068), 587-590.
+\bibitem[Jones {\it et~al}., 1998]{Jones1998} Jones,D.R., Schonlau,M., Welch,W.J. (1998) Efﬁcient Global Optimization of Expensive Black-Box Functions, {\it Journal of Global Optimization}, {\bf 13}, 455-492.
+\bibitem[Kent {\it et~al}., 2002]{Kent2002} Kent,J.W., Sugnet,C.W., Furey,T.S., Roskin,K.M., Pringle,T.H., {\it et~al}. (2002) The Human Genome Browser at UCSC, {\it Genome Research}, {\bf 12}, 996-1006.
+\bibitem[Kent, 2002]{BLAT} Kent, W.J. (2002) BLAT - the BLAST-like alignment tool. \textit{Genome Res.} \textbf{12}, 656-664.
+\bibitem[Lander and Waterman, 1988]{Lander1988} Lander,E.S., Waterman,M.S. (1988) Genomic mapping by fingerprinting random clones: a mathematical analysis, {\it Genomics}, {\bf 2}(3), 231-239.
+\bibitem[Langmead {\it et~al}., 2009]{Langmead2009} Langmead,B., Trapnell,C., Pop,M., Salzburg,S.L. (2009) Ultrafast and memory-efficient alignment of short DNA sequences to the human genome, {\it Genome Biology}, {\bf 10}, R25.
+\bibitem[Laserson {\it et~al}., 2011]{Laserson2011} Laserson,J., Jojic,V., Koller,D. (2011) Genovo: De Novo Assembly for Metagenomes, {\it Journal of Computational Biology}, {\bf 18}(3), 429-443.
+\bibitem[Li {\it et~al}., 2009]{Li2009} Li,H., Handsaker,B., Wysoker,A., Fennel,T., Ruan,J., Homer,N., Marth,G., Abecasis,G., Durbin,R., {\it et~al}. (2009) The Sequence alignment/map (SAM) format and SAMtools, {\it Bioinformatics}, {\bf 25} 2078-2079.
+\bibitem[Li and Homer, 2010]{Li2010} Li,H., Homer,N. (2010) A survey of sequence alignment algorithms for next-generation sequencing, {\it Briefings in Bioinformatics}, {\bf 11}, 473-483.
+\bibitem[Li {\it et~al}., 2010]{Li2010b} Li,R., Zhu,H., Ruan,J., Qian,W., Fang,X., Shi,Z., Li,Y., Li,S., Shan,G., Kristiansen,K., {\it et~al}. (2010) De novo assembly of human genomes with massively parallel short read sequencing, {\it Genome Reseach}, {\bf 20}(2), 265-272.
+\bibitem[Lin {\it et~al}., 2011]{Lin2011} Lin,Y., Li,Y., Shen,H., {\it et~al}. (2011) Comparative studies of de novo assembly tools for next-generation sequencing technologies, {\it Bioinformatics}, {\bf 27}(15), 2031-2037.
+\bibitem[Mavromatis {\it et~al}., 2010]{Mavromatis2010} Mavromatis,K., Yasawong,M., Chertkov,O., Lapidus,A., Lucas,S., Nolan,M., Glavina,D.e.l., Tice,H., Cheng,J., Pitluck,S., {\it et~al}. (2010) Complete genome sequence of Spirochaeta smaragdinae type strain, {\it Standards in Genomic Sciences}.
+\bibitem[Meader, 2010]{Meader2010} Meader,S. (2010) Genome assembly quality: Assessment and improvement using the neutral indel model, {\it Genome Research}, {\bf 20}(5), 675-684.
+\bibitem[Metzker, 2010]{Metzker2010} Metzker,M.L. Sequencing technologies - the next generation, {\it Nature Reviews Genetics}, {\bf 11}, 31-46.
+\bibitem[Narzisi and Mishra, 2011]{Narzisi2011} Narzisi,G., Mishra,B. (2011) Comparing De Novo Genome Assembly: The Long and Short of It, {\it PLoS ONE}, {\bf 6}(4), e19175.
+\bibitem[Needleman and Wunsch, 1970]{Needleman70}
+    Needleman S., Wunsch C. (1970) A general method applicable to the search for similarities in the amino acid sequence of two proteins.
+    \textit{Journal of Molecular Biology.} \textbf{48}(3),443-453
+\bibitem[Nicol {\it et~al}., 2009]{Nicol2009} Nicol,J.W., Helt,G.A., Blanchard,S.G., Raja,A., Loranine,A.E. (2009) The Integrated Genome Browser: free software for distribution and exploration of genome-scale datasets, {\it Bioinformatics}, {\bf 25}(2), 2730-2731.
+\bibitem[Olson, 2009]{Olson2009} Olson,M.R. (2009) New Methods for Assembly and Validation of Large Genomes, {\it Master's Thesis, Notre Dame}.
+\bibitem[Pati {\it et~al}., 2010]{Pati2010} Pati,A., Sikorski,J., Gronow,S., Munk,C., Lapidus,A., Copeland,A., Glavina,D.e.l., Nolan,M., Lucas,S., Chen,F., {\it et~al}. (2010) Complete genome sequence of Brachyspira murdochii type strain (56-150T), {\it Standards in Genomic Sciences}.
+\bibitem[Phillippy {\it et~al}., 2008]{Phillippy2008} Phillippy,A., Schatz,M., Pop,M. (2008) Genome assembly forensics: finding the elusive mis-assembly, {\it Genome Biology}, {\bf 9}(3), R55.
+\bibitem[Pop {\it et~al}., 2009]{Pop2009} Pop,M. (2009) Genome assembly reborn: recent computational challenges, {\it Briefings in Bioinformatics}, {\bf 10}(4), 354-366.
+\bibitem[Pukall {\it et~al}., 2010]{Pukall2010} Pukall,R., Lapidus,A., Glavina,D.e.l., Copeland,A., Tice,H., Cheng,J., Lucas,S., Chen,F., Nolan,M., Bruce,D., {\it et~al}. (2010) Complete genome sequence of Conexibacter woesei type strain (ID131577T), {\it Standards in Genomic Sciences}, April.
+\bibitem[Qin {\it et~al}., 2010]{Qin2010} Qin,J., Li,R., Raes,J., Arumugam,M., Burgdorf,K.S., Manichanh,C., Nielsen,T., Pons,N., Florence,L., Yamada,T., {\it et~al}. (2010) A human gut microbial gene catalogue established by metagenomic sequencing, {\it Nature}, {\bf 464}, 59-65.
+\bibitem[Rasmussen and Williams, 2006]{RW} Rasmussen,C.E., Williams,C.K.I. (2006) Gaussian Processes for Machine Learning, {\it MIT Press} ISBN 026218253X.
+\bibitem[Salzberg {\it et~al}., 2012]{Salzberg2012} Salzberg,S.L., Phillippy,A.M., Zimin,A., Puiu,D., Magoc,T., Koren,S., Treangen,T.J., Schatz,M.C., Delcher,A.L., Roberts,M., {\it et~al}. (2012)  GAGE: A critical evaluation of genome assemblies and assembly algorithms, {\it Genome Research}, {\bf 22}(3), 557-67.
+\bibitem[Schmutz {\it et~al}., 2010]{Schmutz2010} Schmutz,J., Cannon,S.B., Schlueter,J., Ma,J., Mitros,T., Nelson,W., Hyten,D.L., Song,Q., Thelen,J.J., Cheng,J., {\it et~al}. (2010) Genome sequence of the palaeopolyploid soybean, {\it Nature}, {\bf 463}, 178-183.
+\bibitem[Schonlau, 1997]{Schonlau1997} Schonlau,M. (1997) Computer Experiments and Global Optimization, {\it University of Waterloo PhD Thesis in Statistics}.
+\bibitem[Scott {\it et~al}., 2011]{Scott2011} Scott,W., Frazier,P., Powell,W. (2011) The Correlated Knowledge Gradient for Simulation Optimization of Continuous Parameters using Gaussian Process Regression, {\it SIAM Journal of Optimization}, {\bf 21}, 996-1026.
+\bibitem[Simpson {\it et~al}., 2009]{Simpson2009} Simpson,J.T., Wong,K., Jackman,S.D., Schein,J.E., Jones,S.J., Birol,I. (2009) ABySS: A parallel assembler for short read sequence data, {\it Genome Research}, {\bf 19}(6), 1117-1123.
+\bibitem[Smith, Waterman \textit{et~al}., 1981]{SmithWaterman}
+Smith, T.F., Waterman, M.S., and Fitch W.M. (1981) Comparitive biosequence metrics. \textit{Journal of Molecular Biology}, \textbf{18}, 38-46.
+\bibitem[Smith, 1995]{Smith1995} Smith,S.P. (1995) Differentiation of the Cholesky Algorithm, {\it Journal of Computational and Graphical Statistics} {\bf 4}(2), 134-147.
+\bibitem[Subramanian \textit{et~al}., 2008]{DIALIGN-TX}
+Subramanian A.R., Kaufman M., Morgenstern B. (2008) DIALIGN-TX: greedy and progressive approaches for segment-based multiple sequence alignment, {\it Algorithms for Molecular Biology}, {\bf 3}(6).
+\bibitem[Teeling {\it et~al}., 2004]{Teeling2004} Teeling,H., Meyerdierks,A., Bauer,M., Amann,R., Glöckner,F.O. (2004) Application of tetranucleotide frequencies for the assignment of genomic fragments, {\it Environmental Microbiology}, {\bf 6}(9), 938-947.
+\bibitem[Thompson \textit{et~al}., 1999]{Balibase}
+Thompson J.D., Plewniak F., Poch O. (1999) Comparison study of several multiple alignment programs.
+\textit{Nucleic acids research} \textbf{27}(13):2682-90, 1999.
+\bibitem[Tringe {\it et~al}., 2004]{Tringe2004} Tringe,S.G., Mering,C.V., Kobayashi,A., Salamov,A.A., Chen,K., Chang,H.W., Podar,M., Short,J.M., Mathur,E.J., Detter,J.C., Bork,P., {\it et~al}. (2004) Comparitive Metagenomics of Microbial Communities, {\it Science}, {\bf 308}(5721), 554-557.
+\bibitem[Valiev {\it et~al}., 2010]{Valiev2010} Valiev,M., Bylaska,E.J., Govind,N., Kowalski,K., Straatsma,T.P., van Dam,H.J.J., {\it et~al}. (2010) NWChem: a comprehensive and scalable open-source solution for large scale molecular simulations, {\it Computational Physics Communications} {\bf 181}(1477).
+\bibitem[Venter {\it et~al}., 2004]{Venter2004} Venter,C.J., Remington,K., Heidelberg,J.F., Halpern,A.L., Rusch,D., Eisen,J.A., Wu,D., Paulsen,I., Nelson,K.E., Nelson,W., {\it et~al}. (2004) Environmental Genome Shotgun Sequencing of the Sargasso Sea, {\it Science}, {\bf 304}(5667), 66-74.
+\bibitem[Wang {\it et~al}., 2011]{Wang2011} Wang,W., Wei,Z., L,T-W., Wang,J. (2011) Next generation sequencing has lower sequence coverage and poorer SNP-detection capability in the regulatory regions, {\it Scientific Reports}, {\bf 1}, 55.
+\bibitem[Woyke {\it et~al}., 2006]{Woyke2006} Woyke,T., Teeling,H., Ivanova,N., Huntermann,M., Richter,M., Glöckner,F.O., Boffelli,D., Anderson,I.J., Barry,K.W., Shapiro,H.J. (2006) Symbiosis insights through metagenomic analysis of a microbial consortium, {\it Nature}, {\bf 443}, 950-955.
+\bibitem[Woyke {\it et~al}., 2010]{Woyke2010} Woyke,T., Tighe,D., Mavromatis,K., Clum,A., Copeland,A., Schackwitz,W., Lapidus,A., Wu,D., McCutcheon,J.P., McDonald,B.R. {\it et~al}. (2010) One Bacterial Cell, One Complete Genome. {\it PLoS ONE} {\bf 5}(4).
+\bibitem[Wu {\it et~al}., 2009]{Wu2009}  Wu,D., Hugenholtz,P., Mavromatis,K., Pukall,R., Dalin,E., Ivanova,N.N., Kunin,V., Goodwin,L., Wu,M., Tindall,B.J. {\it et~al}. (2009) A phylogeny-driven genomic encyclopaedia of Bacteria and Archaea, {\it Nature}, {\bf 462}, 1056-1060.
+\bibitem[Yilmaz {\it et~al}., 2011]{Yilmaz2011} Yilmaz,P., Kottmann,R., Field,D., Knight,R., Cole,J.R., {\it et~al}. (2011) Minimum information about a marker gene sequence (MIMARKS) and minimum information about any (x) sequence (MIxS) specifications, {\it Nature Biotechnology}, {\bf 29}, 415-420.
+\bibitem[Yooseph {\it et~al}., 2010]{Yooseph2010} Yooseph,S., Nealson,K.H., Rusch,D.B., McCrow,J.P., Dupont,C.L., Kim,M., Johnson,J., Montgomery,R., Ferriera,S., Beeson,K., {\it et~al}. (2010) Genomic and functional adaptation in surface ocean planktonic prokaryotes, {\it Nature}, {\bf 468}, 60-66.
+\bibitem[Zerbino and Birney, 2008]{Zerbino2008} Zerbino,D.R., Birney,E. (2008) Velvet: Algorithms for de novo short read assembly using de Bruijn graphs, {\it Genome Research}, {\bf 18}, 821-829.
+\bibitem[Zimin {\it et~al}., 2008]{Zimin2008} Zimin,A.V., Smith,D.R., Sutton,G., Yorke,J.A. (2008) Assembly Reconciliation, {\it BMC Bioinformatics}, {\bf 24}(1), 42-45.
+\bibitem[Zhang \textit{et~al}., 2000]{Megablast}
+Zhang \textit{et~al}. (2000) A greedy algorithm for aligning DNA sequences. \textit{Journal of Computational Biology}, \textbf{7}, 203-214.
+
+\end{thebibliography}
+\endgroup

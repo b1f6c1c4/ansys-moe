@@ -21,12 +21,12 @@
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-storage-usecase.pdf}
-  \caption{文件存储组件的行为：UML用户用例图\label{fig:impl-storage-usecase}}
+  \caption[文件存储组件的行为]{使用UML用户用例图描绘文件存储组件的行为。\label{fig:impl-storage-usecase}}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-storage-package.pdf}
-  \caption{文件存储组件的结构：UML包图\label{fig:impl-storage-package}}
+  \caption[文件存储组件的结构]{使用UML包图描绘文件存储组件的结构。\label{fig:impl-storage-package}}
 \end{figure}
 通过将\cref{fig:design-comp}中对文件存储组件的要求细化，可以得到\cref{fig:impl-storage-usecase}。
 具体来说，文件存储组件对外提供一套HTTP API，根据HTTP动词和URL来对硬盘上的指定资源进行指定操作，如上传、下载、移动等等。
@@ -48,12 +48,12 @@
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-controller-seq.pdf}
-  \caption{工作流内核组件的行为：UML序列图\label{fig:impl-controller-seq}}
+  \caption[工作流内核组件的行为]{使用UML序列图描绘工作流内核组件的行为。\label{fig:impl-controller-seq}}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-controller-package.pdf}
-  \caption{工作流内核组件的结构：UML包图\label{fig:impl-controller-package}}
+  \caption[工作流内核组件的结构]{使用UML包图描绘工作流内核组件的结构。\label{fig:impl-controller-package}}
 \end{figure}
 根据\cref{ssec:design-wf}中对工作流内核组件的描述，该组件虽然不对外提供服务，但内部却存在较为复杂的流程。
 为此，采用UML序列图而非UML用户用例图来对该组件的行为进行建模。
@@ -98,12 +98,12 @@
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-commond-activity.pdf}
-  \caption{计算服务组件的行为：UML活动图\label{fig:impl-commond-activity}}
+  \caption[计算服务组件的行为]{使用UML活动图描绘计算服务组件的行为。\label{fig:impl-commond-activity}}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-commond-package.pdf}
-  \caption{计算服务组件的结构：UML包图\label{fig:impl-commond-package}}
+  \caption[计算服务组件的结构]{使用UML包图描绘计算服务组件的结构。\label{fig:impl-commond-package}}
 \end{figure}
 根据\cref{ssec:design-wf}中对计算服务组件的描述，该组件并不对外提供服务，且其内部流程也比较简单。
 为此，采用UML活动图而非UML用户用例图或UML序列图来对该组件的行为进行建模，如\cref{fig:impl-commond-activity}所示。
@@ -122,19 +122,19 @@
   \item[common/util.go] 封装创建临时文件夹、实时监控日志文件、下载仿真文件、上传仿真结果文件、删除临时文件夹等功能
   \item[common/killer\_*.go] 结束进程树（分为Linux和Windows两个不同实现）
   \item[Python/doe.py] 进一步封装了LHSMDU算法提出者给出的Python实现\footnote{\href{https://github.com/sahilm89/lhsmdu}{https://github.com/sahilm89/lhsmdu}}
-  \item[R/ei.R] 在R语言的GPfit包\cite{macdonald2015}、CEOptim包\cite{benham2015}的基础上，实现了\cref{ssec:bgo}所描述的贝叶斯优化算法
+  \item[R/ei.R] 在R语言的GPfit包\cite{macdonald2015}、CEOptim包\cite{benham2015}的基础上，实现了\cref{sec:bgo}所描述的贝叶斯优化算法
 \end{description}
 
 \subsection{网站后端}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-facade-usecase.pdf}
-  \caption{网站后端组件的行为：UML用户用例图\label{fig:impl-facade-usecase}}
+  \caption[网站后端组件的行为]{使用UML用户用例图描绘网站后端组件的行为。\label{fig:impl-facade-usecase}}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-facade-package.pdf}
-  \caption{网站后端组件的结构：UML包图\label{fig:impl-facade-package}}
+  \caption[网站后端组件的结构]{使用UML包图描绘网站后端组件的结构。\label{fig:impl-facade-package}}
 \end{figure}
 
 通过将\cref{fig:design-comp}中对文件存储组件的要求细化，可以得到\cref{fig:impl-facade-usecase}。
@@ -168,7 +168,7 @@
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-elk-comp.pdf}
-  \caption{控制面子系统的结构：UML组件图\label{fig:impl-elk-comp}}
+  \caption[控制面子系统的结构]{使用UML组件图描绘控制面子系统的结构。\label{fig:impl-elk-comp}}
 \end{figure}
 本文选取业界常用的ELK（Elasticsearch、Logstash、Kibana）作为系统监控、日志分析的解决方案，其结构如\cref{fig:impl-elk-comp}所示。
 ELK架构中的核心是分布式搜索和数据分析引擎Elasticsearch，对外提供数据存储和搜索功能。
@@ -183,10 +183,6 @@ Elastalert组件（不属于ELK架构）则会定时对一些关键系统运行�
 \subsection{硬件设备简述}
 为了方便系统开发，也为了从网络任意位置访问该系统，购买的小型云主机一台（Linux系统）；
 为了进行非常消耗计算资源的Ansys仿真，租用工作站一台（Windows系统）。
-由于该工作站位于校园内网，无法访问外部任何资源，故租用跳板机一台（Windows系统），以供工作站访问云服务器，参与计算。
-
-在跳板机上，本文采用Windows系统内置的TCP端口转发功能实现工作站访问云主机的消息队列、文件存储、Elasticsearch数据写入、Logstash日志写入等服务；
-而使用开源UDP端口转发实现——updx\footnote{\href{https://github.com/felipejfc/udpx}{https://github.com/felipejfc/udpx}}来实现工作站日志上传。
 
 \subsection{容器化与Docker}
 容器化的基本思想同虚拟化一致：在一台物理机上运行多个组件时，将不同组件的运行环境隔离开，防止其互相干扰，也防止其干扰物理机（宿主）本身。
@@ -224,7 +220,7 @@ Elastalert组件（不属于ELK架构）则会定时对一些关键系统运行�
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/impl-deploy.pdf}
-  \caption{系统物理视图：UML部署图\label{fig:impl-deploy}}
+  \caption[系统物理视图]{使用UML部署图描绘系统物理视图。\label{fig:impl-deploy}}
 \end{figure}
 \Cref{fig:impl-deploy}采用UML部署图的方法给出了整个自动化设计系统的物理视图。
 自动化设计系统至此全部设计、开发、部署完毕。

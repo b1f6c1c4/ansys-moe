@@ -2,7 +2,8 @@
 \begin{document}
 \chapter{自动化设计系统的设计}\label{sec:design}
 在\cref{sec:doebgo}中已经对贝叶斯优化算法的诸多方面的细节问题进行了讨论。
-然而，从算法本身到软件系统的过程又是一个相当不平凡的过程。
+然而，\cref{sec:petri-intro}中也已提到，从算法本身到软件系统的过程是一个相当不平凡的过程，
+尤其是对于这种需要用工作流作为模型的算法。
 本章和下一章将紧扣软件实现这一主题，对自动化设计系统进行全方位的建模与设计。
 
 经过上个世纪80至90年代软件工程领域的蓬勃发展，“4+1”视图模型\cite{kruchten1995}是在上个世纪90年代中叶被提出。
@@ -32,20 +33,21 @@
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/design-usecase.pdf}
-  \caption{系统逻辑视图：UML用户用例图\label{fig:design-usecase}}
+  \caption[系统逻辑视图]{使用UML用户用例图描绘系统逻辑视图。\label{fig:design-usecase}}
 \end{figure}
 自动化设计系统只有设计者一类用户。\Cref{fig:design-usecase}具体描述了系统可以给设计者提供的功能（用户用例）。
 
 \section{流程视图：贝叶斯优化算法的工作流建模}\label{sec:design-wf}
-\begin{figure}[h]
-  \centering
-  \includegraphics{./figures/dist/design-activity.pdf}
-  \caption{系统流程视图：UML活动图\label{fig:design-activity}}
-\end{figure}
 本节将会仔细讨论\cref{fig:design-usecase}中的发布、中止、修改任务的工作流。
 
 \subsection{利用UML活动图初步建模工作流}
-在\cref{sec:fea}中指出，待优化的设计变量可能包括分类变量、离散变量和连续变量三种类型。
+\begin{figure}[h]
+  \centering
+  \includegraphics{./figures/dist/design-activity.pdf}
+  \caption[系统流程视图初步]{使用UML活动图初步描绘系统流程视图。\label{fig:design-activity}}
+\end{figure}
+
+根据\cref{def:dvars}，待优化的设计变量可能包括分类变量、离散变量和连续变量三种类型。
 对于分类变量，由于不同分类之间的结果没有任何可比性，故在工作流一开始应该先枚举所有分类变量的可能组合，为每种组合创建一个分类，并行执行各分类的工作流。
 
 每个分类对应着一个完整的贝叶斯优化算法。首先，根据\cref{ssec:bgo-init}的讨论结果，采用LHSMDU算法计算出$N_\mathrm{init}$组初始实验位置。
@@ -66,7 +68,7 @@
 
 在所有分类均收敛后，只需比较各分类的结果，找到全局最优即可。
 
-\Cref{fig:design-activity}利用UML活动图对发布任务的工作流进行了建模。
+\Cref{fig:design-activity}利用UML活动图对发布任务的工作流进行了初步建模。
 需要注意的是，由于UML活动图并不能正确地表示动态分支结构（见\cref{sec:petri}中的讨论），
 \cref{fig:design-activity}中只画出了部分工作流。
 
@@ -74,12 +76,12 @@
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/design-petri1.pdf}
-  \caption{系统流程视图：FL-Petri网（全局）\label{fig:design-petri1}}
+  \caption[系统流程视图（全局）]{使用FL-Petri网描绘系统流程视图（全局）。\label{fig:design-petri1}}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics{./figures/dist/design-petri2.pdf}
-  \caption{系统流程视图：FL-Petri网（求值过程）\label{fig:design-petri2}}
+  \caption[系统流程视图（局部）]{使用FL-Petri网描绘系统流程视图（求值过程）。\label{fig:design-petri2}}
 \end{figure}
 虽然UML活动图较为直观，但在后期软件实现时异常繁琐，容易出错。
 本小节利用FL-Petri网的手段，将\cref{fig:design-activity}中的工作流重新建模，以方便\cref{sec:impl}中的具体实现。
@@ -135,7 +137,7 @@
     {\includegraphics{./figures/dist/design-comp.pdf}}\par
   \subcaptionbox{消息队列组件内部结构\label{fig:design-comp-mq}}
     {\includegraphics{./figures/dist/design-comp-mq.pdf}}
-  \caption{系统开发视图：UML组件图}
+  \caption[系统开发视图]{使用UML组件图描绘系统开发视图。}
 \end{figure}
 
 \end{document}

@@ -1,12 +1,200 @@
 \documentclass[index]{subfiles}
 \begin{document}
 \chapter{算例：\SI{7.7}{\kilo\watt}车载无线充电系统}\label{sec:example}
-\section{需求分析}
-% TODO
+为了证明该自动化设计系统强大的分析设计能力，本文对一车载无线充电系统的磁谐振部件进行优化设计。
+
+\section{需求分析}\label{sec:example-req}
+设传输距离（线圈到线圈）为\SI{200}{\milli\metre}，发射端和接收端完全对称，且只考虑平面式单层正方形线圈一种线圈形式。
+该系统的谐振频率固定为\SI{85}{\kilo\hertz}。
+其线圈采用利兹线绕成，线径\SI{5}{\milli\metre}。
+线圈下方\SI{1.5}{\milli\metre}处设正方形PC95铁氧体磁屏蔽层。
+
+现需要同时优化线圈边长、线圈匝数、匝间距、磁屏蔽层厚度、磁屏蔽层边长共计5个参数，使得系统性能同时满足以下几个标准：
+\begin{itemize}
+  \item 整个系统的尺寸不应超过\SI{500}{\milli\metre}$\times$\SI{500}{\milli\metre}，越小越好
+  \item 整个接收端（发射端）的厚度\SI{\leq 30}{\milli\metre}，越小越好
+  \item 正常工况下线圈互感\SI{=24}{\micro\henry}（可以有\SI{\pm 10}{\percent}的误差），越准越好
+  \item 正常工况下线圈耦合系数\num{\geq 1}，在不超过2的情况下越大越好
+  \item 横向偏移\SI{200}{\milli\metre}时互感\SI{\geq 10}{\micro\henry}，越大越好
+  \item 线圈电阻\SI{\leq 0.4}{\ohm}，越小越好
+\end{itemize}
+
 \section{仿真文件准备}
-% TODO
-\section{约束条件的引入}
-% TODO
-\section{运行结果}
-% TODO
+\begin{figure}[h]
+  \centering%
+  \subcaptionbox{项目结构和磁模型结构\label{fig:example-proj}}
+    {\includegraphics{./figures/example-proj.png}}
+  \hspace{1em}
+  \subcaptionbox{几何模型结构\label{fig:example-model}}
+    {\includegraphics{./figures/example-model.png}}
+  \caption[仿真文件的结构]{使用Ansys Maxwell 3D对电动汽车无线充电系统磁谐振部件进行建模。}
+\end{figure}
+
+\subsection{项目结构}\label{ssec:example-proj}
+从\cref{sec:example-req}中不难看出，对每一种可能设计变量组合，都需要进行两次有限元分析：一次针对正常工况，一次针对横向偏移时。
+为此，本文在同一个Ansys项目（Project）中添加normal和misaligned两个设计（Design），以分别对两种情况进行建模，如\cref{fig:example-proj}所示。
+
+为了与自动化设计系统配合，本文设置项目的项目变量（Project Variables）如下：
+\begin{description}
+  \item[\$tTurns, \$rTurns] 发射/接收线圈匝数，待定
+  \item[\$tWidth, \$rWidth] 发射/接收线圈最内圈宽度的一半，待定
+  \item[\$tLength, \$rLength] 发射/接收线圈最内圈长度的一半，待定
+  \item[\$tInterval, \$rInterval] 发射/接收线圈匝间距，待定
+  \item[\$tIns, \$rIns] 发射/接收端绝缘材料的厚度，为\SI{6.5}{\milli\metre}
+  \item[\$tExtra, \$rExtra] 发射/接收端磁屏蔽层比线圈最外圈多出来的长度，待定
+  \item[\$tShield, \$rShield] 发射/接收端磁屏蔽层的厚度，待定
+  \item[\$gap] 传输距离，为\SI{200}{\milli\metre}
+  \item[\$crossHeight] 线圈螺旋结构首末链接线的高度，为\SI{2.5}{\milli\metre}
+  \item[\$lineSize] 线圈截面正方形的边长的一半，为$2.5\times\frac{\sqrt{\pi}}{2}=\SI{2.2155673136319}{\milli\metre}$
+\end{description}
+
+对于设计misaligned，设置设计变量（Design Variables）如下：
+\begin{description}
+  \item[\$xMis] 沿X轴的横向偏移，为\SI{200}{\milli\metre}
+  \item[\$yMis] 沿Y轴的横向偏移，为\SI{0}{\milli\metre}
+\end{description}
+
+\subsection{搭建几何模型}
+\begin{figure}[p]
+  \centering%
+  \subcaptionbox{建模过程中用到的正方形线圈的轮廓\label{fig:example-curve}}
+    {\includegraphics[width=0.85\linewidth]{./figures/example-curve.png}}\par
+  \subcaptionbox{最终完成的几何模型\label{fig:example-overall}}
+    {\includegraphics[width=0.85\linewidth]{./figures/example-overall.png}}
+  \caption[几何模型的搭建]{使用Ansys Maxwell 3D对磁谐振部件的几何结构进行建模。}
+\end{figure}
+有限元分析中最基础的一步就是搭建几何模型。为了与自动化设计系统结合，需要尽可能地对所有几何结构进行参数化。
+图\cref{fig:example-model,fig:example-overall}给出了已经搭建好的几何模型的逻辑结构和直观样子。
+虽然其中磁屏蔽层和空气的建模乏善可陈，但线圈的几何结构建模需要略作讨论。
+
+首先，本文采用截面积相等的正方形截面替代圆形截面对线圈进行建模，以大大降低计算量。
+其次，本文利用参数曲线的方法来对方形线圈的复杂螺旋结构进行建模
+（参数曲线如\cref{fig:example-curve}所示；由于其具体表达式异常复杂，将在\cref{sec:tricks}中给出）。
+最后，本文用简单放样和布尔运算将螺旋结构的首位相连，得到完整的线圈模型。
+
+\subsection{设置磁参数}
+在有了几何模型之后，需要指定材料、边界和激励。
+本文将所采用PC95铁氧体材料的磁导率导入Ansys Maxwell中，并分别设定磁屏蔽层的材料为PC95、线圈的材料为铜。
+由于开放空间中不涉及对称性问题，故无需指定边界条件。
+最后，添加两个绕组（Winding）——发射和接收线圈——及其终端（Terminal）。
+\cref{fig:example-proj}
+
+\subsection{设置仿真参数}
+为了得到所需的信息（电阻和电感），选取交变电流（EddyCurrent）分析方法，添加阻抗矩阵仿真参数（Parameters），
+并设置求解步骤（Analysis，于此处设置系统工作频率\SI{85}{\kilo\hertz}）。
+由于在实际运行中收敛较慢，本文作者在特殊位置添加了一些网格约束（Mesh Operations），以改善网格的初始形状，加速仿真收敛。
+
+\subsection{设置后处理方法}
+为了能够将仿真结果传给自动化设计软件，需要添加一些报表。
+本文将normal设计中的两线圈电阻、自感和互感利用数据表（Data Table）的方式导出，
+也将misaligned设计中的两线圈互感导出。
+
+\section{问题规范表述}
+在准备好仿真文件后，为了能让自动化设计系统理解该设计问题，需要按照\cref{sec:fea-problem}所述的定义将设计问题进行形式化规范表达，才能输入系统。
+
+\subsection{设计变量}
+\begin{description}
+  \item[dCoilTurns] 线圈匝数，离散型，\numrange{10}{15}取整数值
+  \item[dCoilOuter] 最外匝线圈边长，连续型，\SIrange{390}{490}{\milli\metre}，精度\SI{5}{\milli\metre}
+  \item[dCoilInner] 最内匝线圈边长，连续型，\SIrange{200}{300}{\milli\metre}，精度\SI{5}{\milli\metre}
+  \item[dShieldThickness] 磁屏蔽层厚度，连续型，\SIrange{1}{23}{\milli\metre}，精度\SI{0.5}{\milli\metre}
+  \item[dShieldExtra] 磁屏蔽层比线圈最外圈多出来的长度，连续型，\SIrange{0}{40}{\milli\metre}，精度\SI{1}{\milli\metre}
+\end{description}
+
+\subsection{几何模型参数}
+\begin{description}
+  \item[gCoilInterval] 线圈匝间距，单位\si{\metre}，不得小于\SI{0.005}{\metre}
+  \item[gCoilLength] 线圈最内圈的边长的一半，单位\si{\metre}
+  \item[gShieldThickness] 磁屏蔽层厚度，单位\si{\metre}
+  \item[gShieldExtra] 磁屏蔽层比线圈最外圈多出来的长度，单位\si{\metre}
+\end{description}
+
+\subsection{电模型参数}
+\begin{description}
+  \item[eIndMutNormal] 正常工况下互感的绝对值，单位\si{\micro\henry}
+  \item[eIndMutMisaligned] 有横向偏移时互感的绝对值，单位\si{\micro\henry}
+  \item[eNormalK] 正常工况下的耦合系数
+  \item[eResEq] 正常工况下线圈电阻（发射线圈和接收线圈的几何平均值）
+\end{description}
+
+\subsection{性能指标}
+在计算性能指标之前，需要先计算一些辅助计算量：
+\begin{description}
+  \item[pDimension] 整个系统的最大尺寸，单位\si{\micro\henry}
+  \item[pThickness] 整个接收端（发射端）的厚度，单位\si{\metre}
+\end{description}
+再给\cref{sec:example-req}中的每个设计目标匹配一个性能指标：
+\begin{description}
+  \item[pDimensionPenalty] 整个系统的最大尺寸不应超过\SI{500}{\milli\metre}，越小越好：
+  \[1{\Big/}\!\left(1+\exp \frac{\text{pDimension}-0.500}{0.003}\right)\times\left(1 - \frac{\text{pDimension}-0.500}{0.1}\right)\]
+  \item[pThickness] 整个接收端（发射端）的厚度\SI{\leq 30}{\milli\metre}，越小越好：
+  \[1{\Big/}\!\left(1+\exp \frac{\text{pThickness}-0.030}{0.0003}\right)\times\left(1 - \frac{\text{pThickness}-0.030}{0.1}\right)\]
+  \item[pNormalIndMutPenalty] 正常工况下线圈互感\SI{=24}{\micro\henry}（可以有\SI{\pm 10}{\percent}的误差），越准越好：
+  \[1{\Big/}\!\left(1+\exp \frac{(\text{pThickness}/24-1)^2-0.1^2}{0.001}\right)\times\left(1 - \frac{(\text{pThickness}/24-1)^2-0.1^2}{0.05}\right)\]
+  \item[pNormalKPenalty] 正常工况下线圈耦合系数\num{\geq 1}，在不超过2的情况下越大越好：
+  \[
+  \begin{multlined}
+  1{\Big/}\!\left(1+\exp \frac{\text{eNormalK}-0.1}{0.001}\right)\times{\Bigg(}\text{eNormalK} \\
+  + 0.1\left(\frac{\text{eNormalK}-0.1}{0.018} - \sqrt{1+\left(\textstyle\frac{\text{eNormalK}-0.18}{0.015}\right)^2}
+  + \sqrt{1+\left(\textstyle\frac{0.1-0.18}{0.015}\right)^2}\right){\Bigg)}
+  \end{multlined}
+  \]
+  \item[pMisalignedIndMutPenalty] 横向偏移\SI{200}{\milli\metre}时互感\SI{\geq 10}{\micro\henry}，越大越好：
+  \[1{\Big/}\!\left(1-\exp \frac{\text{eIndMutMisaligned}-10}{0.1}\right)\times\left(1 + \frac{\text{eIndMutMisaligned}-10}{10}\right)\]
+  \item[pResistancePenalty] 线圈电阻\SI{\leq 0.4}{\ohm}，越小越好：
+  \[1{\Big/}\!\left(1+\exp \frac{\text{eResEq}-0.4}{0.01}\right)\times\left(1 - \frac{\text{eResEq}-0.4}{0.9}\right)\]
+\end{description}
+
+由于自动化设计系统只能进行单目标优化，故在此处先选取总体性能指标为上述各性能指标（不含辅助计算量）之和的相反数，
+再在最后进行数据处理时选择总体性能指标最高的若干组设计，手工进行横向比较。
+
+\section{运行结果与后处理}
+\begin{figure}[p]
+  \centering%
+  \subcaptionbox{匝数-最外匝线圈边长（\si{\milli\metre}）-最内匝线圈边长（\si{\milli\metre}）}
+    {\includegraphics{./data/dist/raw-dCoilOuter-dCoilInner.pdf}}\par
+  \subcaptionbox{匝数-磁屏蔽层比线圈最外圈多出来的长度（\si{\milli\metre}）-磁屏蔽层厚度（\si{\milli\metre}）}
+    {\includegraphics{./data/dist/raw-dShieldExtra-dShieldThickness.pdf}}
+  \caption[全部计算结果]{全部计算结果。每个子图的标题表示线圈匝数（\numrange{10}{15}）。
+  “$\times$”表示不满足要求的设计，“+”表示满足要求的设计。\label{fig:example-res}}
+\end{figure}
+通过控制面板上传仿真文件，并将上述优化设计问题的规范表述提交系统，系统即自动开始执行优化设计工作流。
+
+由于服务器可用时间有限（\exmHour{}），故在仿真收敛前手工中止迭代。
+由于每次仿真都需要相当长（约30分钟）的时间，故该算例实际上只进行了\exmValid{}组有效迭代，并未达到全局收敛。
+然而，仅仅通过这几组迭代，自动化设计系统就已成功找到了\exmFea{}组符合全部几条设计要求的方案，如\cref{fig:example-res}所示。
+
+在设计的最后阶段，为了自动化设计系统输出的所有方案中选取最合适的方案，采用R语言手工对其进行分析。
+本文首先将所有仿真结果通过控制面板导出，然后利用方差分析的方法，探索各个子优化目标的关系。
+本文作者发现该系统的尺寸和抗偏移性能两者互相制约，相关很大；
+为此，先找出所有满足全部设计标准的方案（共计\exmValid{}组），再以这两个子优化目标为条件寻找帕累托最优，得到7组最佳设计候选方案。
+\Cref{tbl:example-opt}给出了这几组方案的详细信息。
+\begin{table}[htbp]
+  \centering
+  \caption[最佳设计方案候选]{最佳设计方案候选。
+  其中长度单位\si{\milli\metre}，电感单位\si{\micro\henry}，电阻单位\si{\milli\ohm}。\label{tbl:example-opt}}
+  \exmOptTable
+\end{table}
+
+\section{小结}
+从\cref{fig:example-res}不难看出，该自动化设计系统在实际无线充电磁耦合元件的优化设计问题的求解中，展现出了以下突出特点：
+\begin{itemize}
+  \item 能够在整个设计可能性空间中性能较好的位置更多地进行探索：在有效设计附近的设计尝试明显比其它位置更密集，比起完全随机搜索节约了很多计算资源。
+  \item 可以轻松处理设计可能性非常巨大的情况：本例中总设计可能性多达
+  \[\begin{multlined}6\times\left(1+\frac{490-390}{5}\right)\times\left(1+\frac{300-200}{5}\right) \\
+  \times\left(1+\frac{23-1}{0.5}\right)\times\left(1+\frac{40-1}{1}\right)\approx\num{4.76e6}\end{multlined}\]
+  种之多；若设每次计算耗时\SI{30}{\minute}，则在单核电脑上逐一进行尝试需要
+  \[\num{4.76e6}\times\SI{30}{\minute}=\SI{1.43e8}{\minute}\approx\num{272}\ \text{年}\]
+  除非采用大规模分布式计算，否则在计算上几乎不可能实现。
+  \item 在不出现错误的情况下系统可以实现无人看守自动运行，而在出现错误的情况下也无需过多担心：
+  \begin{itemize}
+    \item 系统会通过告警渠道自动将错误信息通知管理员，管理员可以手动查看系统日志定位错误原因；
+    \item 子工作流的错误不会影响父工作流和兄弟工作流，也即某一迭代发生错误完全不干扰其他迭代照常进行，
+    甚至也基本不干扰所处分类整体的贝叶斯优化算法的继续运行（该迭代会被视作尚在采样中参数下一步采样位置计算）；
+    \item 由于所有系统状态均在数据库中保存，故可以通过手动修改数据库的办法来修复偶发错误，修复之后工作流依然可以继续执行；
+    \item 由于所有组件（数据库和消息队列）都是无状态的，再加上核心组件之间普遍采用消息队列作为缓冲间接传递消息，
+    故在系统运行中可以灵活地动态下线存在bug的旧组件并上线新组件，工作流执行完全不会受到中断（只会有延迟，而这对自动化设计系统这类非实时系统而言不足为提）。
+  \end{itemize}
+\end{itemize}
+
 \end{document}

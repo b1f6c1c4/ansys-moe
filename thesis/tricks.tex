@@ -1,0 +1,14 @@
+\documentclass[index]{subfiles}
+\begin{document}
+\chapter{方形线圈的参数化建模}\label{sec:tricks}
+本章采用Mathematica语言对\cref{fig:example-curve}中的方形线圈的轮廓进行参数化。
+参数\lstinline"t"的定义域为0至\lstinline"8*$tTurns + 4"的所有整数；
+函数\lstinline"x[t_]"和\lstinline"y[t_]"分别表示X和Y轴坐标。
+式中各参量（以\$开头）的意义参见\cref{ssec:example-proj}。
+
+\begin{lstlisting}[breaklines]
+x[t_] := ((-$lineSize - $tInterval/2 + $tWidth)*(-3 + t - 8*$tTurns + Abs[-3 + t - 8*$tTurns]))/2 + (1 + (3 - t + 8*$tTurns - Abs[-3 + t - 8*$tTurns])/2)*(((-1)^((-1 + (-1)^(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/4)*$lineSize*(-3/2 + t - 4*$tTurns))/Abs[-3/2 + t - 4*$tTurns] + ($tInterval*(-1 - 4*$tTurns + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + Abs[3/2 - Abs[-3/2 + t - 4*$tTurns]] - Abs[1/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]]))/4 + (-1)^((-1 + (-1)^(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/4)*($tWidth + $tInterval*((-5 - 2*(-1)^((1 + (-1)^(5/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/4) + (-1)^(5/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/8 + (1 + 4*$tTurns - 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) - Abs[3/2 - Abs[-3/2 + t - 4*$tTurns]] + Abs[1/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]])/2)));
+y[t_] := ($lineSize*(-3 + t - 8*$tTurns + Abs[-3 + t - 8*$tTurns]))/2 + (1 + (3 - t + 8*$tTurns - Abs[-3 + t - 8*$tTurns])/2)*(((-1)^((-3 + (-1)^(5/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/4)*$lineSize*(-3/2 + t - 4*$tTurns)*(1 + 4*$tTurns - Abs[3/2 - Abs[-3/2 + t - 4*$tTurns]] - Abs[1/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]]))/(2*Abs[-3/2 + t - 4*$tTurns]) - ($lineSize*(-1 - 4*$tTurns + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + Abs[3/2 - Abs[-3/2 + t - 4*$tTurns]] - Abs[1/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]]))/2 + ((-1)^((-3 + (-1)^(5/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/4)*(1 + 4*$tTurns - Abs[3/2 - Abs[-3/2 + t - 4*$tTurns]] - Abs[1/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]])*($tLength + $tInterval*((-5 - 2*(-1)^((1 + (-1)^(5/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/4) + (-1)^(5/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) + 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]))/8 + (1 + 4*$tTurns - 2*(3/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]) - Abs[3/2 - Abs[-3/2 + t - 4*$tTurns]] + Abs[1/2 + 4*$tTurns - Abs[-3/2 + t - 4*$tTurns]])/2)))/2);
+\end{lstlisting}
+
+\end{document}

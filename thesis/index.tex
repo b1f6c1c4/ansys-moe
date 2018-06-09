@@ -1,11 +1,15 @@
 \documentclass[degree=bachelor,tocarialchapter]{../thuthesis/thuthesis}
 \usepackage{./thuthesis/thuthesis}
+\usepackage{./thuappendixbib/thuappendixbib}
 \usepackage{subfiles}
 \usepackage{siunitx}
 \usepackage{cleveref}
+\usepackage{upgreek}
+\usepackage{listings}
+\usepackage{mathtools}
 \thusetup{%
   ctitle={电动汽车无线充电系统\\磁谐振部件优化设计软件研究},
-  etitle={Optimal design for magnetic resonant components of EV wireless charging system},
+  etitle={Software research for optimal design of magnetic resonant components of EV wireless charging system},
   cauthor={涂金正},
   eauthor={Tu, Jinzheng},
   cdegree={工学学士},
@@ -17,20 +21,59 @@
   csupervisor={陈凯楠~助理研究员},
   esupervisor={Chen, Kainan Assistant Professor},
 }
-\sisetup{list-separator={, },list-final-separator={, },list-pair-separator={, },separate-uncertainty,range-phrase={\ensuremath{\sim}}}
+\sisetup{%
+  binary-units=true,list-separator={, },
+  list-final-separator={, },
+  list-pair-separator={, },
+  separate-uncertainty,
+  range-phrase={\ensuremath{\sim}},
+  math-micro=\upmu,
+  text-micro=\upmu
+}
+\lstset{%
+  basicstyle=\ttfamily\small,
+  extendedchars=false
+}
 \newcommand\crefpairgroupconjunction{和}\newcommand\crefmiddlegroupconjunction{、}\newcommand\creflastgroupconjunction{和}
 \newcommand\crefrangeconjunction{至}\newcommand\crefrangepreconjunction{}\newcommand\crefrangepostconjunction{}
 \newcommand\crefpairconjunction{和}\newcommand\crefmiddleconjunction{、}\newcommand\creflastconjunction{和}
-\crefname{listing}{程序}{程序}\Crefname{listing}{程序}{程序}
-\crefname{equation}{式}{式}\Crefname{equation}{式}{式}
-\crefformat{chapter}{第#1章}\Crefformat{chapter}{第#1章}
-\crefname{section}{节}{节}\Crefname{section}{节}{节}
-\crefname{figure}{图}{图}\Crefname{figure}{图}{图}
-\crefname{table}{表}{表}\Crefname{table}{表}{表}
+\crefformat{chapter}{第~#1~章}\Crefformat{chapter}{第~#1~章}
+\crefrangeformat{chapter}{第~#1~至~#2~章}\Crefrangeformat{chapter}{第~#1~至~#2~章}
+\crefformat{appendix}{附录~#1}\Crefformat{appendix}{附录~#1}
+\crefformat{listing}{程序~#1}\Crefformat{listing}{程序~#1}
+\crefformat{equation}{式~#1}\Crefformat{equation}{式~#1}
+\crefformat{section}{节~#1}\Crefformat{section}{节~#1}
+\crefformat{subappendix}{节~#1}\Crefformat{subappendix}{节~#1}
+\crefformat{subsubappendix}{节~#1}\Crefformat{subsubappendix}{节~#1}
+\crefformat{subsubsubappendix}{节~#1}\Crefformat{subsubsubappendix}{节~#1}
+\crefformat{figure}{图~#1}\Crefformat{figure}{图~#1}
+\crefformat{table}{表~#1}\Crefformat{table}{表~#1}
+\crefformat{definition}{定义~#1}\Crefformat{definition}{定义~#1}
+\AtBeginDocument{% ...if you're using hyperref
+  \let\oldlabel\label% Copy original version of \label
+  \let\oldref\ref% Copy original version of \ref
+  \let\oldcref\cref% Copy original version of \cref
+  \let\oldCref\Cref% Copy original version of \Cref
+}
+\newcommand{\addlabelprefix}[1]{%
+  \renewcommand{\label}[1]{\oldlabel{#1-##1}}% Update \label
+  \renewcommand{\ref}[1]{\oldref{#1-##1}}% Update \ref
+}
+\newcommand{\addlabelprefixc}[1]{%
+  \renewcommand{\label}[1]{\oldlabel{#1-##1}}% Update \label
+  \renewcommand{\cref}[1]{\oldcref{#1-##1}}% Update \cref
+  \renewcommand{\Cref}[1]{\oldCref{#1-##1}}% Update \Cref
+}
+\newcommand{\removelabelprefix}{%
+  \renewcommand{\label}{\oldlabel}% Restore \label
+  \renewcommand{\ref}{\oldref}% Restore \ref
+  \renewcommand{\cref}{\oldcref}% Restore \cref
+  \renewcommand{\Cref}{\oldCref}% Restore \Cref
+}
 % For subfiles
 \makeatletter%
 \@ifclassloaded{subfiles}%
-  {\AtBeginDocument{\Denotation}
+  {%\AtBeginDocument{\Denotation}
   \AtEndDocument{%
     \bibliographystyle{thuthesis-author-year}
     \bibliography{index}
@@ -45,6 +88,8 @@
 \newcommand{\Cov}[2]{\operatorname{Cov}\!\left[#1,#2\right]}
 \newcommand{\Corr}[2]{\operatorname{Corr}\!\left[#1,#2\right]}
 \newcommand{\Normal}[2]{\operatorname{N}\!\left(#1,#2\right)}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
 \newcommand{\Denotation}[0]{%
 \begin{denotation}
   \item[$\one_n$] $n\times{}1$的全1列向量
@@ -69,6 +114,21 @@
   \item[$K_{ss}$] 未完成实验处对未完成实验处随机变量的归一化协方差矩阵
 \end{denotation}
 }
+\setcounter{tocdepth}{2}
+\newcommand{\ltnum}[1]{\num[%
+  parse-numbers=true,%
+  round-mode=figures,%
+  round-integer-to-decimal=true,
+  round-precision=4%
+]{#1}}
+\newcommand{\tnum}[1]{\num[%
+  parse-numbers=true,%
+  round-mode=figures,%
+  round-integer-to-decimal=true,
+  round-precision=3%
+]{#1}}
+\def\exmHour{\SI{23}{\hour}}
+\input{./data/dist/opt.tex}
 
 \begin{document}
 \frontmatter
@@ -76,7 +136,7 @@
 \begin{cabstract}
   摘要
 \end{cabstract}
-\ckeywords{关键词}
+\ckeywords{无线充电 磁耦合 优化设计 自动化设计}
 
 \begin{eabstract}
   Abstract
@@ -110,10 +170,36 @@
 \bibliography{index}
 
 \begin{acknowledgement}
-  致谢
+  感谢导师赵争鸣教授、陈凯楠老师对本研究的提纲挈领的指导。
+
+  感谢Scott Clark的博士论文\cite{clark2012}及其相应的开源软件项目MOE——EPI算法的C语言实现，为本文的R语言实现提供了重大帮助。
+
+  在美国弗吉尼亚理工大学进行三个月的研究期间，承蒙李泽元教授、郦强教授、冯君杰师兄的热心指导与帮助，不胜感激。
+
+  感谢刘昊天同学在系统需求分析、硬件设备、论文排版上的帮助。
+
+  感谢在软件开发和论文写作过程中的所有开源库和工具链
+  （涵盖JavaScript、Golang、R、\LaTeX、Python、VBScript、Makefile、Java、C、Erlang、Ruby、Mathematica、Perl等多门语言的数千项目和软件包，
+  除了在算法上直接用到的部分R和Python包在参考文献中引用了以外，恕不能一一列出）。
+  尤其是\thuthesis\footnote{\href{https://github.com/xueruini/thuthesis}{https://github.com/xueruini/thuthesis}}，帮我节省了不少精力。
 \end{acknowledgement}
 
-% \begin{appendix}
-% \end{appendix}
+\begin{appendix}
+\subfile{tricks}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+\addtocontents{lof}{\protect\iffalse}
+\addtocontents{lot}{\protect\iffalse}
+\addtocontents{loe}{\protect\iffalse}
+\addlabelprefixc{trans}
+\subfile{trans}
+\removelabelprefix
+\addlabelprefix{raw}
+\subfile{raw}
+\removelabelprefix
+\addtocontents{toc}{\protect\setcounter{tocdepth}{5}}
+\addtocontents{lof}{\protect\fi}
+\addtocontents{lot}{\protect\fi}
+\addtocontents{loe}{\protect\fi}
+\end{appendix}
 
 \end{document}
