@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -83,7 +84,11 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	}
 
 	// Upload `data/{xId}/` to `storage/{cId}/`
-	err = common.UploadDir(cmd.Raw, id, cmd.Raw.CommandID)
+	var ignorePattern *regexp.Regexp
+	if common.C.PartialUpload {
+		ignorePattern = regexp.MustCompile(`\.(?:aedt|mxwl)results$`)
+	}
+	err = common.UploadDir(cmd.Raw, cmd.Raw.CommandID, id, ignorePattern)
 	if err != nil {
 		return err
 	}
@@ -91,9 +96,11 @@ func (m Module) run(cmd *ansysCommand, cancel <-chan struct{}) error {
 	<-time.After(2 * time.Second)
 
 	// Drop directory `data/{xId}/`
-	err = common.DropDir(cmd.Raw, id)
-	if err != nil {
-		return err
+	if !common.C.PartialUpload {
+		err = common.DropDir(cmd.Raw, id)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -32,7 +32,7 @@ func delayed(ch <-chan struct{}, m time.Duration) chan struct{} {
 }
 
 // Entry setup commond
-func Entry(theLogger func(string)) {
+func Entry(theLogger func(string, string)) {
 	common.M.Version.Version = VERSION
 	common.M.Version.CommitHash = COMMITHASH
 	log = make(chan *common.LogReport, 1000)

@@ -96,10 +96,18 @@ ei <- function(object, num_quasi = 1000, being = NULL) {
     return(eifun);
 }
 
-eiopt <- function(rngs, sampled, values, being_sampled, num_quasi = 1000) {
+gpfit <- function(sampled, values) {
+    print("gpfit start");
+    object <- GPfit::GP_fit(sampled, values, trace = TRUE);
+    print("gpfit done");
+    return(object);
+}
+
+eiopt <- function(rngs, object, being_sampled, num_quasi = 1000) {
     cats <- as.integer(rngs);
-    object <- GPfit::GP_fit(sampled, values);
+    print("eifun start");
     eifun <- ei(object, num_quasi = num_quasi, being = being_sampled);
+    print("eifun done");
     rst <- CEoptim(
                    f = function(disc) eifun(disc / (rngs - 1)),
                    maximize = TRUE,
@@ -107,5 +115,5 @@ eiopt <- function(rngs, sampled, values, being_sampled, num_quasi = 1000) {
                    verbose = TRUE,
                    );
     print(rst);
-    return(list(x=rst$optimizer$discrete, ei=rst$optimum));
+    return(list(x = rst$optimizer$discrete, ei = rst$optimum));
 }

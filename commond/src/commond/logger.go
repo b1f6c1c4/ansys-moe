@@ -40,7 +40,7 @@ func publishLog(log chan *common.LogReport) {
 		case lg := <-log:
 			str, err := json.Marshal(lg)
 			if err != nil {
-				common.SL("Stringify log: " + err.Error())
+				common.SL("error", "Stringify log: "+err.Error())
 				break
 			}
 			conn.Write(str)
