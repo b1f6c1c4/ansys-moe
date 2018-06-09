@@ -1,0 +1,12 @@
+{
+  "name": "data",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "lodash": "^4.17.10",
+    "papaparse": "^4.5.0",
+    "strip-bom": "^3.0.0",
+    "yargs": "^11.0.0"
+  }
+}

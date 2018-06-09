@@ -2,6 +2,11 @@ MK=latexmk -silent -use-make
 
 .DEFAULT_GOAL: all
 
+data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv
+	-mkdir data\dist
+	Rscript --vanilla data/plot.R -i $^ -o $@
+	-rm Rplots.pdf
+
 figures/dist/%.pdf: figures/%.xml
 	-mkdir figures\dist
 	drawio $< -o $@
