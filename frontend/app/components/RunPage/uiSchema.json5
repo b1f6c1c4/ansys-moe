@@ -18,7 +18,7 @@
     G: {
       title: 'headline',
       items: {
-        code: { multiline: true, size: 12 },
+        code: { 'ui:widget': 'MultilineTextWidget', size: 12 },
       },
     },
     ansys: {
@@ -36,18 +36,18 @@
     E: {
       title: 'headline',
       items: {
-        code: { multiline: true, size: 12 },
+        code: { 'ui:widget': 'MultilineTextWidget', size: 12 },
       },
     },
     P: {
       title: 'headline',
       items: {
-        code: { multiline: true, size: 12 },
+        code: { 'ui:widget': 'MultilineTextWidget', size: 12 },
       },
     },
     P0: {
       title: 'headline',
-      code: { multiline: true, size: 12 },
+        code: { 'ui:widget': 'MultilineTextWidget', size: 12 },
     },
   },
 }

@@ -155,8 +155,18 @@
         kind: {
           type: 'string',
           title: '计算方式',
-          enum: ['expression', 'mathematica', 'rlang'],
-          enumNames: ['简单表达式', 'Mathematica语言表达式', 'R语言表达式'],
+          enum: [
+            'expression',
+            'python',
+            'rlang',
+            'mathematica',
+          ],
+          enumNames: [
+            '简单表达式',
+            'Python表达式',
+            'R语言表达式',
+            'Mathematica表达式',
+          ],
           default: 'expression',
         },
         code: { type: 'string', title: '表达式', description: '可以使用设计变量和前级任何参数；若要使用同级参数，需要在下方声明' },
