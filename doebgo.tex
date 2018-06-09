@@ -174,7 +174,7 @@ Kriging模型最关键的部分在于，对没有做实验的位置，也能通�
   K_s = \left(R(x_\star, x_1), \ldots, R(x_\star, x_n)\right)^T
 \end{equation}
 。
-通过对\cref{equ:doe-ks-d}中的协方差矩阵进行相合变换\cite{rasmussen2004}，就可以得到$Y(x_\star)$的后验分布：
+通过对\cref{equ:doe-ks-d}中的协方差矩阵进行相合变换\cite{sacks1989}，就可以得到$Y(x_\star)$的后验分布：
 \begin{equation}\label{equ:doe-y}
   Y(x_\star)|y_s \sim \Normal{\beta_0 + K_s^T K^{-1} (y_s - \beta_0 \one_n)}{\sigma^2 \left(1 - K_s^T K^{-1} K_s\right)}
 \end{equation}
