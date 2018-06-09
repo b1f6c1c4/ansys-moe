@@ -68,21 +68,26 @@ const runRscript = async (script) => {
   }
 };
 
+const tmpl = _.template(fs.readFileSync(path.join(__dirname, 'template.tex'), 'utf-8'));
+
 const run = async () => {
   const data = await readin();
   const quote = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   const pathCommon = path.join(__dirname, './common.R');
   const pathInput = argv._[0];
-  const res = await runRscript(`
+  const opts = JSON.parse(await runRscript(`
     sink(stderr());
     library(jsonlite);
     source("${quote(pathCommon)}");
     data <- getData("${quote(pathInput)}");
     sink();
     print(toJSON(data$opt));
-  `);
-  const obj = JSON.parse(res);
-  await writeout(JSON.stringify(obj, null, 2));
+  `));
+  const fields = ['dCoilTurns', 'dCoilOuter', 'dCoilInner', 'dShieldThickness', 'dShieldExtra'];
+  const res = tmpl({ opts: _.sortBy(opts, fields) });
+  await writeout(res);
+  // const res = _.map(opts, _.unary(tmpl));
+  // await writeout(JSON.stringify(res, null, 2));
 };
 
 run();

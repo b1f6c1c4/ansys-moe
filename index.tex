@@ -115,6 +115,18 @@
 \end{denotation}
 }
 \setcounter{tocdepth}{2}
+\newcommand{\ltnum}[1]{\num[%
+  parse-numbers=true,%
+  round-mode=figures,%
+  round-integer-to-decimal=true,
+  round-precision=4%
+]{#1}}
+\newcommand{\tnum}[1]{\num[%
+  parse-numbers=true,%
+  round-mode=figures,%
+  round-integer-to-decimal=true,
+  round-precision=3%
+]{#1}}
 
 \begin{document}
 \frontmatter

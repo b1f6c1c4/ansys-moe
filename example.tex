@@ -95,8 +95,8 @@
 \subsection{设计变量}
 \begin{description}
   \item[dCoilTurns] 线圈匝数，离散型，\numrange{10}{15}取整数值
-  \item[dCoilOuter] 线圈最外圈的边长，连续型，\SIrange{390}{490}{\milli\metre}，精度\SI{5}{\milli\metre}
-  \item[dCoilInner] 线圈最内圈的边长，连续型，\SIrange{200}{300}{\milli\metre}，精度\SI{5}{\milli\metre}
+  \item[dCoilOuter] 最外匝线圈边长，连续型，\SIrange{390}{490}{\milli\metre}，精度\SI{5}{\milli\metre}
+  \item[dCoilInner] 最内匝线圈边长，连续型，\SIrange{200}{300}{\milli\metre}，精度\SI{5}{\milli\metre}
   \item[dShieldThickness] 磁屏蔽层厚度，连续型，\SIrange{1}{23}{\milli\metre}，精度\SI{0.5}{\milli\metre}
   \item[dShieldExtra] 磁屏蔽层比线圈最外圈多出来的长度，连续型，\SIrange{0}{40}{\milli\metre}，精度\SI{1}{\milli\metre}
 \end{description}
@@ -135,8 +135,8 @@
   \[
   \begin{multlined}
   1{\Big/}\!\left(1+\exp \frac{\text{eNormalK}-0.1}{0.001}\right)\times{\Bigg(}\text{eNormalK} \\
-  + 0.1\left(\frac{\text{eNormalK}-0.1}{0.018} - \sqrt{1+\left(\scriptstyle\frac{\text{eNormalK}-0.18}{0.015}\right)^2}
-  + \sqrt{1+\left(\scriptstyle\frac{0.1-0.18}{0.015}\right)^2}\right){\Bigg)}
+  + 0.1\left(\frac{\text{eNormalK}-0.1}{0.018} - \sqrt{1+\left(\textstyle\frac{\text{eNormalK}-0.18}{0.015}\right)^2}
+  + \sqrt{1+\left(\textstyle\frac{0.1-0.18}{0.015}\right)^2}\right){\Bigg)}
   \end{multlined}
   \]
   \item[pMisalignedIndMutPenalty] 横向偏移\SI{200}{\milli\metre}时互感\SI{\geq 10}{\micro\henry}，越大越好：
@@ -146,19 +146,54 @@
 \end{description}
 
 由于自动化设计系统只能进行单目标优化，故在此处先选取总体性能指标为上述各性能指标（不含辅助计算量）之和的相反数，
-再在最后进行数据处理时选择总体性能指标最高的若干组设计，人工进行多目标的横向比较。
+再在最后进行数据处理时选择总体性能指标最高的若干组设计，手工进行横向比较。
 
-\section{运行结果}
+\section{运行结果与后处理}
 \begin{figure}[p]
   \centering%
-  %\subcaptionbox{建模过程中用到的正方形线圈的轮廓\label{fig:example-curve}}
-  %  {\includegraphics{./data/dist/raw-pDimension-pThickness.pdf}}\par
-  \subcaptionbox{最终完成的几何模型\label{fig:example-overall}}
-    {\includegraphics{./data/dist/raw-dCoilOuter-dShieldThickness.pdf}}\par
-  \subcaptionbox{最终完成的几何模型\label{fig:example-overall}}
-    {\includegraphics{./data/dist/raw-dCoilOuter-dShieldExtra.pdf}}
-  \caption[几何模型的搭建]{使用Ansys Maxwell 3D对磁谐振部件的几何结构进行建模。}
+  \subcaptionbox{匝数-最外匝线圈边长（\si{\milli\metre}）-最内匝线圈边长（\si{\milli\metre}）}
+    {\includegraphics{./data/dist/raw-dCoilOuter-dCoilInner.pdf}}\par
+  \subcaptionbox{匝数-磁屏蔽层比线圈最外圈多出来的长度（\si{\milli\metre}）-磁屏蔽层厚度（\si{\milli\metre}）}
+    {\includegraphics{./data/dist/raw-dShieldExtra-dShieldThickness.pdf}}
+  \caption[全部计算结果]{全部计算结果。每个子图的标题表示线圈匝数（\numrange{10}{15}）。
+  “$\times$”表示不满足要求的设计，“+”表示满足要求的设计。\label{fig:example-res}}
 \end{figure}
 通过控制面板上传仿真文件，并将上述优化设计问题的规范表述提交系统，系统即自动开始执行优化设计工作流。
+
+由于服务器可用时间有限，而每次仿真都需要相当长（相近40分钟）的时间，故该算例实际上只进行229组有效迭代，并未达到全局收敛。
+但仅仅通过这几组迭代，自动化设计系统已经成功找到了很多符合全部几条设计要求的方案，如\cref{fig:example-res}所示。
+
+在设计的最后阶段，为了自动化设计系统输出的所有方案中选取最合适的方案，采用R语言手工对其进行分析。
+本文首先将所有仿真结果通过控制面板导出，然后利用方差分析的方法，探索各个子优化目标的关系。
+本文作者发现该系统的尺寸和抗偏移性能两者互相制约，相关很大；
+为此，先找出所有满足全部设计标准的方案（共计53组），再以这两个子优化目标为条件寻找帕累托最优，得到7组最佳设计候选方案。
+\Cref{tbl:example-opt}给出了这几组方案的详细信息。
+\begin{table}[htbp]
+  \centering
+  \caption[最佳设计方案候选]{最佳设计方案候选。
+  其中长度单位\si{\milli\metre}，电感单位\si{\micro\henry}，电阻单位\si{\milli\ohm}。\label{tbl:example-opt}}
+  \input{./data/dist/opt.tex}
+\end{table}
+
+\section{小结}
+从\cref{fig:example-res}不难看出，该自动化设计系统在实际无线充电磁耦合元件的优化设计问题的求解中，展现出了以下突出特点：
+\begin{itemize}
+  \item 能够在整个设计可能性空间中性能较好的位置更多地进行探索：在有效设计附近的设计尝试明显比其它位置更密集，比起完全随机搜索节约了很多计算资源。
+  \item 可以轻松处理设计可能性非常巨大的情况：本例中总设计可能性多达
+  \[\begin{multlined}6\times\left(1+\frac{490-390}{5}\right)\times\left(1+\frac{300-200}{5}\right) \\
+  \times\left(1+\frac{23-1}{0.5}\right)\times\left(1+\frac{40-1}{1}\right)\approx\num{4.76e6}\end{multlined}\]
+  种之多；若设每次计算耗时\SI{40}{\minute}，则在单核电脑上逐一进行尝试需要
+  \[\num{4.76e6}\times\SI{40}{\minute}=\SI{1.90e8}{\minute}\approx\num{362}\ \text{年}\]
+  除非采用大规模分布式计算，否则在计算上几乎不可能实现。
+  \item 在不出现错误的情况下系统可以实现无人看守自动运行，而在出现错误的情况下也无需过多担心：
+  \begin{itemize}
+    \item 系统会通过告警渠道自动将错误信息通知管理员，管理员可以手动查看系统日志定位错误原因；
+    \item 子工作流的错误不会影响父工作流和兄弟工作流，也即某一迭代发生错误完全不干扰其他迭代照常进行，
+    甚至也基本不干扰所处分类整体的贝叶斯优化算法的继续运行（该迭代会被视作尚在采样中参数下一步采样位置计算）；
+    \item 由于所有系统状态均在数据库中保存，故可以通过手动修改数据库的办法来修复偶发错误，修复之后工作流依然可以继续执行；
+    \item 由于所有组件（数据库和消息队列）都是无状态的，再加上核心组件之间普遍采用消息队列作为缓冲间接传递消息，
+    故在系统运行中可以灵活地动态下线存在bug的旧组件并上线新组件，工作流执行完全不会受到中断（只会有延迟，而这对自动化设计系统这类非实时系统而言不足为提）。
+  \end{itemize}
+\end{itemize}
 
 \end{document}

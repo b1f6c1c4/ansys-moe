@@ -1,0 +1,18 @@
+\begin{tabularx}{\linewidth}{l<%= 'r'.repeat(opts.length) %>}
+  \toprule
+  {\heiti 方案编号} <%= opts.map((v, i) => ` & \\#${i + 1}`).join('') %> \\ \midrule
+  {\heiti 匝数} <%= opts.map((v) => ` & \\num{${v.dCoilTurns}}`).join('') %> \\
+  {\heiti 最外匝线圈边长} <%= opts.map((v) => ` & \\tnum{${v.dCoilOuter}}`).join('') %> \\
+  {\heiti 最内匝线圈边长} <%= opts.map((v) => ` & \\tnum{${v.dCoilInner}}`).join('') %> \\
+  {\heiti 匝间距} <%= opts.map((v) => ` & \\tnum{${1000 * v.gCoilInterval}}`).join('') %> \\
+  {\heiti 磁屏蔽层厚度} <%= opts.map((v) => ` & \\tnum{${v.dShieldThickness}}`).join('') %> \\
+  {\heiti 磁屏蔽层边长} <%= opts.map((v) => ` & \\tnum{${v.dCoilOuter + 2 * v.dShieldExtra}}`).join('') %> \\
+  {\heiti 总厚度} <%= opts.map((v) => ` & \\tnum{${1000 * v.pThickness}}`).join('') %> \\ \hline
+  {\heiti 线圈自感} <%= opts.map((v) => ` & \\ltnum{${v.eIndMutNormal / v.eNormalK}}`).join('') %> \\
+  {\heiti 正对线圈互感} <%= opts.map((v) => ` & \\ltnum{${v.eIndMutNormal}}`).join('') %> \\
+  {\heiti 偏移线圈互感} <%= opts.map((v) => ` & \\ltnum{${v.eIndMutMisaligned}}`).join('') %> \\
+  {\heiti 正对耦合系数} <%= opts.map((v) => ` & \\ltnum{${v.eNormalK}}`).join('') %> \\
+  {\heiti 偏移耦合系数} <%= opts.map((v) => ` & \\tnum{${v.eIndMutMisaligned / v.eIndMutNormal * v.eNormalK}}`).join('') %> \\
+  {\heiti 线圈电阻} <%= opts.map((v) => ` & \\ltnum{${1000 * v.eResEq}}`).join('') %> \\
+  \bottomrule
+\end{tabularx}

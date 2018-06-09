@@ -7,6 +7,10 @@ data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv data/common.R data/plot.R
 	Rscript --vanilla data/plot.R -i $< -o $@
 	-del /Q Rplots.pdf
 
+data/dist/opt.tex: data/raw/ev-wpt-2bd37a50.csv data/template.tex data/index.js
+	-mkdir data\dist
+	node data $< -o $@
+
 figures/dist/%.pdf: figures/%.xml
 	-mkdir figures\dist
 	drawio $< -o $@
