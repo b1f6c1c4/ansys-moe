@@ -1,12 +1,6 @@
 MK=latexmk -silent -use-make
 
-# [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
-all: index.tex
-	-mkdir dist
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" index.tex & exit
-	-bibtex dist/index
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" index.tex & exit
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" index.tex & exit
+all: dist/index.pdf dist/spine.pdf
 
 data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv data/common.R data/plot.R
 	-mkdir data\dist
@@ -27,3 +21,14 @@ figures/dist/%.png: figures/%.xml
 
 %: %.tex
 	$(MK) -pvc $< & exit
+
+dist/spine.pdf: spine.tex
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
+
+# [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
+dist/index.pdf: index.tex
+	-mkdir dist
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
+	-bibtex dist/index
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
+	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit

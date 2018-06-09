@@ -18,8 +18,10 @@
   edepartment={Department of Electrical Engineering},
   cmajor={电气工程及其自动化},
   emajor={Electrical Engineering},
-  csupervisor={陈凯楠~助理研究员},
+  csupervisor={陈凯楠\quad{}助理研究员},
   esupervisor={Chen, Kainan Assistant Professor},
+  cdate={2018年06月10日},
+  edate={2018-06-10},
 }
 \sisetup{%
   binary-units=true,list-separator={, },
@@ -28,11 +30,11 @@
   separate-uncertainty,
   range-phrase={\ensuremath{\sim}},
   math-micro=\upmu,
-  text-micro=\upmu
+  text-micro=\upmu,
 }
 \lstset{%
   basicstyle=\ttfamily\small,
-  extendedchars=false
+  extendedchars=false,
 }
 \newcommand\crefpairgroupconjunction{和}\newcommand\crefmiddlegroupconjunction{、}\newcommand\creflastgroupconjunction{和}
 \newcommand\crefrangeconjunction{至}\newcommand\crefrangepreconjunction{}\newcommand\crefrangepostconjunction{}
@@ -90,6 +92,9 @@
 \newcommand{\Normal}[2]{\operatorname{N}\!\left(#1,#2\right)}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator*{\argmax}{argmax}
+\makeatletter
+\renewcommand{\thu@denotation@name}{主要符号表}
+\makeatother
 \newcommand{\Denotation}[0]{%
 \begin{denotation}
   \item[$\one_n$] $n\times{}1$的全1列向量
@@ -127,7 +132,7 @@
   round-integer-to-decimal=true,
   round-precision=3%
 ]{#1}}
-\def\exmHour{\SI{23}{\hour}}
+\def\exmHour{\SI{24}{\hour}}
 \input{./data/dist/opt.tex}
 
 \begin{document}
@@ -136,7 +141,7 @@
 \begin{cabstract}
   摘要
 \end{cabstract}
-\ckeywords{无线充电 磁耦合 优化设计 自动化设计}
+\ckeywords{无线充电, 磁耦合, 优化设计, 自动化设计}
 
 \begin{eabstract}
   Abstract
@@ -185,7 +190,6 @@
 \end{acknowledgement}
 
 \begin{appendix}
-\subfile{tricks}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \addtocontents{lof}{\protect\iffalse}
 \addtocontents{lot}{\protect\iffalse}
@@ -200,6 +204,7 @@
 \addtocontents{lof}{\protect\fi}
 \addtocontents{lot}{\protect\fi}
 \addtocontents{loe}{\protect\fi}
+\subfile{tricks}
 \end{appendix}
 
 \end{document}
