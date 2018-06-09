@@ -94,6 +94,10 @@
 \DeclareMathOperator*{\argmax}{argmax}
 \makeatletter
 \renewcommand{\thu@denotation@name}{主要符号表}
+\ifdefined\stripped
+\renewcommand{\thu@authorization@mk}{\relax}
+\renewcommand{\endacknowledgement}{\relax}
+\fi
 \makeatother
 \newcommand{\Denotation}[0]{%
 \begin{denotation}
@@ -190,6 +194,7 @@
 \end{acknowledgement}
 
 \begin{appendix}
+\ifdefined\stripped\relax\else
 \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \addtocontents{lof}{\protect\iffalse}
 \addtocontents{lot}{\protect\iffalse}
@@ -204,6 +209,7 @@
 \addtocontents{lof}{\protect\fi}
 \addtocontents{lot}{\protect\fi}
 \addtocontents{loe}{\protect\fi}
+\fi
 \subfile{tricks}
 \end{appendix}
 
