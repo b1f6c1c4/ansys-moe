@@ -39,4 +39,4 @@ if (cfg[1] == "raw") {
   print_help(opt_parser);
   stop("Type must be 'raw' or 'fea'", call.=FALSE);
 }
-ggsave(argv$output, width=14.7, height=10, unit="cm");
+ggsave(argv$output, width=14.7, height=9.5, unit="cm");
