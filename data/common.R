@@ -34,7 +34,9 @@ getData <- function(filename) {
 }
 
 plotRaw <- function(data, x, y) {
-  ggplot(data$raw, aes_string(x=x, y=y)) +
+  raw <- data$raw;
+  raw <- raw[setdiff(rownames(raw), rownames(data$fea)), ];
+  ggplot(raw, aes_string(x=x, y=y)) +
   geom_point(shape=4) +
   geom_point(data=data$fea, shape=3, size=2) +
   facet_wrap(~dCoilTurns) +

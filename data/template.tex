@@ -1,3 +1,8 @@
+\def\exmRaw{\num{<%= nums.raw %>}}
+\def\exmValid{\num{<%= nums.valid %>}}
+\def\exmFea{\num{<%= nums.fea %>}}
+\def\exmOpt{\num{<%= nums.opt %>}}
+\def\exmOptTable{%
 \begin{tabularx}{\linewidth}{l<%= 'r'.repeat(opts.length) %>}
   \toprule
   {\heiti 方案编号} <%= opts.map((v, i) => ` & \\#${i + 1}`).join('') %> \\ \midrule
@@ -16,3 +21,4 @@
   {\heiti 线圈电阻} <%= opts.map((v) => ` & \\ltnum{${1000 * v.eResEq}}`).join('') %> \\
   \bottomrule
 \end{tabularx}
+}

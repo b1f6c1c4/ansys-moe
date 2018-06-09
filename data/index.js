@@ -75,16 +75,25 @@ const run = async () => {
   const quote = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   const pathCommon = path.join(__dirname, './common.R');
   const pathInput = argv._[0];
-  const opts = JSON.parse(await runRscript(`
+  const [opts, nums] = (await runRscript(`
     sink(stderr());
     library(jsonlite);
     source("${quote(pathCommon)}");
     data <- getData("${quote(pathInput)}");
     sink();
     print(toJSON(data$opt));
-  `));
+    print(toJSON(list(
+      raw=nrow(data$raw),
+      valid=nrow(data$raw[data$raw$P0 < 0, ]),
+      fea=nrow(data$fea),
+      opt=nrow(data$opt)
+    )));
+  `)).trim().split('\n').map(_.unary(JSON.parse));;
   const fields = ['dCoilTurns', 'dCoilOuter', 'dCoilInner', 'dShieldThickness', 'dShieldExtra'];
-  const res = tmpl({ opts: _.sortBy(opts, fields) });
+  const res = tmpl({
+    opts: _.sortBy(opts, fields),
+    nums,
+  });
   await writeout(res);
   // const res = _.map(opts, _.unary(tmpl));
   // await writeout(JSON.stringify(res, null, 2));
