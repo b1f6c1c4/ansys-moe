@@ -143,14 +143,19 @@
 \frontmatter
 
 \begin{cabstract}
-  摘要
+  用于电动汽车的无线电能传输（WPT）技术在近十年间吸引了很多关注。
+  针对其中磁谐振部件的电磁场仿真及优化设计问题，现有文献采用的算法大多无效（不能找到全局最优）或低效（浪费计算时间），也没有针对无线充电系统设计问题本身的特点进行优化。
+  本文从分析一般性电动汽车无线充电系统磁谐振部件优化设计问题本身的特点出发，展开文献研究，选取最适合该问题的贝叶斯优化算法作为内核，
+  利用软件工程的技术手段，开发了复杂的软件系统来完整地实现该算法。
+  针对5个设计变量、6个设计目标、数百万种设计可能性的优化算例表明，该自动化设计系统对搜索位置的选取合理，比暴力搜索和完全随机搜索更省资源；
+  该系统还实现了无人值守自动运行，将错误控制在最小范围内，问题解决后可以从上次中断位置无缝继续运行。
 \end{cabstract}
 \ckeywords{无线充电, 磁耦合, 优化设计, 自动化设计}
 
 \begin{eabstract}
-  Abstract
+  Wireless Power Transfer (WPT) for EV charging has drawn much attraction over the past decades. Regarding electromagnetic field analysis and optimal design problem of magnetic resonant components, existing literature mostly applied futile (may never find the global optima) or inefficient (wasting of computational time) algorithms. Furthermore, none of them tunes the algorithms according to the unique characteristics of WPT optimal design problem. By analyzing the features of the design problem ahead of time, we choose the most suitable algorithm, Bayesian Optimization, from related literature and implement it thoroughly by developing a sophisticated software system, utilizing methodologies from software engineering. A case study of WPT magnetic resonant components optimal design involving five design variables, six optimization targets and millions of design possibilities indicates that the computer-automated design (CautoD) system appropriately chooses sampling points, saving a considerable amount of resources than brute-force or random searching. Moreover, the system permits unattended operating, confines errors to the minimum scope, and allows seamless recovering from exceptions.
 \end{eabstract}
-\ekeywords{Keyword}
+\ekeywords{Wireless Power Transfer, Inductive Coupling, Optimal Design, Computer-automated Design}
 
 \makecover
 
