@@ -18,8 +18,10 @@
   edepartment={Department of Electrical Engineering},
   cmajor={电气工程及其自动化},
   emajor={Electrical Engineering},
-  csupervisor={陈凯楠~助理研究员},
+  csupervisor={陈凯楠\quad{}助理研究员},
   esupervisor={Chen, Kainan Assistant Professor},
+  cdate={2018年06月10日},
+  edate={2018-06-10},
 }
 \sisetup{%
   binary-units=true,list-separator={, },
@@ -28,11 +30,11 @@
   separate-uncertainty,
   range-phrase={\ensuremath{\sim}},
   math-micro=\upmu,
-  text-micro=\upmu
+  text-micro=\upmu,
 }
 \lstset{%
   basicstyle=\ttfamily\small,
-  extendedchars=false
+  extendedchars=false,
 }
 \newcommand\crefpairgroupconjunction{和}\newcommand\crefmiddlegroupconjunction{、}\newcommand\creflastgroupconjunction{和}
 \newcommand\crefrangeconjunction{至}\newcommand\crefrangepreconjunction{}\newcommand\crefrangepostconjunction{}
@@ -90,6 +92,13 @@
 \newcommand{\Normal}[2]{\operatorname{N}\!\left(#1,#2\right)}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator*{\argmax}{argmax}
+\makeatletter
+\renewcommand{\thu@denotation@name}{主要符号表}
+\ifdefined\stripped
+\renewcommand{\thu@authorization@mk}{\relax}
+\renewcommand{\endacknowledgement}{\relax}
+\fi
+\makeatother
 \newcommand{\Denotation}[0]{%
 \begin{denotation}
   \item[$\one_n$] $n\times{}1$的全1列向量
@@ -127,21 +136,27 @@
   round-integer-to-decimal=true,
   round-precision=3%
 ]{#1}}
-\def\exmHour{\SI{23}{\hour}}
+\def\exmHour{\SI{24}{\hour}}
 \input{./data/dist/opt.tex}
 
 \begin{document}
 \frontmatter
 
 \begin{cabstract}
-  摘要
+  用于电动汽车的无线电能传输（WPT）技术在近十年间吸引了很多关注。
+  针对其中磁谐振部件的电磁场仿真及优化设计问题，现有文献所采用的方法需要相对较多次的迭代和电磁场仿真才能找到全局最优设计方案，
+  也没有针对无线充电系统设计问题本身的特点进行优化。
+  本文从分析一般性电动汽车无线充电系统磁谐振部件优化设计问题本身的特点出发，展开文献研究，选取最适合该问题的贝叶斯优化算法作为内核，
+  利用软件工程的技术手段，开发了计算机自动化设计软件系统，实现了基于该优化算法的WPT磁谐振部件优化设计功能。
+  针对5个设计变量、6个设计目标、数百万种设计可能性的优化算例表明，该自动化设计系统对搜索位置的选取合理，比暴力搜索和完全随机搜索更省资源；
+  该系统还实现了无人值守自动运行，将错误控制在最小范围内，问题解决后可以从上次中断位置无缝继续运行。
 \end{cabstract}
-\ckeywords{无线充电 磁耦合 优化设计 自动化设计}
+\ckeywords{无线充电, 磁耦合, 优化设计, 自动化设计}
 
 \begin{eabstract}
-  Abstract
+  Wireless Power Transfer (WPT) for EV charging has drawn much attraction over the past decades. Regarding electromagnetic field analysis and optimal design problem of magnetic resonant components, existing literature mostly applied inefficient algorithms that require a large number of iteration to find the global optima. Furthermore, none of them tunes the algorithms according to the unique characteristics of WPT optimal design problem. By analyzing the features of the design problem ahead of time, we choose the most suitable algorithm, Bayesian Optimization, from related literature. Utilizing software engineering methodologies, we develop a computer-automated design (CautoD) software system that fulfills the need of WPT magnetic resonant component optimal design with such optimization algorithm. A case study involving five design variables, six optimization targets and millions of design possibilities indicates that the CautoD system appropriately chooses sampling points, saving a considerable amount of resources than brute-force or random searching. Moreover, the system permits unattended operating, confines errors to the minimum scope, and allows seamless recovering from exceptions.
 \end{eabstract}
-\ekeywords{Keyword}
+\ekeywords{Wireless Power Transfer, Inductive Coupling, Optimal Design, Computer-automated Design}
 
 \makecover
 
@@ -185,7 +200,7 @@
 \end{acknowledgement}
 
 \begin{appendix}
-\subfile{tricks}
+\ifdefined\stripped\relax\else
 \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \addtocontents{lof}{\protect\iffalse}
 \addtocontents{lot}{\protect\iffalse}
@@ -200,6 +215,8 @@
 \addtocontents{lof}{\protect\fi}
 \addtocontents{lot}{\protect\fi}
 \addtocontents{loe}{\protect\fi}
+\fi
+\subfile{tricks}
 \end{appendix}
 
 \end{document}

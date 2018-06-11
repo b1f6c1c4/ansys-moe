@@ -15,7 +15,7 @@
 实验设计（Design of Experiment）学科有着相当悠久的历史。
 为了研究不同因素对系统的影响，科学界和工业界人士通常都会对其进行实验：
 人为设置这些因素为特定的值，观察系统的输出结果，再对结果进行分析。
-如何选定这些值以方便分析、如何进行分析以减弱不可控因素造成的影响的学问也就构成了实验设计学科\cite{davies1954}。
+如何选定这些值以方便分析、如何进行分析以减弱不可控因素造成的影响的学问也就构成了实验设计学科\cite{montgomery}。
 进行实验的目的一般有两类：判断某些因素的影响有无/强弱，和调整因素以提高系统性能。
 前者意味着实验完毕进行数据分析时会采用线性回归分析和方差分析，
 而后者意味着将会采用非线性回归分析或者更为复杂的手段，并经常意味着需要迭代多次实验。
@@ -58,7 +58,7 @@
   \item[E最优] $X^T X$最小特征值越大越好；
   \item[T最优] $X^T X$的迹越大越好；
 \end{description}
-更多标准（C、G、I、V最优等）可以参见文献\inlinecite{pukelsheim1993}。
+更多标准（C、G、I、V最优等）可以参见文献\inlinecite{pukelsheim2006}。
 
 \paragraph{响应曲面方法（RSM, Response Surface Methodology）}
 迭代设计实验、进行实验、利用二次回归模型分析结果，以达到优化系统性能的方法称为RSM。
@@ -174,7 +174,7 @@ Kriging模型最关键的部分在于，对没有做实验的位置，也能通�
   K_s = \left(R(x_\star, x_1), \ldots, R(x_\star, x_n)\right)^T
 \end{equation}
 。
-通过对\cref{equ:doe-ks-d}中的协方差矩阵进行相合变换\cite{rasmussen2004}，就可以得到$Y(x_\star)$的后验分布：
+通过对\cref{equ:doe-ks-d}中的协方差矩阵进行相合变换\cite{sacks1989}，就可以得到$Y(x_\star)$的后验分布：
 \begin{equation}\label{equ:doe-y}
   Y(x_\star)|y_s \sim \Normal{\beta_0 + K_s^T K^{-1} (y_s - \beta_0 \one_n)}{\sigma^2 \left(1 - K_s^T K^{-1} K_s\right)}
 \end{equation}
