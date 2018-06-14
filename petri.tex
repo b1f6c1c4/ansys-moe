@@ -54,27 +54,27 @@ Petri网理论（Petri net throey）可以对包含多个组件的复杂系统�
   \subcaptionbox{分支-汇合节点的语义\label{fig:petri-act-seq2}}
     {\includegraphics{./figures/dist/petri-act-seq2.pdf}}
   \caption[UML活动图示例]{UML活动图示例。\Cref{fig:petri-act-seq1}给出了一个简单的UML活动图。
-  在满足条件1时，后续将会执行分支-同步节点，如\cref{fig:petri-act-seq1}所示。
-  在不满足条件1时，后续将会执行分支-汇合节点，如\cref{fig:petri-act-seq2}所示。\label{fig:petri-act}}
+  在满足条件~1时，后续将会执行分支-同步节点，如\cref{fig:petri-act-seq1}所示。
+  在不满足条件~1时，后续将会执行分支-汇合节点，如\cref{fig:petri-act-seq2}所示。\label{fig:petri-act}}
 \end{figure}
 
 \Cref{fig:petri-act-example}使用UML语言描述了一个活动的内部结构：由若干控制流连接的7个动作节点和若干控制节点。
 该活动用自然语言表示如下：
 \begin{itemize}
-  \item 活动开始后，执行动作0；
-  \item 动作0执行完毕后，判断条件1是否满足：
-  \item 如果条件1满足，执行如下操作（参见\cref{fig:petri-act-seq1}）：
+  \item 活动开始后，执行动作~0；
+  \item 动作~0执行完毕后，判断条件~1是否满足：
+  \item 如果条件~1满足，执行如下操作（参见\cref{fig:petri-act-seq1}）：
   \begin{itemize}
-    \item 同时执行动作1和动作2；
-    \item 当动作1和动作2都执行完毕后，执行动作3；
-    \item 动作3执行完毕后，活动立即终止，不论是否还有未完成的动作。
+    \item 同时执行动作~1和动作~2；
+    \item 当动作~1和动作~2都执行完毕后，执行动作~3；
+    \item 动作~3执行完毕后，活动立即终止，不论是否还有未完成的动作。
   \end{itemize}
-  \item 如果条件1不满足，执行如下操作（参见\cref{fig:petri-act-seq2}）：
+  \item 如果条件~1不满足，执行如下操作（参见\cref{fig:petri-act-seq2}）：
   \begin{itemize}
-    \item 同时执行动作4和动作5；
-    \item 动作4执行完毕后，执行动作6（不论其是否执行过）；
-    \item 动作5执行完毕后，执行动作6（不论其是否执行过）；
-    \item 动作6执行完毕后，活动立即终止，不论是否还有未完成的动作。
+    \item 同时执行动作~4和动作~5；
+    \item 动作~4执行完毕后，执行动作~6（不论其是否执行过）；
+    \item 动作~5执行完毕后，执行动作~6（不论其是否执行过）；
+    \item 动作~6执行完毕后，活动立即终止，不论是否还有未完成的动作。
   \end{itemize}
 \end{itemize}
 
@@ -97,7 +97,7 @@ Petri网理论（Petri net throey）可以对包含多个组件的复杂系统�
 其中每一个输入弧和输出弧都可以具有自己的重数$n\in\mathbb{N}, n\geq1$。如未特别说明，重数默认为1。
 
 \subsection{例子}
-\begin{figure}[h]
+\begin{figure}[t]
   \centering
   \includegraphics{./figures/dist/petri-raw-example.pdf}
   \caption[Petri网示例]{Petri网示例。图中描绘了一个Petri网的其中6种状态及其跳转关系（粗箭头表示）。\label{fig:petri-raw}}
@@ -111,7 +111,7 @@ Petri网理论（Petri net throey）可以对包含多个组件的复杂系统�
 这意味着Petri网相比有限状态机拥有更为强大的建模能力。
 
 \subsection{常见结构}
-\begin{figure}[h]
+\begin{figure}[p]
   \centering%
   \subcaptionbox{顺序结构\label{fig:petri-raw-seq}}
     {\includegraphics{./figures/dist/petri-raw-seq.pdf}}
@@ -125,10 +125,10 @@ Petri网理论（Petri net throey）可以对包含多个组件的复杂系统�
 Petri网的一个重要的特点在于其擅长对多组件并发系统进行建模。
 本小节将给出一些常见的并发结构的Petri网模型，并对其中部分结构附以UML活动图的等价模型，以为后续大型系统的建模进行铺垫。
 
-\Cref{fig:petri-raw-seq}给出了Petri网对顺序结构的建模：动作1执行结束之后执行动作2。
+\Cref{fig:petri-raw-seq}给出了Petri网对顺序结构的建模：动作~1执行结束之后执行动作~2。
 需要注意的是，最上方的跳变没有输入，意味着任何时候都有可能发生，这正好标志着用户可能在任何时候输入数据。
 
-\Cref{fig:petri-raw-fork}给出了Petri网对分支-同步结构的建模：动作1和动作2可以以任何顺序执行。
+\Cref{fig:petri-raw-fork}给出了Petri网对分支-同步结构的建模：动作~1和动作~2可以以任何顺序执行。
 
 \Cref{fig:petri-raw-queue}则使用Petri网对消息队列的建模。
 由于UML活动图对这种结构的建模需要使用更复杂的节点（Send Signal Action，详见UML标准~\inlinecite{omg}），本文此处忽略UML活动图模型。
@@ -209,9 +209,9 @@ L-Petri网的执行即为传统Petri网的执行，不过对于跨层弧翻译�
 
 \Cref{fig:petri-layer}给出了一个比较复杂的L-Petri网的例子。
 根据定义，不难证明其翻译出来的传统Petri网的位置包括
-$\left\|\mathbb{X}^{2}\|\right)$个a，
-$\left\|\mathbb{X}\|\right)$个b，
-$\left\|\mathbb{X}^{3}\|\right)$个c，
+$\left\|\mathbb{X}^{2}\right\|$个a，
+$\left\|\mathbb{X}\right\|$个b，
+$\left\|\mathbb{X}^{3}\right\|$个c，
 以及一个d和一个e。
 在执行时，输出位置与执行的跳变的具体关系如下：
 \begin{itemize}

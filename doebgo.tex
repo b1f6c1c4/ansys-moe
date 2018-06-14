@@ -84,7 +84,7 @@
 为了在每个输入变量维度上都服从均匀分布，LHS方法先将每个输入变量的范围等分成$N$份，再从每份中均匀抽取一点。
 最后，随机打乱$N$组$k$维数据点，实现整个样本空间上的均匀分布。
 需要注意的是，每个维度上的分布均匀性是严格的，但样本空间上的均匀分布却是随机的，有一定概率会得到比较差的结果（比如排成一列的情况\cite{pronzato2012}）。
-关于Lh的改进包括文献~\inlinecite{tang1993,leary2003}提出的利用正交表思想结构来进行的改进，可谓是将传统实验设计与计算机实验设计进行了有机结合。
+关于LHS的改进包括文献~\inlinecite{tang1993,leary2003}提出的利用正交表思想结构来进行的改进，可谓是将传统实验设计与计算机实验设计进行了有机结合。
 
 除此之外，从空间填充入手进行实验设计的方法还有minimax和maximin方法\cite{johnson1990}。
 Minimax方法（简称mM）计算样本空间上的每个点到最近的实验点的距离，并尝试最小化这些距离的最大值；
@@ -280,11 +280,11 @@ Kriging模型最关键的部分在于，对没有做实验的位置，也能通�
 至于算法在实现方面的更为细致的考虑（如优化工作流、预处理、调参等等），将会在\cref{sec:design}中讨论。
 
 \subsection{统计模型及其参数估计}\label{ssec:bgo-mdl}
-在Kriging模型\cref{equ:doe-kriging}中，自相关函数$R(\cdot,\cdot)$可以是任意对称实值二元函数，给参数估计带来了很大困难。
+在Kriging模型（\cref{equ:doe-kriging}）中，自相关函数$R(\cdot,\cdot)$可以是任意对称实值二元函数，给参数估计带来了很大困难。
 而可以用来对模型进行估计的数据又异常稀少——只有寥寥几个点处的目标函数值。
 为此，需要对其加以很强的假设，才能成功对其进行估计。
 
-首先，为了估计方便，对Kriging模型\cref{equ:doe-kriging}中的高斯随机过程$Z(x)$加以平稳假设：
+首先，为了估计方便，对\cref{equ:doe-kriging}中随机过程$Z(x)$加以平稳假设：
 \begin{align}\label{equ:bgo-gp}
   \E{Z(x)} &= 0 \\
   \Cov{Z(w)}{Z(x)} &= \sigma^2 R(w, x) = \sigma^2 R(w - x)
@@ -333,8 +333,7 @@ Kriging模型最关键的部分在于，对没有做实验的位置，也能通�
 更进一步，如果这多组实验中的一部分已经完成，另一部分尚未完成，那么下一次迭代可以提前开始，以尽量少浪费实验设备的等待时间。
 本文统一以上几种情况进行，作如下规定：
 \begin{itemize}
-  \item 无论如何，最多同时进行$N_\mathrm{con}$组实验
-  \item 一次迭代正好包含一组实验
+  \item 一次迭代正好包含一组实验，最多同时进行$N_\mathrm{con}$组迭代
   \item 任何一组迭代完成之后，重复以下过程直至有$N_\mathrm{con}$组实验正在进行：
   \begin{enumerate}
     \item 基于现有的所有实验数据，进行高斯过程的参数估计；
@@ -386,8 +385,8 @@ Kriging模型最关键的部分在于，对没有做实验的位置，也能通�
   \end{bmatrix}
 \end{align}
 其中$R$应参照\cref{equ:bgo-ansi}和高斯过程参数估计的结果来计算。
-同样，对\cref{equ:bgo-kss-d}中的协方差矩阵进行相合变换\cite{clark2012}，
-就可以得到$Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})$的联合后验分布$\mathcal{D}^\dag$：
+再对\cref{equ:bgo-kss-d}中的协方差矩阵进行相合变换\cite{clark2012}
+就可得$Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})$的联合后验分布$\mathcal{D}^\dag$：
 \begin{equation}\label{equ:bgo-y}
   Y(x_\star), Y(x_{\ast 1}),\ldots,Y(x_{\ast p})|y_s \sim
     \Normal{\beta_0 + K_s^T K^{-1} (y_s - \beta_0 \one_n)}{\sigma^2 \left(K_{ss} - K_s^T K^{-1} K_s\right)}
