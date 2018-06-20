@@ -29,11 +29,11 @@ figures/dist/%.png: figures/%.xml
 $(SUBDOCS): %: %.tex
 	$(MK) -pvc $< & exit
 
-dist/spine.pdf: spine.tex
+dist/spine.pdf: spine.tex setup.tex
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
 
 # [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
-dist/%.pdf: %.tex index.tex index.bib $(TEXS)
+dist/%.pdf: %.tex index.tex setup.tex index.bib $(TEXS)
 	-mkdir dist
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
 	-bibtex dist/$*
