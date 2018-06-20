@@ -7,8 +7,8 @@
 \usepackage{upgreek}
 \usepackage{listings}
 \usepackage{mathtools}
-\usepackage{placeins}
 \usepackage{atbegshi}
+\usepackage{etoolbox}
 \thusetup{%
   ctitle={电动汽车无线充电系统\\磁谐振部件优化设计软件研究},
   etitle={Software research for optimal design of magnetic resonant components of EV wireless charging system},
@@ -74,55 +74,22 @@
   \renewcommand{\cref}{\oldcref}% Restore \cref
   \renewcommand{\Cref}{\oldCref}% Restore \Cref
 }
-\newcommand\blankpage{%
-  \wlog{blankpage: at \therealpage}%
-  \newpage\null\thispagestyle{empty}\addtocounter{page}{-1}%
-}
-% For subfiles
+\newcommand\blankpage{\newpage\null\thispagestyle{empty}\addtocounter{page}{-1}}
 \makeatletter
 \newcounter{realpage}
 \setcounter{realpage}{1}
 \AtBeginShipout{\stepcounter{realpage}}
 \ifdefined\imprint
-  \def\forceonevenpage{\ifodd\value{realpage}\blankpage\fi}
-  \def\forceonoddpage{\ifodd\value{realpage}\relax\else\blankpage\fi}
-  \newcommand{\forceoddpage}{
-    \wlog{forceoddpage: from \therealpage}
-    \edef\oldrealpage{\therealpage}
-    \FloatBarrier
-    \wlog{forceoddpage: to \therealpage}
-    \ifnum\oldrealpage=\value{realpage}
-      \wlog{forceoddpage: reversed}
-      \forceonevenpage
-    \else
-      \wlog{forceoddpage: plain}
-      \forceonoddpage
-    \fi
-  }
-\else
-  \def\forceoddpage{\relax}
-\fi
-\ifdefined\imprint
   \renewcommand{\thu@first@titlepage}{\relax}
   \renewcommand{\thu@authorization@mk}{\relax}
-  \renewcommand{\thu@makeabstract}{%
-    \ifthu@bachelor\clearpage\else\cleardoublepage\fi
-    \thu@chapter*[]{\cabstractname} % no tocline
-    \ifthu@bachelor
-      \pagestyle{thu@plain}
-    \else
-      \pagestyle{thu@headings}
-    \fi
-    \pagenumbering{Roman}
-    \thu@cabstract
-    \ifthu@doctor\vfill\else\vskip12bp\fi
-    \thu@put@keywords{\textbf\thu@ckeywords@title}{\thu@ckeywords}
-    \thu@chapter*[]{\eabstractname} % no tocline
-    \thu@eabstract
-    \ifthu@doctor\vfill\else\vskip12bp\fi
-    \thu@put@keywords{%
-      \textbf{\ifthu@bachelor Keywords:\else Key Words:\fi\enskip}}{\thu@ekeywords}
+  \newcommand{\forceoddpage}{
+    \clearpage
+    \ifodd\value{realpage}\relax\else\blankpage\fi
   }
+  \pretocmd{\chapter}{\forceoddpage}{}{}
+\else
+  \def\forceonoddpage{\relax}
+  \def\forceoddpage{\relax}
 \fi
 \@ifclassloaded{subfiles}%
   {%\AtBeginDocument{\Denotation}
