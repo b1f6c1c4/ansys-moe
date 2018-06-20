@@ -2,7 +2,7 @@ MK=latexmk -silent -use-make
 SUBDOCS=introduction features doebgo petri design impl example conclusion tricks trans raw
 TEXS=$(patsubst %,%.tex,$(SUBDOCS))
 
-all: dist/index.pdf dist/spine.pdf
+all: dist/index.pdf dist/prod.pdf dist/print.pdf dist/spine.pdf
 
 data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv data/common.R data/plot.R
 	-mkdir data\dist
