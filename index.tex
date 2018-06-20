@@ -7,6 +7,8 @@
 \usepackage{upgreek}
 \usepackage{listings}
 \usepackage{mathtools}
+\usepackage{placeins}
+\usepackage{atbegshi}
 \thusetup{%
   ctitle={电动汽车无线充电系统\\磁谐振部件优化设计软件研究},
   etitle={Software research for optimal design of magnetic resonant components of EV wireless charging system},
@@ -20,8 +22,8 @@
   emajor={Electrical Engineering},
   csupervisor={陈凯楠\quad{}助理研究员},
   esupervisor={Chen, Kainan Assistant Professor},
-  cdate={2018年06月10日},
-  edate={2018-06-10},
+  cdate={2018年06月20日},
+  edate={2018-06-20},
 }
 \sisetup{%
   binary-units=true,list-separator={, },
@@ -72,8 +74,56 @@
   \renewcommand{\cref}{\oldcref}% Restore \cref
   \renewcommand{\Cref}{\oldCref}% Restore \Cref
 }
+\newcommand\blankpage{%
+  \wlog{blankpage: at \therealpage}%
+  \newpage\null\thispagestyle{empty}\addtocounter{page}{-1}%
+}
 % For subfiles
-\makeatletter%
+\makeatletter
+\newcounter{realpage}
+\setcounter{realpage}{1}
+\AtBeginShipout{\stepcounter{realpage}}
+\ifdefined\imprint
+  \def\forceonevenpage{\ifodd\value{realpage}\blankpage\fi}
+  \def\forceonoddpage{\ifodd\value{realpage}\relax\else\blankpage\fi}
+  \newcommand{\forceoddpage}{
+    \wlog{forceoddpage: from \therealpage}
+    \edef\oldrealpage{\therealpage}
+    \FloatBarrier
+    \wlog{forceoddpage: to \therealpage}
+    \ifnum\oldrealpage=\value{realpage}
+      \wlog{forceoddpage: reversed}
+      \forceonevenpage
+    \else
+      \wlog{forceoddpage: plain}
+      \forceonoddpage
+    \fi
+  }
+\else
+  \def\forceoddpage{\relax}
+\fi
+\ifdefined\imprint
+  \renewcommand{\thu@first@titlepage}{\relax}
+  \renewcommand{\thu@authorization@mk}{\relax}
+  \renewcommand{\thu@makeabstract}{%
+    \ifthu@bachelor\clearpage\else\cleardoublepage\fi
+    \thu@chapter*[]{\cabstractname} % no tocline
+    \ifthu@bachelor
+      \pagestyle{thu@plain}
+    \else
+      \pagestyle{thu@headings}
+    \fi
+    \pagenumbering{Roman}
+    \thu@cabstract
+    \ifthu@doctor\vfill\else\vskip12bp\fi
+    \thu@put@keywords{\textbf\thu@ckeywords@title}{\thu@ckeywords}
+    \thu@chapter*[]{\eabstractname} % no tocline
+    \thu@eabstract
+    \ifthu@doctor\vfill\else\vskip12bp\fi
+    \thu@put@keywords{%
+      \textbf{\ifthu@bachelor Keywords:\else Key Words:\fi\enskip}}{\thu@ekeywords}
+  }
+\fi
 \@ifclassloaded{subfiles}%
   {%\AtBeginDocument{\Denotation}
   \AtEndDocument{%
@@ -81,7 +131,7 @@
     \bibliography{index}
   }}%
   {\relax}%
-\makeatother%
+\makeatother
 \newcommand{\one}{{1}}
 \let\oldPr\Pr
 \renewcommand{\Pr}[1]{\oldPr\!\left[#1\right]}
@@ -94,10 +144,6 @@
 \DeclareMathOperator*{\argmax}{argmax}
 \makeatletter
 \renewcommand{\thu@denotation@name}{主要符号表}
-\ifdefined\stripped
-\renewcommand{\thu@authorization@mk}{\relax}
-\renewcommand{\endacknowledgement}{\relax}
-\fi
 \makeatother
 \newcommand{\Denotation}[0]{%
 \begin{denotation}
@@ -158,7 +204,11 @@
 \end{eabstract}
 \ekeywords{Wireless Power Transfer, Inductive Coupling, Optimal Design, Computer-automated Design}
 
-\makecover
+\ifdefined\production
+  \makecover[scan/auth.pdf]
+\else
+  \makecover
+\fi
 
 \tableofcontents
 
@@ -184,7 +234,11 @@
 \bibliographystyle{thuthesis-numeric}
 \bibliography{index}
 
-\begin{acknowledgement}
+\ifdefined\production
+  \acknowledgement[scan/decl.pdf]
+\else
+  \acknowledgement
+\fi
   感谢导师赵争鸣教授、陈凯楠老师对本研究的提纲挈领的指导。
 
   感谢Scott Clark的博士论文\cite{clark2012}及其相应的开源软件项目MOE——EPI算法的C语言实现，为本文的R语言实现提供了重大帮助。
@@ -197,10 +251,10 @@
   （涵盖JavaScript、Golang、R、\LaTeX、Python、VBScript、Makefile、Java、C、Erlang、Ruby、Mathematica、Perl等多门语言的数千项目和软件包，
   除了在算法上直接用到的部分R和Python包在参考文献中引用了以外，恕不能一一列出）。
   尤其是\thuthesis\footnote{\href{https://github.com/xueruini/thuthesis}{https://github.com/xueruini/thuthesis}}，帮我节省了不少精力。
-\end{acknowledgement}
+\endacknowledgement
+\ifdefined\imprint\blankpage\fi
 
 \begin{appendix}
-\ifdefined\stripped\relax\else
 \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \addtocontents{lof}{\protect\iffalse}
 \addtocontents{lot}{\protect\iffalse}
@@ -215,7 +269,6 @@
 \addtocontents{lof}{\protect\fi}
 \addtocontents{lot}{\protect\fi}
 \addtocontents{loe}{\protect\fi}
-\fi
 \subfile{tricks}
 \end{appendix}
 

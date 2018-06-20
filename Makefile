@@ -33,17 +33,9 @@ dist/spine.pdf: spine.tex
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
 
 # [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
-dist/index.pdf: index.tex index.bib $(TEXS)
+dist/%.pdf: %.tex index.tex index.bib $(TEXS)
 	-mkdir dist
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-	-bibtex dist/index
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-
-# [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
-dist/stripped.pdf: stripped.tex index.tex index.bib $(TEXS)
-	-mkdir dist
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-	-bibtex dist/stripped
+	-bibtex dist/$*
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
