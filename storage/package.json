@@ -10,6 +10,7 @@
     "lint": "eslint --ignore-path .gitignore ."
   },
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "archiver": "^2.1.1",
     "async": "^2.6.0",

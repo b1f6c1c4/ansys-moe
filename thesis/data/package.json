@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "lodash": "^4.17.10",
     "papaparse": "^4.5.0",
