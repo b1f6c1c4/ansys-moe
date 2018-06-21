@@ -2,9 +2,14 @@ MK=latexmk -silent -use-make
 SUBDOCS=introduction features doebgo petri design impl example conclusion tricks trans raw
 TEXS=$(patsubst %,%.tex,$(SUBDOCS))
 
-all: dist/index.pdf dist/spine.pdf
+all: dist/index.pdf dist/prod.pdf dist/print.pdf dist/spine.pdf
 
 data/dist/%.pdf: data/raw/ev-wpt-2bd37a50.csv data/common.R data/plot.R
+	-mkdir data\dist
+	Rscript --vanilla data/plot.R -i $< -o $@ & exit
+	-del /Q Rplots.pdf
+
+data/dist/%.png: data/raw/ev-wpt-2bd37a50.csv data/common.R data/plot.R
 	-mkdir data\dist
 	Rscript --vanilla data/plot.R -i $< -o $@ & exit
 	-del /Q Rplots.pdf
@@ -24,21 +29,13 @@ figures/dist/%.png: figures/%.xml
 $(SUBDOCS): %: %.tex
 	$(MK) -pvc $< & exit
 
-dist/spine.pdf: spine.tex
+dist/spine.pdf: spine.tex setup.tex
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
 
 # [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
-dist/index.pdf: index.tex index.bib $(TEXS)
+dist/%.pdf: %.tex index.tex setup.tex index.bib $(TEXS)
 	-mkdir dist
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-	-bibtex dist/index
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-
-# [#1](https://github.com/linhr/thuappendixbib/issues/1#issuecomment-394139645)
-dist/stripped.pdf: stripped.tex index.tex index.bib $(TEXS)
-	-mkdir dist
-	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
-	-bibtex dist/stripped
+	-bibtex dist/$*
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit
 	xelatex -interaction=batchmode -halt-on-error -recorder -output-directory="./dist" $< & exit

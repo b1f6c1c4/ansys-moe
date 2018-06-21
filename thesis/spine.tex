@@ -1,8 +1,30 @@
 \documentclass[degree=bachelor]{./thuthesis/thuthesis}
+\usepackage{./thuthesis/thuthesis}
+\geometry{
+  paperwidth=440mm,
+  paperheight=297mm,
+  hcentering,
+  ignoreall,
+  nomarginpar,
+  left=440mm-210mm+32mm,
+  right=32mm,
+  headheight=5mm,
+  headsep=5mm,
+  textheight=227mm,
+  bottom=32mm,
+  footskip=12mm}
 \begin{document}
-\thusetup{
-  cauthor={涂金正},
-  ctitle={电动汽车无线充电系统磁谐振部件优化设计软件研究},
+\include{setup}
+\frontmatter
+\makeatletter
+\thu@first@titlepage
+\AddToShipoutPictureFG*{%
+  \put(\LenToUnit{225.1mm},\LenToUnit{260.3mm}){\vtop{{\null}
+    \rotatebox[origin=tr]{-90}{\makebox[\textheight]{
+      \fangsong\addCJKfontfeatures*{RawFeature={vertical:}}%
+      \xiaosan\ziju{0.4}%
+      \thu@ctitle@spine\hfill\thu@cauthor}}%
+  }}%
 }
-\shuji
+\makeatother
 \end{document}
