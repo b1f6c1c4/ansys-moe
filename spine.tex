@@ -13,6 +13,10 @@
   textheight=227mm,
   bottom=32mm,
   footskip=12mm}
+\makeatletter
+\let\old@thu@cdate\thu@cdate
+\renewcommand{\thu@cdate}{\fontspec{宋体}\old@thu@cdate}
+\makeatother
 \begin{document}
 \include{setup}
 \frontmatter

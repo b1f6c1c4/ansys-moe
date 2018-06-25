@@ -95,6 +95,9 @@
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator*{\argmax}{argmax}
 \makeatletter
+\let\old@thu@cdate\thu@cdate
+\renewcommand{\thu@cdate}{\fontspec{宋体}\old@thu@cdate}
+\renewcommand{\eabstractname}{\fontspec{Arial}ABSTRACT}
 \renewcommand{\thu@denotation@name}{主要符号表}
 \makeatother
 \newcommand{\Denotation}[0]{%
@@ -202,7 +205,6 @@
   感谢在软件开发和论文写作过程中的所有开源库和工具链
   （涵盖JavaScript、 Golang、 R、 \LaTeX、 Python、 VBScript、 Makefile、 Java、 C/C++、 Erlang、 Ruby、 Mathematica、 Perl 等多门语言的数千项目和软件包，
   除了在算法上直接用到的部分R和Python包在参考文献中引用了以外，恕不能一一列出）。
-  尤其是\thuthesis\footnote{\href{https://github.com/xueruini/thuthesis}{https://github.com/xueruini/thuthesis}}，帮我节省了不少精力。
   \forceoddpage
 \endacknowledgement
 \ifdefined\imprint\blankpage\fi
